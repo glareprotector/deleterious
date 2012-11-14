@@ -1,0 +1,4 @@
+#include <string>
+#include "globals.h"
+
+string globals::base_folder = string("../data/proteins/humdiv/");

@@ -1,0 +1,15 @@
+all:	prog
+
+
+prog:	sequence.o globals.o helper.o msa.o main.o
+	g++ -o prog sequence.o globals.o helper.o msa.o main.o
+sequence.o:	sequence.cpp
+	g++ -c sequence.cpp
+globals.o:	globals.cpp
+	g++ -c globals.cpp
+helper.o:	helper.cpp
+	g++ -c helper.cpp
+msa.o:	msa.cpp
+	g++ -c msa.cpp
+main.o:	main.cpp
+	g++ -c main.cpp

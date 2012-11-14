@@ -1,0 +1,32 @@
+#include <string>
+#include <vector>
+#include "msa.h"
+#include <fstream>
+
+msa read_msa(string file){
+
+  ifstream f(file.c_str());
+  string first_line;
+  getline(f, first_line);
+  vector<string> ans;
+  
+  while(f.good()){
+    string temp;
+    getline(f, temp);
+    ans.push_back(temp);
+  }
+
+  return msa(ans);
+
+}
+
+string read_raw_seq(string file){
+
+  ifstream f(file.c_str());
+  string first_line;
+  getline(f, first_line);
+  string ans;
+  getline(f, ans);
+
+  return ans;
+}

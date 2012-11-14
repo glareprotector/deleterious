@@ -1,0 +1,24 @@
+#ifndef MSA_H
+#define MSA_H
+#include <string>
+#include <vector>
+
+using namespace std;
+
+class msa{
+ public:
+  vector<string> m_data;
+  int length;
+  int num_seq;
+
+  msa(vector<string> _msa);
+  msa();
+  string get_column(int pos);
+  string get_seq(int which);
+
+  int get_length();
+  int get_num_seq();
+
+};
+
+#endif

@@ -1,0 +1,22 @@
+#ifndef SEQUENCE_H
+#define SEQUENCE_H
+
+#include <string>
+#include <vector>
+#include "globals.h"
+#include "msa.h"
+
+class sequence{
+
+  sequence(string _name, string _raw_seq, msa _msa);
+  sequence(string _name);
+
+  string get_info_folder(string _name);
+
+  string m_name;
+  string m_raw_seq;
+  msa m_msa;
+
+};
+
+#endif

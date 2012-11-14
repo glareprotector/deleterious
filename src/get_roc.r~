@@ -1,0 +1,13 @@
+
+args<-commandArgs(TRUE)
+
+input_file = args[1]
+
+data = read.table(input_file,header=F,quote='', sep='\t')
+scores = 
+
+library(ROCR)
+
+pred = prediction(scores, classes)
+perf = performance(pred,"tpr","fpr")
+plot(perf)

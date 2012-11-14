@@ -1,0 +1,5 @@
+#include <string>
+
+string experiment::get_base_folder(){
+  return m_base_folder;
+}

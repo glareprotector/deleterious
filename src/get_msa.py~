@@ -1,0 +1,16 @@
+import global_stuff
+
+import wc
+import param
+import objects
+
+f = open(global_stuff.protein_list_file, 'r')
+
+for line in f:
+    protein_name = line.strip()
+    print protein_name
+    import pdb
+    pdb.set_trace()
+    wc.get_stuff(objects.dW, param.param({'uniprot_id':protein_name}), True, True, False)
+
+

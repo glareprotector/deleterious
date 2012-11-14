@@ -1,0 +1,24 @@
+#include "sequence.h"
+#include <string>
+#include "globals.h"
+#include "helper.h"
+#include "msa.h"
+
+sequence::sequence(string _name, string _raw_seq, msa _msa){
+  m_name = _name;
+  m_raw_seq = _raw_seq;
+  m_msa = _msa;
+}
+
+string sequence::get_info_folder(string name){
+  return globals::base_folder + name;
+}
+
+sequence::sequence(string _name){
+
+  m_name = _name;
+  m_raw_seq = read_raw_seq(get_info_folder(m_name) + string("seq"));
+  m_msa = read_msa(get_info_folder(m_name) + string("msa"));
+
+}
+
