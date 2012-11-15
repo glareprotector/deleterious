@@ -61,6 +61,18 @@ vector<mutation> read_mutation_file(string file, string name, int is_deleterious
   return mutations;
 }
 
+double string_distance(string x, string y){
+  int num_diff = 0;
+  int length = x.length();
+  for(int i = 0; i < length; i++){
+    if(x[i] != y[i]){
+      num_diff++;
+    }
+  }
+  return (double)num_diff / (double)length;
+}
+  
+
 vector<string> read_protein_list_file(string file){
 
   vector<string> ans;

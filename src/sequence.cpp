@@ -44,26 +44,54 @@ vector<mutation> sequence::get_mutations(){
   return m_mutations;
 }
 
-double sequence::predict_position(int pos, char mutant_res){
-  string column = m_msa.get_column(pos);
-  int count = 0;
-  int total = 0;
-  for(int i = 0; i < m_msa.get_num_seq(); i++){
-    if(column[i] == mutant_res){
-      count++;
+double sequence::predict_position(int pos, char mutant_res, ih options, dh parameters){
+
+  // most naive method.  can weigh sequences differently
+  if(options[string("which_method")] == 0){
+    vector<double> weights = get_sequence_weights(options, parameters);
+    string column = m_msa.get_column(pos);
+    double count = 0;
+    double total = 0;
+    for(int i = 0; i < m_msa.get_num_seq(); i++){
+      if(column[i] == mutant_res){
+	count += weights[i];
+      }
+      if(column[i] != '-'){
+	total += weights[i];
+      }
     }
-    if(column[i] != '-'){
-      total++;
-    }
+  return (count + 1.0) / (total + 1.0);
   }
-  return ((double)count + 1.0) / ((double)total + 1.0);
 }
 
-vector<double> sequence::predict_all_positions(){
+vector<double> sequence::get_sequence_weights(ih options, dh parameters){
+
+  if(options[string("which_weight")] == 0){
+
+    int num_seq_in_msa = m_msa.get_num_seq();
+    vector< vector< double> > dists(num_seq_in_msa, vector<double>(num_seq_in_msa, 0));
+    for(int i = 0; i < num_seq_in_msa; i++){
+      for(int j = 0; j < num_seq_in_msa; j++){
+	dists[i][j] = (m_msa.get_seq(i), m_msa.get_seq(j));
+      }
+    }
+    vector<double> weights(num_seq_in_msa, 0);
+    for(int i = 0; i < num_seq_in_msa; i++){
+      double total;
+      for(int j = 0; j < num_seq_in_msa; j++){
+	total += dists[i][j];
+      }
+      weights[i] = (double)total / (double) num_seq_in_msa;
+    }
+    return weights;
+  }
+}
+
+vector<double> sequence::predict_all_positions(ih options, dh parameters){
  
   vector<double> ans;
   for(int i = 0; i < m_mutations.size(); i++){
-    ans.push_back(predict_position(m_mutations[i].pos, m_mutations[i].mutant_res));
+    ans.push_back(predict_position(m_mutations[i].pos, m_mutations[i].mutant_res, options, parameters));
   }
   return ans;
 }
