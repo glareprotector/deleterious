@@ -8,7 +8,7 @@ import sys
 which_job = int(sys.argv[1])
 total_jobs = int(sys.argv[2])
 
-which_object = objects.dW
+which_object = objects.pairwise_dist
 
 f = open(global_stuff.protein_list_file, 'r')
 

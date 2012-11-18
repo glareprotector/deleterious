@@ -36,6 +36,7 @@ string msa::get_seq(int which){
 }
 
 
+
 ostream& operator<<(ostream& output, msa& the_msa){
   for(int i = 0; i < the_msa.get_num_seq(); i++){
     for(int j = 0; j < the_msa.get_length(); j++){
@@ -53,3 +54,12 @@ msa::msa(){
 mutation::mutation(int _pos, char _wild_res, char _mutant_res, int _is_deleterious, string _name):
   pos(_pos), wild_res(_wild_res), mutant_res(_mutant_res), is_deleterious(_is_deleterious), name(_name){}
 
+bool constraint::satisfies(string seq){
+  return seq[pos] == res;
+}
+
+constraint::constraint(int _pos, char _res)
+  :pos(_pos), res(_res){}
+
+constraint::constraint(){
+}

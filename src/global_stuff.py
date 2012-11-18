@@ -15,11 +15,11 @@ import math
 import pdb
 
 
-base_folder = '../data/proteins/humdiv/'
+base_folder = '../data/proteins/humvar/'
 all_seqs_file = '../data/human-2011_12.seq'
-neutral_mutations_file = '../data/humdiv-2011_12.neutral.pph.input'
-deleterious_mutations_file = '../data/humdiv-2011_12.deleterious.pph.input'
-protein_list_file = '../data/humdiv_list'
+neutral_mutations_file = '../data/humvar-2011_12.neutral.pph.input'
+deleterious_mutations_file = '../data/humvar-2011_12.deleterious.pph.input'
+protein_list_file = '../data/humvar_list'
 
 completed_list_file = '../data/completed_list'
 

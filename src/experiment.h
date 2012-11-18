@@ -18,11 +18,12 @@ class experiment{
   vector<sequence> m_proteins;
   string m_base_folder;
   string m_results_folder;
+  string get_roc_file_name();
 
-  hash_map<string, int> options;
-  hash_map<string, double> parameters;
+  ih m_options;
+  dh m_parameters;
 
-  experiment(string protein_list_file, string base_folder, string results_folder);
+  experiment(string protein_list_file, string base_folder, string results_folder, ih options, dh parameters);
   string get_base_folder();
   int get_num_proteins();
 

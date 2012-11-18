@@ -163,12 +163,32 @@ class easy_to_read_msa_format(wrapper.file_wrapper, wrapper.by_uniprot_id_wrappe
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
 
         f = open(self.get_holding_location(), 'w')
+        recalculate = False
+        pdb.set_trace()
         msa = self.get_var_or_file(agW, params, recalculate, True, True, False)
         f.write(str(len(msa)) + '\t' + str(msa.get_alignment_length()) + '\n')
         for i in range(len(msa)):
             to_write = ''
             for j in range(msa.get_alignment_length()):
                 to_write = to_write + msa[i,j]
+            print len(to_write), to_write
             f.write(to_write + '\n')
         return f
-        
+
+class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        msa = self.get_var_or_file(agW, params, recalculate, False, False, False)
+        dists = [ [0 for i in range(msa.get_alignment_length())] for j in range(msa.get_alignment_length())]
+        for i in range(msa.get_alignment_length()):
+            for j in range(msa.get_alignment_length()):
+                x_no_skip = ''
+                y_no_skip = ''
+                for k in range(len(msa)):
+                    if msa[k][i] != '-' and msa[k][j] != '-':
+                        x_no_skip += msa[k][i]
+                        y_no_skip += msa[k][j]
+                dists[i][j] = helper.get_KL(x_no_skip, y_no_skip)
+                dists[j][i] = dists[i][j]
+        return dists

@@ -8,7 +8,7 @@ import sys
 which_job = int(sys.argv[1])
 total_jobs = int(sys.argv[2])
 
-which_obj = objects.easy_to_read_msa_format
+which_obj = objects.pairwise_dist
 
 evalue = 1e-10
 
@@ -25,8 +25,8 @@ i = 0
 for line in f:
     if i % total_jobs == which_job:
         protein_name = line.strip()
-        print which_job, total_jobs, 'running ', i
-        wc.get_stuff(which_obj, param.param({'uniprot_id':protein_name, 'ev':evalue}), True, True, False)
+        print which_job, total_jobs, 'running ', protein_name
+        wc.get_stuff(which_obj, param.param({'uniprot_id':protein_name, 'ev':evalue}), False, False, True)
         g.write(protein_name + '\n')
     i += 1
 

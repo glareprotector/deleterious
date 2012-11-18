@@ -20,6 +20,8 @@ class msa{
   int get_length();
   int get_num_seq();
 
+  double get_distance(int pos1, int pos2);
+
 };
 
 ostream& operator<<(ostream& output, msa& the_msa);
@@ -32,6 +34,14 @@ struct mutation{
   int is_deleterious;
   string name;
   mutation(int, char, char, int, string);
+};
+
+struct constraint{
+  int pos;
+  int res;
+  bool satisfies(string seq);
+  constraint(int _pos, char _res);
+  constraint();
 };
 
 #endif

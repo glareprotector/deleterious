@@ -26,11 +26,21 @@ class sequence{
 
   vector<double> get_sequence_weights(ih options, dh parameters);
 
+  vector<int> get_neighbors(int pos, ih options, dh parameters);
+  unordered_map< pair<int,int>, int> get_edge_to_rank(vector<vector<double>> dists);
+  double get_distance(int pos1, int pos2);
+
+
+  int get_length();
+
   vector<mutation> m_mutations;
   string m_name;
   string m_raw_seq;
   msa m_msa;
-
+  vector< vector<double>> m_dists;
+  unordered_map< pair<int, int>, int> m_edge_to_rank;
 };
+
+
 
 #endif

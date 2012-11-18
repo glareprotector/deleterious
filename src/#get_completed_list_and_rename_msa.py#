@@ -19,11 +19,12 @@ for line in f:
         if 'pairwise' in a_file:
             has_dist = True
             subprocess.call(['cp', folder+a_file, folder+'dists'])
-            completed.append(name)
+
             # copy to better file_name
 
             break
-    
+    if has_easy and has_dist:
+        completed.append(name)
 
 g = open(global_stuff.completed_list_file, 'w')
 for name in completed:

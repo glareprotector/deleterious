@@ -140,6 +140,34 @@ def super_shorten(x):
 
 def get_KL(d1, d2):
 
+    d1d = {}
+    d2d = {}
+    d1d2d = {}
+    assert len(d1) == len(d2)
+    for i in range(len(d1)):
+        if d1[i] in d1d:
+            d1d[d1[i]] += 1.0 / len(d1)
+        else:
+            d1d[d1[i]] = 1.0 / len(d1)
+        if d2[i] in d2d:
+            d2d[d2[i]] += 1.0 / len(d1)
+        else:
+            d2d[d2[i]] = 1.0 / len(d1)
+        if (d1[i],d2[i]) in d1d2d:
+            d1d2d[(d1[i],d2[i])] += 1.0 / len(d1)
+        else:
+            d1d2d[(d1[i],d2[i])] = 1.0 / len(d1)
+    ans = 0
+    for key in d1d2d:
+        try:
+            ans += d1d2d[key] * ((math.log(d1d2d[key]) - math.log(d1d[key[0]])) - math.log(d2d[key[1]]))
+        except:
+            #pdb.set_trace()
+            pass
+    return ans
+
+
+
     # keep dictionary of counts for each distribution
     d1_dict = {}
     for i in range(len(d1)):
