@@ -9,6 +9,8 @@ import global_stuff
 import pdb
 import param
 
+from Bio.Align import MultipleSeqAlignment
+
 # also sets global_stuff.RESULTS_FOLDER to proper value
 def read_param(file_location):
     
@@ -57,6 +59,99 @@ def read_param(file_location):
 
     
     return folder_name, the_params
+
+
+# query should be a SeqRecord object
+def filter_msa_based_on_pos_neighbors_and_query(query, pos, msa, neighbors):
+
+    seqs = [query]
+    s = query.seq.tostring()
+
+    ans = ''
+
+    for i in range(len(msa)):
+        okay = True
+        for n in neighbors:
+            if msa[i][n] != s[n]:
+                okay = False
+                break
+        if okay:
+            ans += msa.get_column(pos)[i]
+            seqs.append(msa[i])
+            
+    return MultipleSeqAlignment(seqs)
+
+
+def get_weight_of_msa_seqs(msa):
+
+    unnormalized = [0 for i in range(len(msa))]
+    num = [1 for i in range(len(msa))]
+
+    for i in range(msa.get_alignment_length()):
+        d = {}
+        col = msa.get_column(i)
+        for j in range(len(msa)):
+            if col[j] != '-':
+                num[j] += 1
+                try:
+                    d[col[j]] += 1
+                except:
+                    d[col[j]] = 1
+        for j in range(len(msa)):
+            if col[j] != '-':
+                unnormalized[j] += 1.0 / d[col[j]]
+    try:
+        normalized = [unnormalized[i] / num[i] for i in range(len(msa))]
+    except:
+        x = 2
+        import pdb
+        pdb.set_trace()
+    return normalized
+
+def predict_position(params, recalculate, mutation):
+
+    import wc
+    import objects
+
+    use_neighbor = False
+
+    protein_name = mutation[0]
+    pos = mutation[1]
+    params.set_param('uniprot_id', protein_name)
+    seq = wc.get_stuff(objects.dW, params, recalculate, False, False)
+    msa = wc.get_stuff(objects.agW, params, recalculate, False, False)
+
+    if use_neighbor:
+    
+        neighbors = wc.get_stuff(objects.neighbors_w, params, recalculate, False, False)
+        try:
+            msa = filter_msa_based_on_pos_neighbors_and_query(seq, pos, msa, neighbors[pos])
+        except:
+            x = 2
+            pdb.set_trace()
+    weights = get_weight_of_msa_seqs(msa)
+
+    res = mutation[3]
+
+    score = 0
+
+    col = msa.get_column(pos)
+    for i in range(len(msa)):
+        if col[i] == res:
+            score += weights[i]
+
+    return score / sum(weights)
+            
+def filter_column_pair(x, y, escape):
+
+    x_skip = ''
+    y_skip = ''
+    assert len(x) == len(y)
+    for i in range(len(x)):
+        if x[i] not in escape and y[i] not in escape:
+            x_skip += x[i]
+            y_skip += y[i]
+    return x_skip, y_skip
 
 def read_hp_values(file_location):
 

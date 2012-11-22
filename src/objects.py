@@ -62,10 +62,11 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
 
-    def whether_to_override(self, location):
+    def whether_to_override(self, object_key):
         
         #if the file size is too small, we know there was something wrong
         import os
+        location = self.get_file_location(object_key)
         if os.path.getsize(location) < 1:
             return True
 
@@ -179,7 +180,9 @@ class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-        msa = self.get_var_or_file(agW, params, recalculate, False, False, False)
+        msa = self.get_var_or_file(agW, params, False, False, False, False)
+        import pdb
+
         dists = [ [0 for i in range(msa.get_alignment_length())] for j in range(msa.get_alignment_length())]
         for i in range(msa.get_alignment_length()):
             for j in range(msa.get_alignment_length()):
@@ -189,6 +192,185 @@ class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                     if msa[k][i] != '-' and msa[k][j] != '-':
                         x_no_skip += msa[k][i]
                         y_no_skip += msa[k][j]
+
                 dists[i][j] = helper.get_KL(x_no_skip, y_no_skip)
                 dists[j][i] = dists[i][j]
         return dists
+
+class protein_mutation_list(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        protein_name = self.get_param(params, 'uniprot_id')
+        neutral_file = global_stuff.base_folder + protein_name + '/' + 'all_mutations'
+        mutations = []
+        f = open(neutral_file)
+        for line in f:
+            s = line.strip().split('\t')
+            mutations.append([protein_name, int(s[0])-1, s[1], s[2], int(s[3])])
+
+
+        return mutations
+
+class mutation_list_given_protein_list(wrapper.obj_wrapper):
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+
+        protein_list_file = global_stuff.data_folder + self.get_param(params, 'protein_list_file')
+        f = open(protein_list_file, 'r')
+        mutation_list = []
+        for line in f:
+            protein_name = line.strip()
+            self.set_param(params, 'uniprot_id', protein_name)
+
+            mutation_list = mutation_list + self.get_var_or_file(protein_mutation_list, params, False, False, False)
+        return mutation_list
+
+class edge_to_rank(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    def whether_to_override(self, object_key):
+        return True
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+
+        print "beginning edge_to_rank ", params.get_param('uniprot_id')
+
+        dists = self.get_var_or_file(pairwise_dist, params, recalculate, True, False, False)
+
+        print 'got dists: ', len(dists)
+
+        
+        the_dict = {}
+        temp = []
+        for i in range(len(dists)):
+            for j in range(len(dists)):
+                temp.append([(i,j),dists[i][j]])
+        temp_sorted = sorted(temp, key = lambda elt: elt[1], reverse = True)
+        i = 0
+        for elt in temp_sorted:
+            the_dict[elt[0]] = i
+            i += 1
+
+        print 'finish etr'
+
+        return the_dict
+
+
+class neighbors_w(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    def whether_to_override(self, object_key):
+        return True
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+
+
+        etr = self.get_var_or_file(edge_to_rank, params, recalculate, True, False, False)
+
+        seq = self.get_var_or_file(dW, params, recalculate, True, False, False)
+
+        print 'start to retrieve dists'
+        dists = self.get_var_or_file(pairwise_dist, params, recalculate, True, False, False)
+        print 'finish to retrieve dists'
+        length = len(seq)
+        avg_deg = self.get_param(params, 'avg_deg')
+        edges = []
+
+        print 'start neighbor'
+
+        rank_cutoff = ((length * 1.0) * avg_deg)
+        #pdb.set_trace()
+        for i in range(length):
+            edges.append([])
+            for j in range(length):
+                if i != j:
+                    #if etr[(i,j)] < rank_cutoff:
+                    #    edges[-1].append(j)
+                    if etr[(i,j)] < rank_cutoff:
+                        if len(edges[-1]) == 0:
+                            edges[-1].append(j)
+                        else:
+                            if etr[(i,j)] < etr[(i,edges[-1][0])]:
+                                edges[-1][0] = j
+        #pdb.set_trace()
+
+        print 'end neighbor'
+
+        
+        return edges
+
+
+
+
+
+class filtered_mutation_list_given_protein_list(wrapper.mat_obj_wrapper):
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+
+        all_mutations = self.get_var_or_file(mutation_list_given_protein_list, params, recalculate, False, False)
+
+        n_dict = {}
+        q_dict = {}
+        m_dict = {}
+
+        neighbor_cutoff = self.get_param(params, 'n_cutoff')
+        filter_cutoff = self.get_param(params, 'f_cutoff')
+
+        filtered_mutations = []
+
+        for mutation in all_mutations:
+
+            protein_name = mutation[0]
+            print protein_name
+            self.set_param(params, 'uniprot_id', protein_name)
+
+            seq = self.get_var_or_file(dW, params, recalculate, False, False)
+            if len(seq) < 300:
+
+                try:
+                    neighbors = n_dict[protein_name]
+                except:
+                    neighbors = self.get_var_or_file(neighbors_w, params, recalculate, True, False)
+                    n_dict[protein_name] = neighbors
+
+                try:
+                    query = q_dict[protein_name]
+                except:
+                    query = self.get_var_or_file(dW, params, recalculate, True, False)
+                    q_dict[protein_name ] = query
+
+                try:
+                    msa = m_dict[protein_name]
+                except:
+                    msa = self.get_var_or_file(agW, params, recalculate, True, False)
+                    m_dict[protein_name ] = msa
+
+                pos = mutation[1]
+                print pos, len(neighbors)
+
+                filtered_column = helper.filter_msa_based_on_pos_neighbors_and_query(query, pos, msa, neighbors[pos])
+
+                print '       ', len(neighbors[pos]), len(filtered_column), neighbor_cutoff, filter_cutoff
+
+                if len(neighbors[pos]) > neighbor_cutoff and len(filtered_column) > filter_cutoff:
+                    filtered_mutations.append(mutation)
+                    print '                                   YES'
+
+        return filtered_mutations
+
+def get_roc_file(params, out_file):
+    import wc
+    recalculate = False
+    l = wc.get_stuff(filtered_mutation_list_given_protein_list, params, recalculate, False, False, False)
+
+    ans = []
+    for mutation in l:
+        score = helper.predict_position(params, recalculate, mutation)
+        print score
+        ans.append([score, mutation[4]])
+
+    helper.write_mat(ans, out_file)
+
+
+

@@ -31,7 +31,7 @@ class file_cache_for_wrapper(object):
             
 
             if os.path.isfile(location):
-                if self.the_wrapper.whether_to_override(location):
+                if self.the_wrapper.whether_to_override(object_key):
                     return False
                 return True
         return False
@@ -86,7 +86,7 @@ class object_cache_for_wrapper(object):
             return True
         else:
 
-            if self.the_wrapper.whether_to_override():
+            if self.the_wrapper.whether_to_override(object_key):
 
                 return False
 
@@ -110,7 +110,7 @@ class object_cache_for_wrapper(object):
     #@print_stuff_dec
     def set(self, object_key, object, to_pickle, params, to_filelize, always_recalculate = False):
         #print self.the_wrapper
-        #pdb.set_trace()
+
 
 
         if len(self.dump) > global_stuff.CACHE_MAX_SIZE:
@@ -168,6 +168,7 @@ class akcO(object):
             
 
     def has(self, key, recalculate):
+        recalculate = False
         if key in self.dump:
             return True
         elif not recalculate:
@@ -241,6 +242,8 @@ class ukcO(object):
 
     # recalculate specifies whether to look at possible pickle file and use it
     def has(self, recalculate):
+        recalculate = False
+        
         if self.val != None:
             return True
         elif not recalculate:
@@ -252,6 +255,9 @@ class ukcO(object):
 
     # recalculate determines whether to look at pickle
     def get(self, recalculate):
+
+        recalculate = False
+        
         if self.val != None:
             return self.val
         elif not recalculate:

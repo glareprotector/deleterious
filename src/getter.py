@@ -26,8 +26,12 @@ for line in f:
     if i % total_jobs == which_job:
         protein_name = line.strip()
         print which_job, total_jobs, 'running ', protein_name
-        wc.get_stuff(which_obj, param.param({'uniprot_id':protein_name, 'ev':evalue}), False, False, True)
-        g.write(protein_name + '\n')
+        p = param.param({'uniprot_id':protein_name, 'ev':evalue})
+        seq = wc.get_stuff(objecdts.dW, p, False, False, False)
+        if len(seq) < 500:
+            wc.get_stuff(which_obj, p, False, True, True)
+            g.write(protein_name + '\n')
+            g.flush()
     i += 1
 
 print 'ending', which_job, total_jobs

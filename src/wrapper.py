@@ -21,7 +21,7 @@ from wrapper_decorator import *
 class wrapper(object):
 
 
-    def whether_to_override(self, x):
+    def whether_to_override(self, object_key):
         return False
 
     def super_shorten(self):
@@ -124,6 +124,7 @@ class wrapper(object):
     def old_get_var_or_file(self, the_wrapper, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False):
 
         used_keys, all_keys, x, all_keys_key_key_set = the_wrapper.constructor(params, recalculate, to_pickle, to_filelize, always_recalculate)
+
         self.temp_dependents_keys[-1]  = self.temp_dependents_keys[-1].union(all_keys)
         self.temp_dependents_all_keys_key_key_sets[-1] = self.temp_dependents_all_keys_key_key_sets[-1].union(all_keys_key_key_set)
         return x
@@ -189,7 +190,7 @@ class indexed_wrapper(wrapper):
 
 class obj_wrapper(wrapper):
 
-    def whether_to_override(self):
+    def whether_to_override(self, object_key):
         return False
 
     def get_file_dumper(self, maker, params):
@@ -245,6 +246,9 @@ class file_wrapper(wrapper):
     
 # for now, assume source_wrapper instance is available.  if instance is available, that means it wasn't created yet, so wouldn't be in wrapper registry, so don't need to fetch it from there.  in the future, might separately create source instance first, in which case might instead pass in the parameters needed to fetch the param.  or could fetch the instance first externally, then pass to this __init__
 class generic_dumper_wrapper(file_wrapper):
+
+    def whether_to_override(self, object_key):
+        return self.source_wrapper.whether_to_override(object_key)
 
     def __repr__(self):
         return self.__class__.__name__  + '*' + self.source_wrapper.__repr__()

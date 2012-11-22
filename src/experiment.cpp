@@ -5,6 +5,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <sstream>
+#include <stdio.h>
+#include "globals.h"
 
 using namespace std;
 
@@ -29,6 +31,7 @@ string experiment::get_roc_file_name(){
   for(auto it = m_parameters.begin(); it != m_parameters.end(); ++it){
     ss<<it->first + string("_")<<it->second<<"_";
   }
+  ss<<"input_"<<globals::protein_list_file;
   return ss.str();
 }
 
@@ -48,12 +51,20 @@ void experiment::get_roc_file(){
   
   for(int i = 0; i < all_mutations.size(); i++){
     mutation temp = all_mutations[i];
-    f<<all_scores[i]<<'\t'<<temp.is_deleterious<<'\t'<<temp.name<<'\t'<<temp.pos<<'\t'<<temp.wild_res<<'\t'<<temp.mutant_res<<'\n';
+    if(all_scores[i] >= 0){
+      f<<all_scores[i]<<'\t'<<temp.is_deleterious<<'\t'<<temp.name<<'\t'<<temp.pos<<'\t'<<temp.wild_res<<'\t'<<temp.mutant_res<<'\n';
+    }
   }
+  f.flush();
   f.close();
   string roc_plot_file_name = roc_base + string(".roc.pdf");
+  cout<<"roc_file_name: "<<roc_plot_file_name<<endl;
+  
   string cmd = string("Rscript get_roc.r ") + roc_file_name + string(" ") + roc_plot_file_name;
-  system(cmd.c_str());
+  cout<<"command: "<<cmd<<endl;
+  //popen(cmd.c_str(), "r");
+  //xexit(1);
+  cout<<"finished: "<<roc_plot_file_name<<endl;
 
 
 }

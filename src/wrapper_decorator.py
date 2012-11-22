@@ -84,6 +84,7 @@ def dec(f):
 #        print '        finished to calculate NEW stuff in wrapper ', self, recalculate, to_pickle, to_filelize, always_recalculate
 #        print '                                                             ', len(self.temp_used_keys)
         # always pickle used_keys and all_keys
+
         self.used_keys_cache.set(self.temp_used_keys[-1], True)
         self.set_keys_cache.set(self.temp_new_param_keys[-1], True)
         try:
@@ -115,6 +116,7 @@ def dec(f):
             object_key = index
         self.all_keys_cache.set(all_keys_key, all_keys, True, recalculate)
         # set always recalculate to false here? if call dumper wrapper directly can set it to true
+
         obj = self.cache.set(object_key, obj, to_pickle, params, to_filelize, always_recalculate)
 
         self.temp_used_keys.pop()
@@ -133,6 +135,7 @@ def dec(f):
         params = params.get_copy()
 #        print self, recalculate, params
         if self.used_keys_cache.has(recalculate) and self.set_keys_cache.has(recalculate) and self.all_keys_key_key_set_cache.has(recalculate):
+
             used_keys = self.used_keys_cache.get(recalculate)
             set_keys = self.set_keys_cache.get(recalculate)
             all_keys_key_key_set = self.all_keys_key_key_set_cache.get(recalculate)
@@ -156,6 +159,11 @@ def dec(f):
                 if self.cache.has(object_key, recalculate):
                     #print '           getting cached value in wrapper ', self
                     obj = self.cache.get(object_key, recalculate)
+                    try:
+                        self.cache.dump[object_key] = obj
+                    except:
+                        pass
+                    #obj = self.cache.set(object_key, obj, to_pickle, params, to_filelize, always_recalculate)
                     if always_recalculate:
                         return cache_everything_f_poster(self, params, recalculate, to_pickle, to_filelize, always_recalculate, obj)
                     return used_keys, all_keys, obj, all_keys_key_key_set

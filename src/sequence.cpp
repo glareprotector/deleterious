@@ -6,6 +6,7 @@
 #include "experiment.h"
 #include <iostream>
 #include <algorithm>
+#include <math.h>
 
 using namespace std;
 
@@ -28,6 +29,7 @@ sequence::sequence(string _name, experiment* _p_experiment){
 
 
   m_name = _name;
+  cout<<"reading in: "<<m_name<<endl;
   m_raw_seq = read_raw_seq(info_folder + string("seq"));
   m_msa = read_msa(info_folder + string("msa"));
   m_dists = read_double_mat(info_folder + string("dists"));
@@ -63,9 +65,12 @@ double sequence::predict_position(int pos, char mutant_res, ih options, dh param
       constraint_list.push_back(constraint(neighbors[i], m_raw_seq[neighbors[i]]));
     }
     //cout<<"mutant_res: "<<mutant_res<<" "<<"pos: "<<pos<<endl;
-    //display_string(m_msa.get_column(pos));
+    display_string(m_msa.get_column(pos));
+    int num_satisfy = 0;
     for(int i = 0; i < m_msa.get_num_seq(); i++){
+
       if(satisfies_constraint_list_and(m_msa.get_seq(i), constraint_list)){
+	num_satisfy++;
 	if(column[i] == mutant_res){
 	  count += weights[i];
 	}
@@ -73,9 +78,16 @@ double sequence::predict_position(int pos, char mutant_res, ih options, dh param
 	  total += weights[i];
 	}
       }
+
     }
+    cout<<"num_satisfy: "<<num_satisfy<<endl;
     //cout<<count<<" "<<total<<endl;
-    return (count + 1.0) / (total + 1.0);
+    if(num_satisfy < 50){
+      return -1;
+    }
+    else{
+      return (count + 1.0) / (total + 1.0);
+    }
   }
 }
 
@@ -146,6 +158,8 @@ unordered_map< pair<int,int>, int> sequence::get_edge_to_rank(vector< vector<dou
   int idx = temp.size() - 1;
   for(int i = 0; i < temp.size(); i++){
     edge_to_rank[temp[i].second] = idx;
+    //cout<<idx<<endl;
+    //cout<<temp[i].second.first<<" "<<temp[i].second.second<<" "<<idx<<" "<<temp[i].first<<endl;
     idx--;
   }
   return edge_to_rank;
@@ -187,7 +201,7 @@ vector<int> sequence::get_neighbors(int pos, ih options, dh parameters){
     int idx = temp.size() - 1;
     while(i < parameters[string("num_neighbor")]){
       if(idx != pos){
-	//	cout<<temp[idx].second<<" is neighbor with kl "<<temp[idx].first<<endl;
+	cout<<temp[idx].second<<" is neighbor with kl "<<temp[idx].first<<endl;
 	//display_string(m_msa.get_column(temp[idx].second));
 	ans.push_back(temp[idx].second);
 	i++;
@@ -198,7 +212,15 @@ vector<int> sequence::get_neighbors(int pos, ih options, dh parameters){
     return ans;
   }
   else if(options[string("which_neighbor_method")] == 1){
-    int x;
+    vector<int> ans(0);
+    for(int i = 0; i < get_length(); i++){
+      //cout<<m_edge_to_rank[pair<int,int>(pos,i)]<<" "<<parameters[string("edge_avg")] * get_length()<<" "<<get_length()<<i<<endl;
+      if(m_edge_to_rank[pair<int,int>(pos,i)] + get_length() < parameters[string("edge_avg")] * get_length()){
+	//cout<<"gg"<<m_edge_to_rank[pair<int,int>(pos,i)]<<" "<<parameters[string("edge_avg")] * get_length()<<" "<<get_length()<<endl;
+	ans.push_back(i);
+      }
+    }
+    return ans;
   }
 }
     

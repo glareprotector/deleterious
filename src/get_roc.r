@@ -1,10 +1,10 @@
 
 args<-commandArgs(TRUE)
-
+x = 1
 input_file = args[1]
 output_file = args[2]
-
-data = read.table(input_file,header=F,quote='', sep='\t')
+#Sys.sleep(3)
+data = read.table(input_file,header=F,quote='', sep=',')
 scores = data[,1]
 classes = data[,2]
 
