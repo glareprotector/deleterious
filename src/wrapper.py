@@ -20,6 +20,19 @@ from wrapper_decorator import *
 
 class wrapper(object):
 
+    def get_to_pickle(self):
+        return True
+
+    @classmethod
+    def get_all_keys(cls, params, self = None):
+        return set()
+
+    @classmethod
+    def get_object_key(cls, params, self = None):
+        import param
+        import pdb
+
+        return params.restriction(params, cls.get_all_keys(params, self))
 
     def whether_to_override(self, object_key):
         return False
@@ -109,7 +122,7 @@ class wrapper(object):
     # wrapper refers to which class, not a specific wrapper instance
     @print_stuff_dec
     def get_var_or_file(self, wrapper, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False):
- #       print '                      called  ', self, wrapper, recalculate, to_pickle, to_filelize, always_recalculate
+#        print '                      called  ', self, wrapper, recalculate, to_pickle, to_filelize, always_recalculate
         #pdb.set_trace()
         self.set_param(params, "which_wrapper_class", wrapper)
         from wc import wc
@@ -247,6 +260,11 @@ class file_wrapper(wrapper):
 # for now, assume source_wrapper instance is available.  if instance is available, that means it wasn't created yet, so wouldn't be in wrapper registry, so don't need to fetch it from there.  in the future, might separately create source instance first, in which case might instead pass in the parameters needed to fetch the param.  or could fetch the instance first externally, then pass to this __init__
 class generic_dumper_wrapper(file_wrapper):
 
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+
+        return self.source_wrapper.get_all_keys(params, self)
+
     def whether_to_override(self, object_key):
         return self.source_wrapper.whether_to_override(object_key)
 
@@ -278,7 +296,7 @@ class generic_dumper_wrapper(file_wrapper):
     @dec
     @print_stuff_dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-        #pdb.set_trace()
+
         assert to_pickle == False
         #assert recalculate == True
         # manually set always_recalculate to false here
@@ -290,8 +308,10 @@ class generic_dumper_wrapper(file_wrapper):
                 always_recalculate = False
         #ERROR?
         obj = self.old_get_var_or_file(self.source_wrapper, params, recalculate, to_pickle, to_filelize, always_recalculate)
+        import datetime
+        start = datetime.datetime.now()
         self.dump_object(obj)
-
+        print 'pickle: ', datetime.datetime.now() - start
         return open(self.get_holding_location(), 'rb')
 
 class pkdW(generic_dumper_wrapper):
@@ -323,7 +343,14 @@ class dadW(generic_dumper_wrapper):
     def dump_object(self, object):
         AlignIO.write(object, open(self.get_holding_location(),'w'), 'fasta')
 
-class wrapper_catalog(obj_wrapper, indexing_wrapper):
+class wrapper_catalog(obj_wrapper):
+
+    def get_to_pickle(self):
+        return False
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set(['which_wrapper_class'])
 
     # since there is no maker, hackishly set it to self
     def other_init(self, maker, params):
@@ -343,6 +370,8 @@ class wrapper_catalog(obj_wrapper, indexing_wrapper):
 # only purpose of this class is to give wrapper_catalog instance a "maker"
 class famished_wrapper(object):
 
+    
+
     def set_param(self, params, key, val):
         params.set_param(key, val)
         return params
@@ -351,7 +380,7 @@ class famished_wrapper(object):
         return params.get_param(key)
 
     def get_var_or_file(self, wrapper, params, recalculate, to_pickle, to_filelize = False):
-        #print '                       ', self, wrapper
+
 
         self.set_param(params, "which_wrapper_class", wrapper)
         from wc import wc

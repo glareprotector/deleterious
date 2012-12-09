@@ -81,6 +81,21 @@ def filter_msa_based_on_pos_neighbors_and_query(query, pos, msa, neighbors):
             
     return MultipleSeqAlignment(seqs)
 
+def filter_msa_based_on_pos_constraint(msa, constraints):
+
+    seqs = []
+    for i in range(len(msa)):
+        works = True
+        for c in constraints:
+            pos = c[0]
+            res = c[1]
+            if msa[i][pos] != res:
+                works = False
+                break
+        if works:
+            seqs.append(msa[i])
+    return MultipleSeqAlignment(seqs)
+
 
 def get_weight_of_msa_seqs(msa):
 
@@ -91,15 +106,25 @@ def get_weight_of_msa_seqs(msa):
         d = {}
         col = msa.get_column(i)
         for j in range(len(msa)):
+            """
             if col[j] != '-':
                 num[j] += 1
                 try:
                     d[col[j]] += 1
                 except:
                     d[col[j]] = 1
+            """
+            num[j] += 1
+            try:
+                d[col[j]] += 1
+            except:
+                d[col[j]] = 1
         for j in range(len(msa)):
+            """
             if col[j] != '-':
                 unnormalized[j] += 1.0 / d[col[j]]
+            """
+            unnormalized[j] += 1.0 / d[col[j]]
     try:
         normalized = [unnormalized[i] / num[i] for i in range(len(msa))]
     except:
@@ -108,12 +133,12 @@ def get_weight_of_msa_seqs(msa):
         pdb.set_trace()
     return normalized
 
-def predict_position(params, recalculate, mutation):
+def predict_position(params, recalculate, mutation, use_neighbor):
 
     import wc
     import objects
 
-    use_neighbor = False
+    #use_neighbor = False
 
     protein_name = mutation[0]
     pos = mutation[1]
@@ -141,6 +166,147 @@ def predict_position(params, recalculate, mutation):
             score += weights[i]
 
     return score / sum(weights)
+
+
+
+
+def predict_position_energy(params, recalculate, mutation, use_neighbor, ignore_pos):
+
+    import wc
+    import objects
+
+    #use_neighbor = False
+
+    protein_name = mutation[0]
+    pos = mutation[1]
+    wild_res = mutation[2]
+    mut_res = mutation[3]
+    params.set_param('uniprot_id', protein_name)
+    seq = wc.get_stuff(objects.dW, params, recalculate, False, False)
+    msa = wc.get_stuff(objects.agW, params, recalculate, False, False)
+
+    score = 0
+    
+    col = msa.get_column(pos)
+
+    if not ignore_pos:
+        try:
+            score += -1.0 * math.log( float(col.count(mut_res)+1) / (col.count(wild_res)+1) )
+            #score = -1.0 * ( float(col.count(mut_res)+1) / (col.count(wild_res)+1) )
+        except:
+            pdb.set_trace()
+            x=2
+        print score
+    if col.count(mut_res) == 0:
+            return -1.0 * score
+    
+    
+    if use_neighbor:
+        constraints_a = [(pos,wild_res)]
+        filter_a_msa = filter_msa_based_on_pos_constraint(msa, constraints_a)
+        constraints_b = [(pos,mut_res)]
+        filter_b_msa = filter_msa_based_on_pos_constraint(msa, constraints_b)
+        all_neighbors = wc.get_stuff(objects.neighbors_w, params, recalculate, False, False)
+        neighbors = all_neighbors[pos]
+        for neighbor in neighbors[0:1]:
+            try:
+                na_col = filter_a_msa.get_column(neighbor)
+                nb_col = filter_b_msa.get_column(neighbor)
+            except:
+                pdb.set_trace()
+                x=2
+            na_col_no_skip = [x for x in na_col if x != '-']
+            nb_col_no_skip = [x for x in nb_col if x != '-']
+            score += get_KL_real(nb_col_no_skip, na_col_no_skip)
+            if abs(score) < .001:
+                pdb.set_trace()
+                x=2
+
+    return -1.0 * score
+
+
+def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbor, weighted):
+
+    import wc
+    import objects
+
+    #use_neighbor = False
+
+    protein_name = mutation[0]
+    pos = mutation[1]
+    wild_res = mutation[2]
+    mut_res = mutation[3]
+    params.set_param('uniprot_id', protein_name)
+    seq = wc.get_stuff(objects.dW, params, recalculate, False, False)
+    msa = wc.get_stuff(objects.general_msa, params, recalculate, False, False)
+
+    score = 0
+    
+    col = msa.get_column(pos)
+
+    seq_weights = wc.get_stuff(objects.general_seq_weights, params, False, False, False)
+    
+    if not ignore_pos:
+        try:
+            mut_weight = sum([seq_weights[i] for i in range(len(col)) if col[i] == mut_res])
+            wild_weight = sum([seq_weights[i] for i in range(len(col)) if col[i] == wild_res])
+            score += -1.0 * math.log(mut_weight + 1.0) / (wild_weight + 1.0)
+            #score += -1.0 * math.log( float(col.count(mut_res)+1) / (col.count(wild_res)+1) )
+            #score = -1.0 * ( float(col.count(mut_res)+1) / (col.count(wild_res)+1) )
+        except:
+            pdb.set_trace()
+            x=2
+        print score
+    if col.count(mut_res) == 0:
+            return -1.0 * score
+
+    neighbor_score = 0
+    
+    if use_neighbor:
+
+
+
+        
+        constraints_a = [(pos,wild_res)]
+        filter_a_msa = filter_msa_based_on_pos_constraint(msa, constraints_a)
+        constraints_b = [(pos,mut_res)]
+        filter_b_msa = filter_msa_based_on_pos_constraint(msa, constraints_b)
+        all_neighbors = wc.get_stuff(objects.neighbors_w_weight_w, params, recalculate, False, False)
+        neighbors = all_neighbors[pos]
+
+        # sort neighbors by weight
+        sorted_neighbors = sorted(neighbors, key = lambda elt: elt[1], reverse = True)
+
+        total_weight = 0
+        
+        for neighbor_pair in sorted_neighbors[0:max_neighbor]:
+            neighbor = neighbor_pair[0]
+            weight = neighbor_pair[1]
+            total_weight += weight
+            try:
+                na_col = filter_a_msa.get_column(neighbor)
+                nb_col = filter_b_msa.get_column(neighbor)
+            except Exception, err:
+                print err
+                import pdb
+                pdb.set_trace()
+                x=2
+            neighbor_score += weight * get_KL_real(nb_col, na_col, seq_weights)
+            if abs(score) < .001:
+                #pdb.set_trace()
+                x=2
+
+        try:
+            neighbor_score /= total_weight
+        except:
+            import pdb
+            pdb.set_trace()
+            x=2
+
+    return -1.0 * (score + neighbor_score)
+
+
+    
             
 def filter_column_pair(x, y, escape):
 
@@ -239,6 +405,7 @@ def get_KL(d1, d2):
     d2d = {}
     d1d2d = {}
     assert len(d1) == len(d2)
+    #print len(d1)
     for i in range(len(d1)):
         if d1[i] in d1d:
             d1d[d1[i]] += 1.0 / len(d1)
@@ -261,33 +428,94 @@ def get_KL(d1, d2):
             pass
     return ans
 
+totalcount = 0
+Xcount = 0
 
+def do_map(aa,mapping):
+    try:
+
+
+        return mapping[aa]
+    except:
+        print aa
+        return mapping['-']
+
+
+def get_KL_fast_alt(msa, a, b, char_to_num, weights):
+
+    
+
+    max_num = len(char_to_num) + 1
+
+    d1d = [0 for i in range(max_num)]
+    d2d = [0 for i in range(max_num)]
+    d1d2d = [ [0 for i in range(max_num)] for j in range(max_num) ]
+
+    total = 0
+
+    for i in range(len(msa)):
+        if msa[i][a] != '_' and msa[i][b] != 'b':
+            d1d[do_map(msa[i][a], global_stuff.aa_to_num)] += weights[i]
+            d2d[do_map(msa[i][b], global_stuff.aa_to_num)] += weights[i]
+            d1d2d[do_map(msa[i][a], global_stuff.aa_to_num)][do_map(msa[i][b], global_stuff.aa_to_num)] += weights[i]
+            total += weights[i]
+
+    for i in range(max_num):
+        d1d[i] /= total
+        d2d[i] /= total
+        for j in range(max_num):
+            d1d2d[i][j] /= total
+    ans = 0
+
+    for i in range(max_num):
+        for j in range(max_num):
+            if d1d2d[i][j] > 0:
+                ans += d1d2d[i][j] * ( math.log(d1d2d[i][j]) - math.log(d1d[i]) - math.log(d2d[j]))
+                
+    return ans
+
+def get_KL_real(d1, d2, weights):
 
     # keep dictionary of counts for each distribution
     d1_dict = {}
+    d1_weight = 0.0
     for i in range(len(d1)):
-        if d1[i] in d1_dict.keys():
-            d1_dict[d1[i]] = d1_dict[d1[i]] + 1
-        else:
-            d1_dict[d1[i]] = 1
+        if d1[i] != '-':
+            d1_weight += weights[i]
+            if d1[i] in d1_dict.keys():
+                d1_dict[d1[i]] = d1_dict[d1[i]] + weights[i]
+            else:
+                d1_dict[d1[i]] = weights[i]
+
     for k in d1_dict.keys():
-        d1_dict[k] = float(d1_dict[k]) / float(len(d1))
- #   pdb.set_trace()
+        d1_dict[k] = float(d1_dict[k]) / d1_weight
+
     d2_dict = {}
+    d2_weight = 0.0
     for i in range(len(d2)):
-        if d2[i] in d2_dict.keys():
-            d2_dict[d2[i]] = d2_dict[d2[i]] + 1
+        if d2[i] != '-':
+            d2_weight += weights[i]
+            if d2[i] in d2_dict.keys():
+                d2_dict[d2[i]] = d2_dict[d2[i]] + weights[i]
+            else:
+                d2_dict[d2[i]] = weights[i]
+
+
+    # add pseudocount in d2 for every key in d1 union d2
+    union_keys = set(d1_dict.keys()) | set(d2_dict.keys())
+
+    added_pseudo = 0.0
+
+    for key in union_keys:
+        added_pseudo += 1.0
+        if key in d2_dict.keys():
+            d2_dict[key] = d2_dict[key] + 1.0
         else:
-            d2_dict[d2[i]] = 1
+            d2_dict[key] = 1.0
+            
     for k in d2_dict.keys():
-        d2_dict[k] = float(d2_dict[k]) / float(len(d2))
-#    pdb.set_trace()
-    # add pseudocounts for d2
-    for k in d1_dict.keys():
-        if k in d2_dict.keys():
-            d2_dict[k] = d2_dict[k] + 1
-        else:
-            d2_dict[k] = 1
+        d2_dict[k] = d2_dict[k] / (d2_weight + added_pseudo)
+
     ans = 0
     for k in d1_dict.keys():
         if d1_dict[k] > 0:

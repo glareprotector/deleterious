@@ -10,20 +10,33 @@ searching_for = sys.argv[3:]
 
 f = open(global_stuff.data_folder + in_list, 'r')
 
+p = global_stuff.get_param()
+
 completed = []
+
+import objects
+
+to_check_for = [objects.general_distance, objects.general_msa, objects.neighbors_w_weight_w]
+
+import wc
 
 for line in f:
     name = line.strip()
-    folder = global_stuff.base_folder + name + '/'
-    files = os.listdir(folder)
-    num_present = 0
-    for a_file in files:
-        for it in searching_for:
-            if it in a_file:
-                num_present += 1
 
-    if num_present == len(searching_for):
-        completed.append(name)
+    p.set_param('uniprot_id',name)
+
+
+    ok = True
+    for obj in to_check_for:
+
+        inst = wc.get_wrapper_instance(obj)
+        
+        if not inst.has(p, False):
+            ok = False
+            
+
+    if ok:
+       completed.append(name)
     
 
 g = open(global_stuff.data_folder + out_list, 'w')

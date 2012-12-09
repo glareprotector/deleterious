@@ -22,6 +22,7 @@ class file_cache_for_wrapper(object):
     # if we are not trusting the files previously in file system, then we only say a file is there if it was created this round
     def has(self, object_key, recalculate):
 #        pdb.set_trace()
+        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
         if object_key in self.files_created:
             return True
         elif not recalculate:
@@ -38,12 +39,14 @@ class file_cache_for_wrapper(object):
 
     # get is only called if has was just called and returned true
     def get(self, object_key, recalculate, mode = 'r'):
+        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
         self.allocate(object_key)
         return open(self.the_wrapper.get_file_location(object_key), mode)
 
     # moves object from temporary to permanent location.  makes destination folder if needed. keep track of which files were get'ed in this execution.  set is only called right after get is called
     # if this is not chain specific, only do this
     def set(self, object_key, object, to_pickle, params, to_filelize = None, always_recalculate = False):
+        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
         self.allocate(object_key)
         subprocess.call(['mv', object.name, self.the_wrapper.get_file_location(object_key)])
         self.files_created.add(object_key)
@@ -52,6 +55,7 @@ class file_cache_for_wrapper(object):
 
     # creates folder for object whose type is specified by the wrapper. this step does the prep work allowing the object to be put in the cache, which in this case is the folder in the file system
     def allocate(self, object_key):
+        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
         #if not os.path.exists(self.the_wrapper.get_folder(object_key)):
         try:
             os.makedirs(self.the_wrapper.get_folder(object_key))
@@ -81,6 +85,7 @@ class object_cache_for_wrapper(object):
 
     def has(self, object_key, recalculate):
         #print self, self.the_wrapper
+        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
         if object_key in self.dump:
             
             return True
@@ -95,6 +100,7 @@ class object_cache_for_wrapper(object):
     
     # if we don't trust pickles, only trust it if it was created this round.  stuff created this round is in self.dump
     def get(self, object_key, recalculate):
+        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
         if object_key in self.dump:
             return self.dump[object_key]
         elif self.pickle_dumper_wrapper.has(object_key, recalculate):
@@ -111,7 +117,9 @@ class object_cache_for_wrapper(object):
     def set(self, object_key, object, to_pickle, params, to_filelize, always_recalculate = False):
         #print self.the_wrapper
 
+        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
 
+        to_pickle = self.the_wrapper.get_to_pickle()
 
         if len(self.dump) > global_stuff.CACHE_MAX_SIZE:
             self.dump.clear()
@@ -201,10 +209,27 @@ class akcO(object):
 
 class index_cache(akcO):
 
+    def __init__(self, maker, params):
+        self.dump = {}
+        self.the_wrapper = maker.get_param(params, "source_instance")
+        self.pickle_location = global_stuff.BIN_FOLDER + self.__repr__() + '.pk'
+        self.existing_dump = {}
+        #if global_stuff.recalculate == False:
+        #    try:
+        #        self.existing_dump = pickle.load(open(self.pickle_location, 'rb'))
+        #    except:
+        #        self.existing_dump = {}
+        
+        self.pickles_created = set()
+        self.maker = maker
+
+
+
     # for now, decide that if i'm going to index, then i'm also going to pickle.
     # it's possible that you are caching an object(it wasn't in object cache), but its index is already here
     def get_and_set_index(self, key, to_reindex = global_stuff.to_reindex):
         #print self.dump
+
         if self.has(key, to_reindex):
             return self.get(key)
         else:
@@ -213,7 +238,7 @@ class index_cache(akcO):
                 
                 new_val = 0
             else:
-                new_val = len(cur_keys) + 1
+                new_val = len(cur_keys)
             self.set(key, new_val, True, to_reindex)
             return new_val
             

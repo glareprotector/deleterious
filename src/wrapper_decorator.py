@@ -9,6 +9,8 @@ def dec(f):
         if key == 'md':
             
             return True
+        if key == 'dist_type' or key == 'which_msa' or key == 'which_weight' or key == 'which_dist':
+            return True
         if val.__class__.__name__ in ['int', 'float', 'str']:
             return False
         import cross_validation_pseudo as cv
@@ -102,7 +104,20 @@ def dec(f):
         #all_keys_key = get_all_keys_key(self, params, self.used_keys_cache.get(recalculate), self.set_keys_cache.get(recalculate))
         all_keys = get_all_keys(self, params, recalculate)
         # pop the used_keys and dependents keys and set params
-        object_key = get_objects_key(self, params, all_keys)
+
+
+
+
+
+        # hardcode the object key now
+        # object_key = get_objects_key(self, params, all_keys)
+        object_key = self.get_object_key(params, self)
+
+
+
+
+
+
         # wrapper decides whether to make index.  index provided to object constructor in params.  object can decide whether to do anything with it.
         #pdb.set_trace()
         if self.makes_index():
@@ -130,10 +145,53 @@ def dec(f):
     
     def h(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
 
+
+
+
+        object_key = self.get_object_key(params, self)
+
+        used_keys = set()
+        all_keys = set()
+        all_keys_key_key_set = set()
+
+        if self.makes_index():
+
+            if self.object_key_to_index.has(object_key, global_stuff.to_reindex):
+                object_index = self.object_key_to_index.get(object_key)
+                if self.cache.has(object_index, recalculate):
+                    #print '           getting cached value in wrapper ', self
+                    obj = self.cache.get(object_index, recalculate)
+                    if always_recalculate:
+                        return cache_everything_f_poster(self, params, recalculate, to_pickle, to_filelize, always_recalculate, obj)
+                    return used_keys, all_keys, obj, all_keys_key_key_set
+                        
+        if self.cache.has(object_key, recalculate):
+            #print '           getting cached value in wrapper ', self
+            obj = self.cache.get(object_key, recalculate)
+            try:
+                if len(self.cache.dump) > global_stuff.CACHE_MAX_SIZE:
+                    self.cache.dump.clear()
+                self.cache.dump[object_key] = obj
+                        
+            except:
+                pass
+            #obj = self.cache.set(object_key, obj, to_pickle, params, to_filelize, always_recalculate)
+            if always_recalculate:
+                return cache_everything_f_poster(self, params, recalculate, to_pickle, to_filelize, always_recalculate, obj)
+            return used_keys, all_keys, obj, all_keys_key_key_set
+
+
+        return cache_everything_f_poster(self, params, recalculate, to_pickle, to_filelize, always_recalculate)
+
+
         # make a copy of params
         
         params = params.get_copy()
 #        print self, recalculate, params
+ #       try:
+ #           print "     SOURCE: ", self.source_wrapper
+ #       except:
+ #           print 'no source wrapper'
         if self.used_keys_cache.has(recalculate) and self.set_keys_cache.has(recalculate) and self.all_keys_key_key_set_cache.has(recalculate):
 
             used_keys = self.used_keys_cache.get(recalculate)
@@ -160,7 +218,10 @@ def dec(f):
                     #print '           getting cached value in wrapper ', self
                     obj = self.cache.get(object_key, recalculate)
                     try:
+                        if len(self.cache.dump) > global_stuff.CACHE_MAX_SIZE:
+                            self.cache.dump.clear()
                         self.cache.dump[object_key] = obj
+                        
                     except:
                         pass
                     #obj = self.cache.set(object_key, obj, to_pickle, params, to_filelize, always_recalculate)
