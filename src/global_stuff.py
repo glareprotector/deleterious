@@ -16,7 +16,7 @@ import pdb
 
 def get_param():
     import param
-    p = param.param({'ev':1e-10, 'protein_list_file':'mf_lessthan_300', 'uniprot_id':'Q9NVL1', 'avg_deg':3, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':1, 'pseudo_c':1})
+    p = param.param({'ev':1e-10, 'protein_list_file':'mf_done', 'uniprot_id':'Q9NVL1', 'avg_deg':3, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':1, 'pseudo_c':1})
     return p
 
 polyphen_msa_directory = '/mnt/work/fultonw/deleterious/data/polyphen-2.2.2/precomputed/alignments/'
