@@ -275,7 +275,8 @@ class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         print 'calc: ', end - start
         return dists
 
-class protein_mutation_list(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+# right now, only know how to read/write float mats, so make this a regular wrapper
+class protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -309,7 +310,7 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | mf_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -333,7 +334,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return keys | general_msa.get_all_keys(params, self) | general_seq_weights.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -352,6 +353,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         
         
         # make C and get node counts.  for each edge, need to get joint counts
+
         weights = self.get_var_or_file(general_seq_weights, params, recalculate, False, False)
 
 
@@ -548,7 +550,7 @@ class general_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
     def whether_to_override(self, object_key):
         return False
 
-class div_weights(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+class div_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -560,7 +562,7 @@ class div_weights(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         msa = self.get_var_or_file(general_msa, params, False, False, False)
         return helper.get_weight_of_msa_seqs(msa)
 
-class general_seq_weights(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+class general_seq_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
         return False
@@ -584,7 +586,7 @@ class general_seq_weights(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return [1.0 for i in range(len(msa))]
                                         
 
-class edge_to_rank(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+class edge_to_rank(wrapper.edge_to_int_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -666,7 +668,7 @@ class neighbors_w(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         
         return edges
 
-class neighbors_w_weight_w(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -743,7 +745,7 @@ class neighbors_w_weight_w(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
 
-class filtered_mutation_list_given_protein_list(wrapper.mat_obj_wrapper):
+class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):

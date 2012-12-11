@@ -28,7 +28,7 @@ hostname = 'dragon.csail.mit.edu'
 port = 20
 
 #remote_folder = '/mnt/work/fw27/deleterious/deleterious/data/proteins/humvar/'
-remote_folder = '~/scratch/'
+remote_base_folder = '~/scratch/'
 
 f = open(global_stuff.protein_list_file, 'r')
 
@@ -45,12 +45,16 @@ p = global_stuff.get_param()
 
 past = datetime.datetime.now()
 
-def get(obj, p):
+def get(obj, p, gotten_stuff):
     global past
     print 'starting: ', p.get_param('uniprot_id'), obj, which_job, total_jobs
     ans = wc.get_stuff(obj, p, False, False, False)
     print 'took: ', datetime.datetime.now() - past
     past = datetime.datetime.now()
+
+
+    gotten_stuff.append([obj, p.get_copy()])
+    
     return ans
 
 for line in f:
@@ -58,6 +62,11 @@ for line in f:
 
     
     if i % total_jobs == which_job:
+
+
+        gotten_stuff = []
+
+        
         protein_name = line.strip()
         
         if protein_name not in to_skip:
@@ -80,10 +89,10 @@ for line in f:
                     import pdb
 
                     try:
-                        get(objects.general_msa,p)
-                        get(objects.general_seq_weights,p)
-                        get(objects.neighbors_w_weight_w,p)
-                        get(objects.edge_to_rank,p)
+                        get(objects.general_msa,p, gotten_stuff)
+                        get(objects.general_seq_weights,p, gotten_stuff)
+                        get(objects.neighbors_w_weight_w,p, gotten_stuff)
+                        get(objects.edge_to_rank,p, gotten_stuff)
                     except:
                         print 'fail', protein_name
                 else:
@@ -93,21 +102,22 @@ for line in f:
 
             # move stuff to ent
             # first try to create the folder
-            folder = remote_folder + protein_name
+            remote_folder = remote_base_folder + protein_name + '/'
             client = ssh.SSHClient()
             client.load_system_host_keys()
             client.set_missing_host_key_policy(ssh.AutoAddPolicy())
             client.connect(hostname, port, username, password)
             client.exec_command('mkdir ' + folder)
-
-
-            cur_folder = wc.get_wrapper_instance(objects.by_uniprot_id_wrapper).get_folder(p)
-            
             scp = ssh.SCPSclient(ssh.get_transport())
 
-            all_files = os.listdir(cur_folder)
-            for a_file in all_files:
-                scp.put(cur_folder + a_file, folder + a_file)
+            for gotten in gotten_stuff:
+                obj = gotten[0]
+                p_used = gotten[1]
+                instance = get_wrapper_instance(gotten[0])
+                here_file = instance.get_file_location(p_used)
+                file_name = instance.get_file_name(p_used)
+                there_file = remote_folder + file_name
+                scp.put(here_file, there_file)
                 
 
             

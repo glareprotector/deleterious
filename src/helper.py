@@ -523,6 +523,8 @@ def get_KL_real(d1, d2, weights):
     return ans
 
 
+
+
 def physical_distance(x):
     norm = 0;
     for i in range(len(x)):
@@ -571,10 +573,50 @@ def write_mat(mat, f_name, the_sep = ',', option = 'w'):
     #print mat
     for row in mat:
         
-        line = string.join([str(x) for x in row], sep=the_sep)
+        line = string.join([('%.2f' % x)  for x in row], sep=the_sep)
         line = line + '\n'
         f.write(line)
     f.close()
+
+def write_mat_raw(mat, f_name, the_sep = ',', option = 'w'):
+    f = open(f_name, option)
+    #print mat
+    for row in mat:
+        
+        line = string.join([str(x)  for x in row], sep=the_sep)
+        line = line + '\n'
+        f.write(line)
+    f.close()
+
+
+def read_mat_to_int_float_tuple(f):
+    f = open(f.name, 'r')
+    ans = []
+    for line in f:
+        this = []
+        if len(line.strip()) > 0:
+
+            s = line.strip().split(',')
+            for it in s:
+                sp = it[1:len(it)-1]
+                spp = sp.split('-')
+                a = int(spp[0])
+                b = float(spp[1])
+                this.append((a,b))
+        ans.append(this)
+    return ans
+
+def write_int_float_tuple_mat(mat, f_name):
+    def g(t):
+        return '(' + str(t[0]) + '-' + ('%.3f' % t[1]) + ')'
+    f = open(f_name, 'w')
+    for row in mat:
+        line = string.join([g(x) for x in row],sep = ',')
+        line = line + '\n'
+        f.write(line)
+    f.close()
+        
+        
 
 def write_vect(vect, f_name, the_sep = ',', option = 'w'):
     f = open(f_name, option)
@@ -582,37 +624,77 @@ def write_vect(vect, f_name, the_sep = ',', option = 'w'):
     f.write(line)
     f.close()
 
+def read_edge_to_int(f):
+    f = open(f.name)
+    ans = {}
+    for line in f:
+        s = line.strip().split(',')
+        u = int(s[0])
+        v = int(s[1])
+        val = int(s[2])
+        ans[(u,v)] = val
+    return ans
+
+def write_edge_to_int(obj, f_name):
+    f = open(f_name, 'w')
+    for key in obj:
+        f.write(str(key[0]) + ',' + str(key[1]) + ',' + str(obj[key]) + '\n')
+    f.close()
+
 def read_vect_to_float(f, the_sep = ','):
-    r = csv.reader(f, delimter = the_sep, quotechar = '')
+    r = csv.reader(f, delimiter = the_sep)
     line = r.next()
     vect = [float(x) for x in line]
-    r.close()
+    f.close()
     return vect
 
 def read_mat_to_float(f, the_sep = ','):
-    r = csv.reader(f, delimter = the_sep, quotechar = '')
+    r = csv.reader(f, delimiter = the_sep)
     mat = []
     for line in r:
         vect = [float(x) for x in line]
         mat.append(vect)
-    r.close()
+    f.close()
     return mat
 
 def read_vect_to_int(f, the_sep = ','):
-    r = csv.reader(f, delimter = the_sep, quotechar = '')
+    r = csv.reader(f, delimiter = the_sep)
     line = r.next()
     vect = [int(x) for x in line]
-    r.close()
+    f.close()
     return vect
 
 def read_mat_to_int(f, the_sep = ','):
-    r = csv.reader(f, delimter = the_sep, quotechar = '')
+    r = csv.reader(f, delimiter = the_sep)
     mat = []
     for line in r:
         vect = [int(x) for x in line]
         mat.append(vect)
-    r.close()
+    f.close()
     return mat
+
+def get_overlap(n1, n2):
+    n1set = set()
+    n2set = set()
+    count = 0
+    for i in range(len(n1)):
+        for it in n1[i]:
+            n1set.add((i,it[0]))
+            count += 1
+    for i in range(len(n2)):
+        for it in n2[i]:
+            n2set.add((i,it[0]))
+    intersect = n1set & n2set
+    pdb.set_trace()
+    return len(intersect), count
+
+def get_file_string_set(f_name):
+    f = open(f_name, 'r')
+    ans = set()
+    for line in f:
+        ans.add(line.strip())
+    f.close()
+    return ans
 
 def get_representative_atom(res):
     if 'CA' in res.child_dict.keys():

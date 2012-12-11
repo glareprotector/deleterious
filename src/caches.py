@@ -29,9 +29,10 @@ class file_cache_for_wrapper(object):
 
             location = self.the_wrapper.get_file_location(object_key)
             # check if we want to override
-            
 
-            if os.path.isfile(location):
+                
+
+            if os.path.isfile(location) or self.the_wrapper.was_transferred(object_key):
                 if self.the_wrapper.whether_to_override(object_key):
                     return False
                 return True
@@ -76,10 +77,13 @@ class object_cache_for_wrapper(object):
         #pdb.set_trace()
         self.maker.set_param(params, "dumper_source_instance", self.the_wrapper)
 
-
-        self.pickle_dumper_wrapper = wrapper.pkdW(maker, params)
+        # change this to depend on the object
+        # self.pickle_dumper_wrapper = wrapper.pkdW(maker, params)
+        self.pickle_dumper_wrapper = self.the_wrapper.get_pickle_dumper(maker, params)
+        
         self.maker.set_param(params, "dumper_source_instance", self.the_wrapper)
         #pdb.set_trace()
+        # file dumper is file wrapper.  it calls obj wrapper's 
         self.file_dumper_wrapper = self.the_wrapper.get_file_dumper(maker, params)
 
 
@@ -106,8 +110,9 @@ class object_cache_for_wrapper(object):
         elif self.pickle_dumper_wrapper.has(object_key, recalculate):
             assert recalculate == False
             f = self.pickle_dumper_wrapper.get(object_key, recalculate)
-
-            obj = pickle.load(open(f.name, 'rb'))
+            # replace with dumper wrapper(file)'s read_object function
+            # obj = pickle.load(open(f.name, 'rb'))
+            obj = self.pickle_dumper_wrapper.read_object_from_file(f)
             return obj
         raise KeyError
     
