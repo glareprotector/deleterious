@@ -19,7 +19,9 @@ def get_param():
     p = param.param({'ev':1e-10, 'protein_list_file':'mf_done', 'uniprot_id':'Q9NVL1', 'avg_deg':3, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':1, 'pseudo_c':1})
     return p
 
-polyphen_msa_directory = '/mnt/work/fultonw/deleterious/data/polyphen-2.2.2/precomputed/alignments/'
+home = '/home/fw27/d/deleterious/'
+
+polyphen_msa_directory = home+'data/polyphen-2.2.2/precomputed/alignments/'
 
 
 base_folder = '../data/proteins/humvar/'
@@ -29,12 +31,12 @@ deleterious_mutations_file = '../data/humvar-2011_12.deleterious.pph.input'
 #protein_list_file = '../data/hum_var_msa_completed'
 
 
-cosmic_gene_list = '/mnt/work/fultonw/deleterious/data/lncosmic_genes'
-cosmic_raw_data_folder = '/mnt/work/fultonw/deleterious/data/fasta/'
+cosmic_gene_list =home+ 'data/cosmic_genes'
+cosmic_raw_data_folder = home+'data/fasta/'
 
-protein_list_file = '/mnt/work/fultonw/deleterious/data/humvar_list'
+protein_list_file = home+'data/humvar_list'
 
-data_folder = '/mnt/work/fultonw/deleterious/data/'
+data_folder = home+'data/'
 
 completed_list_file = '../data/completed_list'
 
@@ -42,7 +44,7 @@ FILE_MANAGER_SIZE = 500
 OBJ_MANAGER_SIZE = 500
 #MUSCLE_PATH = '../muscle/muscle3.8.31_i86linux64'
 
-MUSCLE_PATH = '/mnt/work/fultonw/deleterious/muscle/muscle3.8.31_i86linux64'
+MUSCLE_PATH = home+'muscle/muscle3.8.31_i86linux64'
 DSSP_PATH = '/mnt/work/fultonw/active_site/dssp/dssp-2.0.4-linux-amd64'
 
 
