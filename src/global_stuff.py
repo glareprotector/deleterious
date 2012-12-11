@@ -16,13 +16,13 @@ import pdb
 
 def get_param():
     import param
-    p = param.param({'ev':1e-10, 'protein_list_file':'mf_done', 'uniprot_id':'Q9NVL1', 'avg_deg':3, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':1, 'pseudo_c':1})
+    p = param.param({'ev':1e-10, 'protein_list_file':'mf_done', 'uniprot_id':'Q8WXA2', 'avg_deg':3, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':0, 'pseudo_c':1})
     return p
 
 polyphen_msa_directory = '/mnt/work/fultonw/deleterious/data/polyphen-2.2.2/precomputed/alignments/'
 
 
-base_folder = '../data/proteins/humvar/'
+base_folder = '../data/proteins/humvar_from_orchestra/'
 all_seqs_file = '../data/human-2011_12.seq'
 neutral_mutations_file = '../data/humvar-2011_12.neutral.pph.input'
 deleterious_mutations_file = '../data/humvar-2011_12.deleterious.pph.input'

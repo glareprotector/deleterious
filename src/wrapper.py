@@ -163,6 +163,33 @@ class wrapper(object):
     def set(self, object_key, object, to_pickle, params):
         return self.cache.set(object_key, object, to_pickle, params)
 
+    def get_file_name(self, object_key):
+        location = self.get_file_location(object_key)
+        return location.split('/')[-1]
+
+    def record_transferred_file(self, object_key):
+        try:
+            if self.was_transferred(object_key):
+                f = open(self.transferred_files_location(object_key), 'a')
+                f.write(self.get_file_name(object_key) + '\n')
+                f.close()
+        except:
+            f = open(self.transferred_files_location(object_key), 'w')
+            f.write(self.get_file_name(object_key) + '\n')
+            f.close()
+        
+
+    def was_transferred(self, object_key):
+        try:
+            folder_transferred_files = helper.get_file_string_set(self.transferred_files_location(object_key))
+            return self.get_file_name(object_key) in folder_transferred_files
+        except:
+            pdb.set_trace()
+            return False
+
+    def get_transferred_files_location(self, object_key):
+        return self.get_folder(object_key) + 'moved_files'
+
 class shorten_name_wrapper(wrapper):
 
     def super_shorten(self):
@@ -203,6 +230,9 @@ class indexed_wrapper(wrapper):
 
 class obj_wrapper(wrapper):
 
+    def get_pickle_dumper(self, maker, params):
+        return pkdW(maker, params)
+
     def whether_to_override(self, object_key):
         return False
 
@@ -217,6 +247,9 @@ class obj_wrapper(wrapper):
         self.cache = caches.object_cache_for_wrapper(maker, params)
 
 class mat_obj_wrapper(obj_wrapper):
+
+    def get_pickle_dumper(self, maker, params):
+        return mfdW(maker, params)
     
     def get_file_dumper(self, maker, params):
 
@@ -226,12 +259,40 @@ class mat_obj_wrapper(obj_wrapper):
 
 class vect_obj_wrapper(obj_wrapper):
 
+    def get_pickle_dumper(self, maker, params):
+        return vfdW(maker, params)
+
     def get_file_dumper(self, maker, params):
-        return generic_vect_file_dumper_wrapper(maker, params)
-        maker.set_param(params, "which_wrapper_class", wrapper.generic_vect_file_dumper_wrapper)
-        return maker.get_var_or_file(wrapper_catalog, params, True, False, False)
+        return vfdW(maker, params)
+
+class edge_to_int_obj_wrapper(obj_wrapper):
+
+    def get_pickle_dumper(self, maker, params):
+        return etiW(maker, params)
+
+    def get_file_dumper(self, maker, params):
+        return etiW(maker, params)
+
+class int_mat_obj_wrapper(obj_wrapper):
+
+    def get_pickle_dumper(self, maker, params):
+        return imfdW(maker, params)
+
+    def get_file_dumper(self, maker, params):
+        return imfdW(maker, params)
+
+class int_float_tuple_mat_obj_wrapper(obj_wrapper):
+
+    def get_pickle_dumper(self, maker, params):
+        return iftmfdW(maker, params)
+
+    def get_file_dumper(self, maker, params):
+        return iftmfdW(maker, params)
 
 class msa_obj_wrapper(obj_wrapper):
+
+    def get_pickle_dumper(self, maker, params):
+        return dadW(maker, params)
 
     def get_file_dumper(self, maker, params):
         return dadW(maker, params)
@@ -315,23 +376,61 @@ class generic_dumper_wrapper(file_wrapper):
         return open(self.get_holding_location(), 'rb')
 
 class pkdW(generic_dumper_wrapper):
+
+    def read_object_from_file(self, f):
+        return pickle.load(f)
     
     def dump_object(self, obj):
         pickle.dump(obj, open(self.get_holding_location(), 'wb'))
 
+# assume mat_obj_wrapper reads stuff to float
 class mfdW(generic_dumper_wrapper):
+
+    def read_object_from_file(self, f):
+        return helper.read_mat_to_float(f)
 
     # do i have to create the folder first?
     def dump_object(self, obj):
         write_mat(obj, self.get_holding_location())
 
-class generic_vect_file_dumper_wrapper(generic_dumper_wrapper):
+class etiW(generic_dumper_wrapper):
+
+    def read_object_from_file(self, f):
+        return helper.read_edge_to_int(f)
+
+    def dump_object(self, obj):
+        return helper.write_edge_to_int(obj, self.get_holding_location())
+
+class imfdW(generic_dumper_wrapper):
+
+    def read_object_from_file(self, f):
+        return helper.read_mat_to_int(f)
+
+    def dump_object(self, obj):
+        helper.write_mat_raw(obj, self.get_holding_location())
+
+class iftmfdW(generic_dumper_wrapper):
+
+    def read_object_from_file(self, f):
+        return helper.read_mat_to_int_float_tuple(f)
+
+    def dump_object(self, obj):
+        helper.write_int_float_tuple_mat(obj, self.get_holding_location())
+
+# assumes vect_obj_wrapper reads stuff to float
+class vfdW(generic_dumper_wrapper):
+
+    def read_object_from_file(self, f):
+        return helper.read_vect_to_float(f)
 
     # do i have to create the folder first?
     def dump_object(self, obj):
         write_vect(obj, self.get_holding_location())
 
 class dfdW(generic_dumper_wrapper):
+
+    def read_project_from_file(self, f):
+        assert(False)
 
     def dump_object(self, obj):
         f = open(self.get_holding_location(), 'w')
