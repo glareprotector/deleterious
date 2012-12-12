@@ -35,7 +35,7 @@ class wrapper(object):
         return params.restriction(params, cls.get_all_keys(params, self))
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     def super_shorten(self):
         return True
@@ -58,6 +58,7 @@ class wrapper(object):
     # if the wrapper index stuff, its objects can obtain indicies thru maker->object_key_to_index
     # in general, the methods i make should have a maker pointer so that params can be accessed thru the maker
     def get_name(self, object_key, to_reindex = global_stuff.to_reindex):
+        object_key = self.get_object_key(object_key)
         if not self.super_shorten():
             assert False
             if not self.makes_index():
@@ -154,8 +155,8 @@ class wrapper(object):
     def get_cache(self):
         pass
 
-    def has(self, object_key, recalculate):
-        return self.cache.has(object_key, recalculate)
+    def has(self, object_key, recalculate, check_remote = False):
+        return self.cache.has(object_key, recalculate, check_remote)
 
     def get(self, object_key, recalculate):
         return self.cache.get(object_key, recalculate)
@@ -169,19 +170,21 @@ class wrapper(object):
 
     def record_transferred_file(self, object_key):
         try:
-            if self.was_transferred(object_key):
-                f = open(self.transferred_files_location(object_key), 'a')
+            if not self.was_transferred(object_key):
+
+                f = open(self.get_transferred_files_location(object_key), 'a')
                 f.write(self.get_file_name(object_key) + '\n')
                 f.close()
         except:
-            f = open(self.transferred_files_location(object_key), 'w')
+            f = open(self.get_transferred_files_location(object_key), 'w')
             f.write(self.get_file_name(object_key) + '\n')
             f.close()
         
 
     def was_transferred(self, object_key):
         try:
-            folder_transferred_files = helper.get_file_string_set(self.transferred_files_location(object_key))
+
+            folder_transferred_files = helper.get_file_string_set(self.get_transferred_files_location(object_key))
             return self.get_file_name(object_key) in folder_transferred_files
         except:
 
@@ -234,12 +237,13 @@ class obj_wrapper(wrapper):
         return pkdW(maker, params)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     def get_file_dumper(self, maker, params):
         return dfdW(maker, params)
 
     def get_file_location(self, object_key):
+        return self.cache.pickle_dumper_wrapper.get_file_location(object_key)
         return self.get_folder(object_key) + self.get_name(object_key) + '.pk'
 
     def other_init(self, maker, params):
