@@ -72,8 +72,6 @@ for line in f:
         if protein_name not in to_skip:
 
 
-            if i > 2:
-                break
 
             i += 1
             

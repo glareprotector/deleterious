@@ -184,7 +184,7 @@ class wrapper(object):
             folder_transferred_files = helper.get_file_string_set(self.transferred_files_location(object_key))
             return self.get_file_name(object_key) in folder_transferred_files
         except:
-            pdb.set_trace()
+
             return False
 
     def get_transferred_files_location(self, object_key):
