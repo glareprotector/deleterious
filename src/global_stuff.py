@@ -16,7 +16,7 @@ import pdb
 
 def get_param():
     import param
-    p = param.param({'ev':1e-10, 'protein_list_file':'mf_done', 'uniprot_id':'Q8WXA2', 'avg_deg':3, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':0, 'pseudo_c':1})
+    p = param.param({'ev':1e-10, 'protein_list_file':'mf_done', 'uniprot_id':'Q8WXA2', 'avg_deg':3, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':1, 'pseudo_c':1})
     return p
 
 home = '/home/fw27/d/deleterious/'

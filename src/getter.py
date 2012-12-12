@@ -68,6 +68,7 @@ def get(obj, p, gotten_stuff, used_ps, check = True):
         gotten_stuff.append([obj, p.get_copy()])
         return ans
     else:
+        gotten_stuff.append([obj, p.get_copy()])
         print 'already have: ', p.get_param('uniprot_id'), obj
 
 import pdb
@@ -83,11 +84,11 @@ to_gets = set([objects.general_msa, objects.general_seq_weights, objects.neighbo
 #this is the stuff to delete right after one protein is processed
 to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
 
-sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 0)
+sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 20)
 
 for line in f:
 
-
+    
     
     if i % total_jobs == which_job:
 
@@ -103,7 +104,7 @@ for line in f:
 
 
             i += 1
-            
+            print '                        TRAVERSED:', i
 
             p.set_param('uniprot_id',protein_name)
 
@@ -114,7 +115,7 @@ for line in f:
             for which_weight in range(2):
                 p.set_param('which_weight',which_weight)
 
-                if len(seq) < 150:
+                if len(seq) < 10000:
                     import pdb
 
                     try:
