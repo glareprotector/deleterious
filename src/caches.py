@@ -20,7 +20,7 @@ class file_cache_for_wrapper(object):
 
 
     # if we are not trusting the files previously in file system, then we only say a file is there if it was created this round
-    def has(self, object_key, recalculate):
+    def has(self, object_key, recalculate, check_remote=False):
 #        pdb.set_trace()
         object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
         if object_key in self.files_created:
@@ -30,9 +30,10 @@ class file_cache_for_wrapper(object):
             location = self.the_wrapper.get_file_location(object_key)
             # check if we want to override
 
+            print 'checking: ', location, os.path.isfile(location)
                 
 
-            if os.path.isfile(location) or self.the_wrapper.was_transferred(object_key):
+            if os.path.isfile(location) or (check_remote and self.the_wrapper.was_transferred(object_key)):
                 if self.the_wrapper.whether_to_override(object_key):
                     return False
                 return True
@@ -87,7 +88,7 @@ class object_cache_for_wrapper(object):
         self.file_dumper_wrapper = self.the_wrapper.get_file_dumper(maker, params)
 
 
-    def has(self, object_key, recalculate):
+    def has(self, object_key, recalculate, check_remote=False):
         #print self, self.the_wrapper
         object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
         if object_key in self.dump:
@@ -99,8 +100,10 @@ class object_cache_for_wrapper(object):
 
                 return False
 
+            print self.the_wrapper
+            assert False
             
-            return self.pickle_dumper_wrapper.has(object_key, recalculate)
+            return self.pickle_dumper_wrapper.has(object_key, recalculate, check_remote)
     
     # if we don't trust pickles, only trust it if it was created this round.  stuff created this round is in self.dump
     def get(self, object_key, recalculate):

@@ -192,7 +192,7 @@ class their_agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return set(['uniprot_id'])
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -234,7 +234,7 @@ class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -548,7 +548,7 @@ class general_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return self.get_var_or_file(their_agW, params, False, False, False)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
 class div_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -565,7 +565,7 @@ class div_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 class general_seq_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -593,7 +593,7 @@ class edge_to_rank(wrapper.edge_to_int_obj_wrapper, wrapper.by_uniprot_id_wrappe
         return general_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -676,7 +676,7 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
         return keys | edge_to_rank.get_all_keys(params, self) | dW.get_all_keys(params, self) | general_msa.get_all_keys(params, self) | dW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):

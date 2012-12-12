@@ -437,7 +437,7 @@ def do_map(aa,mapping):
 
         return mapping[aa]
     except:
-        print aa
+
         return mapping['-']
 
 
@@ -705,3 +705,71 @@ def get_representative_atom(res):
         print 'no CA or CB atom in residue'
             #pdb.set_trace()
         return res.child_list[0]
+
+
+class file_sender(object):
+
+    def __init__(self, lock_file, buildup_size):
+        self.lock_file = lock_file
+        self.buildup_size = buildup_size
+        self.buildup = []
+
+    def __send(self, it):
+        # first try to make the remote directory
+        
+        import ssh
+        
+        here_file = it[0]
+        there_file = it[1]
+        there_folder = it[2]
+        hostname = it[3]
+        username = it[4]
+        password = it[5]
+        port = it[6]
+        wrapper = it[7]
+        object_key = it[8]
+
+        client = ssh.SSHClient()
+        client.load_system_host_keys()
+        client.set_missing_host_key_policy(ssh.AutoAddPolicy())
+        client.connect(hostname, port, username, password)
+        client.exec_command('mkdir ' + there_folder)
+
+
+        t = ssh.Transport((hostname, port))
+        t.connect(username=username, password=password)
+
+        sftp = ssh.SFTPClient.from_transport(t)
+
+        sftp.put(here_file, there_file)
+        wrapper.record_transferred_file(object_key)
+
+        try:
+            import subprocess
+            print '               removing:', here_file
+            subprocess.call(['rm', here_file])
+
+        except Exception, err:
+            print err
+
+
+        
+        
+    def send(self, here_file, there_file, hostname, there_folder, username, password, port, wrapper, object_key):
+        #first check if if it is a file
+        import pdb
+
+        import os
+        if os.path.isfile(here_file):
+            import pdb
+
+            self.buildup.append([here_file, there_file, there_folder, hostname, username, password, port, wrapper, object_key, wrapper, object_key])
+        if len(self.buildup) > self.buildup_size:
+            import FileLock
+            with FileLock.FileLock(self.lock_file, timeout=2) as lock:
+                for it in self.buildup:
+                    self.__send(it)
+            self.buildup = []
+            import pdb
+
+                    

@@ -24,6 +24,8 @@ home = '/home/fw27/d/deleterious/'
 polyphen_msa_directory = home+'data/polyphen-2.2.2/precomputed/alignments/'
 
 
+lock_folder = home + 'lock_folder/'
+
 base_folder = '../data/proteins/humvar_from_orchestra/'
 all_seqs_file = '../data/human-2011_12.seq'
 neutral_mutations_file = '../data/humvar-2011_12.neutral.pph.input'
@@ -67,9 +69,9 @@ q = 21
 
 
 
-PROTEIN_BASE_FOLDER = '../data/proteins/humvar/'
+PROTEIN_BASE_FOLDER = home+'data/proteins/humvar_from_orchestra/'
 
-COSMIC_BASE_FOLDER = '../data/proteins/cosmic/'
+COSMIC_BASE_FOLDER = home+'data/proteins/cosmic/'
 
 dropbox_folder = '~/Dropbox/deleterious/'
 
