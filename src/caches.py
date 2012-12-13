@@ -100,8 +100,8 @@ class object_cache_for_wrapper(object):
 
                 return False
 
-            print self.the_wrapper
-            assert False
+
+
             
             return self.pickle_dumper_wrapper.has(object_key, recalculate, check_remote)
     

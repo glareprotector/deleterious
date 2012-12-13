@@ -339,6 +339,20 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
         import numpy
+        q = global_stuff.q
+
+        msa = self.get_var_or_file(general_msa, params, recalculate, False, False)
+
+        C = numpy.matrix(numpy.zeros(((q-1)*msa.get_alignment_length(),(q-1)*msa.get_alignment_length())))
+
+        print 'C size: ', C.size
+
+
+        directed = numpy.zeros((msa.get_alignment_length(), msa.get_alignment_length(), q, q))
+
+        print 'directed_size: ', directed.size
+        pdb.set_trace()
+
 
         import datetime
         past=datetime.datetime.now()
@@ -346,9 +360,9 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         print '                   STARTING MF ', params.get_param('uniprot_id')
 
 
-        q = global_stuff.q
+
         
-        msa = self.get_var_or_file(general_msa, params, recalculate, False, False)
+
 
         
         
@@ -406,7 +420,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         def site_aa_to_index(i, aa):
             return i * (q-1) + aa
 
-        C = numpy.matrix(numpy.zeros(((q-1)*msa.get_alignment_length(),(q-1)*msa.get_alignment_length())))
+
 
 
 
@@ -436,6 +450,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
 
+
         def get_E(E,i,j,k,l):
             if j == q-1 or l == q-1:
                 return 0
@@ -461,7 +476,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             else:
                 return H[i,j]
 
-        directed = numpy.zeros((msa.get_alignment_length(), msa.get_alignment_length(), q, q))
+
         for i in range(msa.get_alignment_length()):
             for j in range(msa.get_alignment_length()):
                 total = 0

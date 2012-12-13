@@ -1,6 +1,15 @@
 import sys
 import subprocess
 
+"""
+total jobs
+protein_list absolute path
+mode
+queue(only for bsub)
+mem_limit(only for bsub)
+hours:minutes(only for bsub)
+"""
+
 getter_script = 'getter.py'
 
 log_dir = '../dump/'
