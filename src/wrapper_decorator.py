@@ -139,14 +139,14 @@ def dec(f):
         self.temp_new_param_keys.pop()
         self.temp_dependents_all_keys_key_key_sets.pop()
         
-
+        #print 'FINISH GETTING:', self, params.get_param('which_wrapper_class')
                     
         return self.used_keys_cache.get(recalculate), all_keys, obj, all_keys_key_key_set
     
     def h(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
 
 
-
+        #print 'START TO GET: ', self, params.get_param('which_wrapper_class')
 
         object_key = self.get_object_key(params, self)
 
@@ -178,6 +178,7 @@ def dec(f):
             #obj = self.cache.set(object_key, obj, to_pickle, params, to_filelize, always_recalculate)
             if always_recalculate:
                 return cache_everything_f_poster(self, params, recalculate, to_pickle, to_filelize, always_recalculate, obj)
+            #print 'FINISH GETTING:', self, params.get_param('which_wrapper_class')
             return used_keys, all_keys, obj, all_keys_key_key_set
 
 
@@ -227,6 +228,7 @@ def dec(f):
                     #obj = self.cache.set(object_key, obj, to_pickle, params, to_filelize, always_recalculate)
                     if always_recalculate:
                         return cache_everything_f_poster(self, params, recalculate, to_pickle, to_filelize, always_recalculate, obj)
+                    print 'FINISH GETTING:', self, params.get_param('which_wrapper_class')
                     return used_keys, all_keys, obj, all_keys_key_key_set
         return cache_everything_f_poster(self, params, recalculate, to_pickle, to_filelize, always_recalculate)
 

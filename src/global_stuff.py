@@ -19,14 +19,18 @@ def get_param():
     p = param.param({'ev':1e-10, 'protein_list_file':'mf_done', 'uniprot_id':'Q8WXA2', 'avg_deg':3, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':1, 'pseudo_c':1})
     return p
 
-home = '/home/fw27/d/deleterious/'
+#home = '/home/fw27/d/deleterious/'
+home = '/mnt/work/fultonw/deleterious/'
 
 polyphen_msa_directory = home+'data/polyphen-2.2.2/precomputed/alignments/'
 
 
 lock_folder = home + 'lock_folder/'
 
-base_folder = '../data/proteins/humvar_from_orchestra/'
+#base_folder = '../data/proteins/humvar_from_orchestra/'
+base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
+#base_folder = home
+
 all_seqs_file = '../data/human-2011_12.seq'
 neutral_mutations_file = '../data/humvar-2011_12.neutral.pph.input'
 deleterious_mutations_file = '../data/humvar-2011_12.deleterious.pph.input'
@@ -69,7 +73,8 @@ q = 21
 
 
 
-PROTEIN_BASE_FOLDER = home+'data/proteins/humvar_from_orchestra/'
+#PROTEIN_BASE_FOLDER = home+'data/proteins/humvar_from_orchestra/'
+PROTEIN_BASE_FOLDER = base_folder
 
 COSMIC_BASE_FOLDER = home+'data/proteins/cosmic/'
 

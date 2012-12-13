@@ -1,3 +1,10 @@
+"""
+which_job
+total_jobs
+protein_list absolute path
+"""
+
+
 import global_stuff
 
 import wc
@@ -33,13 +40,13 @@ port = 22
 #remote_folder = '/mnt/work/fw27/deleterious/deleterious/data/proteins/humvar/'
 remote_base_folder = '/home/fultonw/scratch/'
 
-#f = open(global_stuff.protein_list_file, 'r')
+
 f = open(protein_list, 'r')
 
 print 'starting', which_job, total_jobs
 
-to_send = True
-whether_to_delete = True
+to_send = False
+whether_to_delete = False
 
 i = 0
 
@@ -79,7 +86,7 @@ import pdb
 used_ps = set()
 
 #this is the stuff to send over.  delete these when u send them over
-to_gets = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_distance])
+to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
 
 #this is the stuff to delete right after one protein is processed
 to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
@@ -110,9 +117,9 @@ for line in f:
 
             seq = get(objects.dW, p, gotten_stuff, used_ps, False)
 
+            print 'seq length: ', len(seq)
 
-
-            for which_weight in range(2):
+            for which_weight in range(1,2):
                 p.set_param('which_weight',which_weight)
 
                 if len(seq) < 10000:

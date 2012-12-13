@@ -32,6 +32,7 @@ class FileLock(object):
         while True:
             try:
                 self.fd = os.open(self.lockfile, os.O_CREAT|os.O_EXCL|os.O_RDWR)
+
                 break
             except OSError as e:
                 if e.errno != errno.EEXIST:
@@ -40,6 +41,7 @@ class FileLock(object):
                     raise FileLockExcepgtion("Timeout occured.")
                 time.sleep(self.delay)
         self.is_locked = True
+
             
             
     def release(self):
