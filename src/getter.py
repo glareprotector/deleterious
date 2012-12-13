@@ -84,7 +84,7 @@ to_gets = set([objects.general_msa, objects.general_seq_weights, objects.neighbo
 #this is the stuff to delete right after one protein is processed
 to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
 
-sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 20)
+sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 0)
 
 for line in f:
 
