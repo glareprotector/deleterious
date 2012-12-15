@@ -685,7 +685,7 @@ def get_overlap(n1, n2):
         for it in n2[i]:
             n2set.add((i,it[0]))
     intersect = n1set & n2set
-    pdb.set_trace()
+
     return len(intersect), count
 
 def get_file_string_set(f_name):
