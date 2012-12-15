@@ -351,7 +351,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         directed = numpy.zeros((msa.get_alignment_length(), msa.get_alignment_length(), q, q))
 
         print 'directed_size: ', directed.size
-        pdb.set_trace()
+
 
 
         import datetime
@@ -452,10 +452,11 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
         def get_E(E,i,j,k,l):
+            # i and k are positions
             if j == q-1 or l == q-1:
                 return 0
             else:
-                return E[site_aa_to_index(i,j),site_aa_to_index(k,l)]
+                return -1.0 * E[site_aa_to_index(i,j),site_aa_to_index(k,l)]
 
 
         h_node = numpy.zeros((msa.get_alignment_length(), q))
@@ -500,6 +501,17 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                     for l in range(q):
                         directed[i,j,k,l] = math.exp(directed[i,j,k,l] - total)
 
+        # get marginals of directed pairwise marginals
+
+        dir_node_marg = numpy.zeros((msa.get_alignment_length(),q))
+        for i in range(msa.get_alignment_length()):
+            for k in range(q):
+                temp = 0
+                for j in range(msa.get_alignment_length()):
+                    for l in range(q):
+                        temp += directed[i,j,k,l]
+                dir_node_marg[i,k] = temp
+
         dist = [ [0.0 for i in range(msa.get_alignment_length())] for j in range(msa.get_alignment_length())]
 
         for i in range(msa.get_alignment_length()):
@@ -508,7 +520,8 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                 for k in range(q):
                     for l in range(q):
                         if directed[i,j,k,l] > 0:
-                            val += directed[i,j,k,l] * (math.log(directed[i,j,k,l]) - math.log(node_counts[i,k]) - math.log(node_counts[j,l]))
+                            #val += directed[i,j,k,l] * (math.log(directed[i,j,k,l]) - math.log(node_counts[i,k]) - math.log(node_counts[j,l]))
+                            val += directed[i,j,k,l] * (math.log(directed[i,j,k,l]) - math.log(dir_node_marg[i,k]) - math.log(dir_node_marg[j,l]))
                 dist[i][j] = val
 
         print '                           FINISHED EVERYTHING', datetime.datetime.now() - past
@@ -957,6 +970,19 @@ def get_overlap(params, protein_list, out_file):
     n1 = wc.get_stuff(general_distance, params, False, False, False)
     params.set_param('which_dist', 1)
     n2 = wc.get_stuff(general_distance, params, False, False, False)
+
+    n1set = set()
+    for i in range(len(n1)):
+        for j in range(len(n1[i])):
+            n1set.add((i,n1[i][j][0]))
+
+    n2set = set()
+    for i in range(len(n2)):
+        for j in range(len(n2[i])):
+            n1set.add((i,n2[i][j][0]))
+
+    return set(n1set & n1set)
+
 
 def get_mutation_info(params, out_file):
     import wc

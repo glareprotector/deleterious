@@ -34,8 +34,9 @@ class file_cache_for_wrapper(object):
                 
 
             if os.path.isfile(location) or (check_remote and self.the_wrapper.was_transferred(object_key)):
-                if self.the_wrapper.whether_to_override(object_key):
-                    return False
+                if global_stuff.whether_to_look_at_whether_to_override:
+                    if self.the_wrapper.whether_to_override(object_key):
+                        return False
                 return True
         return False
 
@@ -96,9 +97,10 @@ class object_cache_for_wrapper(object):
             return True
         else:
 
-            if self.the_wrapper.whether_to_override(object_key):
+            if global_stuff.whether_to_look_at_whether_to_override:
+                if self.the_wrapper.whether_to_override(object_key):
 
-                return False
+                    return False
 
 
 
