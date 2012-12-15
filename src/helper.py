@@ -729,6 +729,8 @@ class file_sender(object):
         wrapper = it[7]
         object_key = it[8]
 
+
+
         client = ssh.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(ssh.AutoAddPolicy())
@@ -740,9 +742,12 @@ class file_sender(object):
         t.connect(username=username, password=password)
 
         sftp = ssh.SFTPClient.from_transport(t)
-
-        sftp.put(here_file, there_file)
-        wrapper.record_transferred_file(object_key)
+        try:
+            print '\t\t\tsending:', here_file, there_file
+            sftp.put(here_file, there_file)
+            wrapper.record_transferred_file(object_key)
+        except:
+            print '\t\t\tfailed to send:', here_file, there_file
 
         try:
             import subprocess
@@ -764,7 +769,16 @@ class file_sender(object):
             import pdb
 
             self.buildup.append([here_file, there_file, there_folder, hostname, username, password, port, wrapper, object_key, wrapper, object_key])
-        if len(self.buildup) > self.buildup_size:
+
+        import wc
+        dist_count = 0
+        for it in self.buildup:
+            import objects
+            if type(it[0]) == objects.general_distance:
+                dist_count += 1
+                
+        if dist_count > 0 or len(self.buildup) > self.buildup_size:
+        #if len(self.buildup) > self.buildup_size:
             import FileLock
             with FileLock.FileLock(self.lock_file, timeout=2) as lock:
                 for it in self.buildup:
