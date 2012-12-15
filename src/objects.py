@@ -343,15 +343,15 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
         msa = self.get_var_or_file(general_msa, params, recalculate, False, False)
 
-        C = numpy.matrix(numpy.zeros(((q-1)*msa.get_alignment_length(),(q-1)*msa.get_alignment_length())))
+        C = numpy.matrix(numpy.zeros(((q-1)*msa.get_alignment_length(),(q-1)*msa.get_alignment_length())),copy=False,dtype=numpy.float32)
 
         print 'C size: ', C.size
 
 
-        directed = numpy.zeros((msa.get_alignment_length(), msa.get_alignment_length(), q, q))
+        directed = numpy.zeros((msa.get_alignment_length(), msa.get_alignment_length(), q, q),dtype=numpy.float32)
 
         print 'directed_size: ', directed.size
-        pdb.set_trace()
+
 
 
         import datetime
@@ -396,8 +396,8 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                 node_counts[i,j] /= node_sizes[i]
 
 
-        edge_counts = numpy.zeros((msa.get_alignment_length(),msa.get_alignment_length(), q, q)) + (pseudo_total / (q*q))
-        edge_sizes = numpy.zeros((msa.get_alignment_length(),msa.get_alignment_length()))  + (pseudo_total / (q*q))
+        edge_counts = numpy.zeros((msa.get_alignment_length(),msa.get_alignment_length(), q, q),dtype=numpy.uint16) + (pseudo_total / (q*q))
+        edge_sizes = numpy.zeros((msa.get_alignment_length(),msa.get_alignment_length()),dtype=numpy.uint16)  + (pseudo_total / (q*q))
         
         for i in range(msa.get_alignment_length()):
             for j in range(msa.get_alignment_length()):
@@ -432,7 +432,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                             C[site_aa_to_index(i,k), site_aa_to_index(j,l)] = edge_counts[i,j,k,l] - node_counts[i,k] * node_counts[j,l]
                         except:
                             x=2
-                            pdb.set_trace()
+
                             x=2
 
 
@@ -486,7 +486,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                             temp = get_E(E,i,k,j,l) + get_H(h_node,i,k) + get_H(h_node,j,l)
                             directed[i,j,k,l] = temp
                         except:
-                            pdb.set_trace()
+
                             print temp
                         if total == 0:
                             try:
@@ -880,7 +880,7 @@ def get_protein_info(params, protein_list, info_file):
             msa = wc.get_stuff(their_agW, params, False, False, False)
             g.write(name + ',' + str(msa.get_alignment_length()) + ',' + str(len(msa)) + ',' + str(frac) + '\n')
         except:
-            pdb.set_trace()
+
             print 'fail'
     f.close()
     g.close()
