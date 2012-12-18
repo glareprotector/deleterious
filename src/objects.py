@@ -65,6 +65,9 @@ class dW(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         asdf = SeqIO.read(seq_file_handle, 'fasta')
         return asdf
 
+    def whether_to_override(self, object_key):
+        return False
+
 # blast results file wrapper(xml format)
 class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -88,7 +91,10 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         seq_records.append(query)
 
         print 'RUNNING BLAST!!!!!!!'
-        psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location())
+        if self.get_param('which_msa') == 0:
+            psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location())
+        elif self.get_param('which_msa') == 2:
+            psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLASTP_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location())
         #psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', out = self.get_holding_location())
         #pdb.set_trace()
         print psi_blast_cline
@@ -102,7 +108,10 @@ class aeW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return adW.get_all_keys(params, self) | dW.get_all_keys(params, self)
+        keys = adW.get_all_keys(params, self) | dW.get_all_keys(params, self)
+        if params.get_param('which_msa') == 2:
+            keys = keys | set(['blmax'])
+        return keys
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -119,10 +128,18 @@ class aeW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         seq_records.append(query)
         seen.add(query.seq.tostring())
         # add high scoring pairs in alignments with sufficiently low evalue that have not been seen
+        # add them to temp data structure so that i can sort by evalue before adding them
         for alignment in record.alignments:
             for hsp in alignment.hsps:
                 if hsp.expect < self.get_param(params, 'ev') and not hsp.sbjct in seen:
-                    seq_records.append(Bio.SeqRecord.SeqRecord(Bio.Seq.Seq(hsp.sbjct), id = alignment.hit_id))
+                    temp.append[hsp.expect, Bio.SeqRecord.SeqRecord(Bio.Seq.Seq(hsp.sbjct), id = alignment.hit_id)]
+        temp_sorted = sorted(temp, key = lambda x:x[0])
+        if self.get_param(params, 'which_msa') == 2:
+            for i in range(self.get_param(params, 'blmax')):
+                seq_records.append(temp_sorted[i][1])
+        elif self.get_param(params, 'which_msa') == 0:
+            seq_records = seq_records + [it[1] for it in temp_sorted]
+                
         # write hits to fasta file
         output_handle = open(self.get_holding_location(), 'w')
         SeqIO.write(seq_records, output_handle, 'fasta')
@@ -310,7 +327,7 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | mf_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -547,7 +564,7 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
 
 
 
-        protein_list_file = global_stuff.data_folder + self.get_param(params, 'protein_list_file')
+        protein_list_file = self.get_param(params, 'protein_list_file')
         f = open(protein_list_file, 'r')
         mutation_list = []
         for line in f:
@@ -704,7 +721,7 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
         return keys | edge_to_rank.get_all_keys(params, self) | dW.get_all_keys(params, self) | general_msa.get_all_keys(params, self) | dW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -860,7 +877,7 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
 
 def get_protein_info(params, protein_list, info_file):
     import wc
-    f = open(global_stuff.data_folder + protein_list, 'r')
+    f = open(protein_list, 'r')
     g = open(info_file, 'w')
     i = 0
     for line in f:
@@ -903,7 +920,7 @@ def get_every_site_info(params, protein_list, dist_file):
     import wc
     f = open(dist_file,'w')
 
-    protein_list = global_stuff.data_folder + protein_list
+    protein_list = protein_list
     h = open(protein_list)
 
     k=0
@@ -961,27 +978,25 @@ def get_every_site_info(params, protein_list, dist_file):
 
     """
 
+# for computations involving mutations, specify protein_list to draw from.
+
 def get_overlap(params, protein_list, out_file):
 
 
+    f = open(protein_list, 'r')
+    import wc
+    for line in f:
+        name = line.strip()
+        params.set_param('uniprot_id', name)
 
+        params.set_param('which_dist', 0)
+        n1 = wc.get_stuff(neighbors_w_weight_w, params, False, False, False)
+        params.set_param('which_dist', 1)
+        n2 = wc.get_stuff(neighbors_w_weight_w, params, False, False, False)
 
-    params.set_param('which_dist', 0)
-    n1 = wc.get_stuff(general_distance, params, False, False, False)
-    params.set_param('which_dist', 1)
-    n2 = wc.get_stuff(general_distance, params, False, False, False)
+        print helper.get_overlap(n1,n2)
 
-    n1set = set()
-    for i in range(len(n1)):
-        for j in range(len(n1[i])):
-            n1set.add((i,n1[i][j][0]))
-
-    n2set = set()
-    for i in range(len(n2)):
-        for j in range(len(n2[i])):
-            n1set.add((i,n2[i][j][0]))
-
-    return set(n1set & n1set)
+    
 
 
 def get_mutation_info(params, out_file):
@@ -998,10 +1013,7 @@ def get_mutation_info(params, out_file):
         name = mutation[0]
         print '                                 asdf',name,i
         pos = mutation[1]
-        wild = mutation[2]
-        mut = mutation[3]
-        # print number of neighbors, number of seqs in msa, count of wild, count of mut
-        params.set_param('uniprot_id', name)
+
 
 
         all_neighbors = {}

@@ -590,19 +590,26 @@ def write_mat_raw(mat, f_name, the_sep = ',', option = 'w'):
 
 
 def read_mat_to_int_float_tuple(f):
+    import pdb
+    pdb.set_trace()
     f = open(f.name, 'r')
     ans = []
     for line in f:
         this = []
         if len(line.strip()) > 0:
-
-            s = line.strip().split(',')
-            for it in s:
-                sp = it[1:len(it)-1]
-                spp = sp.split('-')
-                a = int(spp[0])
-                b = float(spp[1])
-                this.append((a,b))
+            try:
+                s = line.strip().split(',')
+                for it in s:
+                    sp = it[1:len(it)-1]
+                    spp = sp.split('-')
+                    a = int(spp[0])
+                    b = float(spp[1])
+                    this.append((a,b))
+            except Exception, err:
+                print err
+                pdb.set_trace()
+                print s
+                
         ans.append(this)
     return ans
 

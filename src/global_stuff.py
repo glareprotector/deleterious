@@ -30,8 +30,8 @@ whether_to_look_at_whether_to_override = True
 lock_folder = home + 'lock_folder/'
 
 #base_folder = '../data/proteins/humvar_from_orchestra/'
-base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
-#base_folder = '/home/fultonw/scratch/'
+#base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
+base_folder = '/mnt/work/fultonw/scratch/'
 #base_folder = home
 
 all_seqs_file = '../data/human-2011_12.seq'
@@ -95,6 +95,7 @@ NACCESS_FOLDER = '/mnt/work/fultonw/active_site/Naccess/'
 
 
 BLAST_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/psiblast'
+BLASTP_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/blastp'
 #BLASTDB_PATH = '/mnt/work/fultonw/nr/'
 BLASTDB_PATH = 'nr/nr'
 
