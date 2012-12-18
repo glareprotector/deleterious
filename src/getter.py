@@ -38,15 +38,15 @@ hostname = 'ent.csail.mit.edu'
 port = 22
 
 #remote_folder = '/mnt/work/fw27/deleterious/deleterious/data/proteins/humvar/'
-remote_base_folder = '/home/fultonw/scratch/'
+remote_base_folder = '/mnt/work/fultonw/scratch/'
 
 
 f = open(protein_list, 'r')
 
 print 'starting', which_job, total_jobs
 
-to_send = False
-whether_to_delete = False
+to_send = True
+whether_to_delete = True
 
 i = 0
 
@@ -91,7 +91,20 @@ to_gets = set([objects.general_distance, objects.general_seq_weights, objects.ne
 #this is the stuff to delete right after one protein is processed
 to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
 
-sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 20)
+sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 0)
+
+protein_list_file = protein_list.split('/')[-1]
+
+log_file = global_stuff.home + 'process_files/' + str(which_job) + '_' + str(total_jobs) + '_' + protein_list_file
+
+import datetime
+past = (datetime.datetime.now())
+past2 = (datetime.datetime.now())
+print 'ggggggggggg', past
+g = open(log_file,'w')
+
+f2 = open(protein_list, 'r')
+num_proteins = len(f2.readlines())
 
 for line in f:
 
@@ -107,10 +120,13 @@ for line in f:
         
         if protein_name not in to_skip:
 
+            print 'hhhhhhhhhhhhhh', past
+            g.write('started: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
+            past2  = datetime.datetime.now()
 
+            g.flush()
+            
 
-
-            i += 1
             print '                        TRAVERSED:', i
 
             p.set_param('uniprot_id',protein_name)
@@ -127,12 +143,19 @@ for line in f:
 
                     try:
                         for to_get in to_gets:
+
                             get(to_get, p, gotten_stuff, used_ps)
-              
+
                     except Exception, err:
                         print 'fail', protein_name, err
                 else:
                     print 'skipping', protein_name
+
+
+
+            g.write('finished: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
+            past2 = datetime.datetime.now()
+            g.flush()
 
             if to_send:
 
@@ -150,6 +173,8 @@ for line in f:
                         there_folder = remote_base_folder + p_used.get_param('uniprot_id') + '/'
                         file_name = instance.get_file_name(p_used)
                         there_file = there_folder + file_name
+                        import pdb
+
                         sender.send(here_file, there_file, hostname, there_folder, username, password, port, instance, p_used)
                     except Exception, err:
                         pass

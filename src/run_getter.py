@@ -20,6 +20,8 @@ protein_list = sys.argv[2]
 
 mode = sys.argv[3]
 
+protein_list_file = protein_list.split('/')[-1]
+
 try:
     queue = sys.argv[4]
 except:
@@ -47,11 +49,11 @@ for i in range(total_jobs):
     cmd = 'python ' + getter_script + ' ' + str(i) + ' ' + str(total_jobs) + ' ' + protein_list
     print cmd
     if mode == 'b':
-        log_file = log_dir + 'b'+ '_' + str(i) + '_' + str(total_jobs) + '_log'
-        error_file = log_dir + 'b' + '_' + str(i) + '_' + str(total_jobs) + '_err'
+        log_file = log_dir + 'b'+ '_' + str(i) + '_' + str(total_jobs) + '_' + protein_list_file + '_' + 'log'
+        error_file = log_dir + 'b' + '_' + str(i) + '_' + str(total_jobs) + protein_list_file + '_' + '_err'
     if mode == 'r':
-        log_file = log_dir + 'r'+ '_' + str(i) + '_' + str(total_jobs) + '_log'
-        error_file = log_dir + 'r' + '_' + str(i) + '_' + str(total_jobs) + '_err'
+        log_file = log_dir + 'r'+ '_' + str(i) + '_' + str(total_jobs) + protein_list_file + '_' + '_log'
+        error_file = log_dir + 'r' + '_' + str(i) + '_' + str(total_jobs) + protein_list_file + '_' + '_err'
         
 
     

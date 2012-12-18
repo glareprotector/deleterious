@@ -4,8 +4,8 @@ import global_stuff
 import pdb
 
 cosmic_file = global_stuff.data_folder + 'CosmicMutantExport_v62_291112.tsv'
-mutation_file = global_stuff.data_folder + 'cosmic_mutations'
-gene_file = global_stuff.data_folder + 'cosmic_genes'
+mutation_file = global_stuff.data_folder + 'cosmic_mutations_real'
+gene_file = global_stuff.data_folder + 'cosmic_genes_real'
 
 class mutation(object):
 
@@ -28,6 +28,9 @@ class mutation(object):
     def __lt__(self, other):
         return self.site < other.site
 
+    def __eq__(self, other):
+        return self.__str__() == other.__str__()
+
     def __str__(self):
         return str(self.site) + ','  + self.wild + ',' + self.mut + ',' + str(self.count) + ',' + str(self.gene_mult)
 
@@ -46,6 +49,9 @@ class site(object):
     def __str__(self):
         return self.gene + ',' + str(self.pos)
 
+    def __eq__(self, other):
+        return self.__str__() == other.__str__()
+
     def __repr__(self):
         return self.__str__()
 
@@ -59,8 +65,6 @@ site_counts = {}
 i = 0
 for line in f:
     i += 1
-    if i > 50000:
-        break
     if i%50 == 0:
         print i
 
@@ -75,6 +79,7 @@ for line in f:
         pos = raw[1:(length-1)]
         a_site = site(gene, pos)
         to_add = mutation(a_site, wild, mut)
+
         if mut != wild and mut != '*':
             try:
                 mutation_counts[to_add] += 1
@@ -92,6 +97,8 @@ for line in f:
         x=2
         print err
         x=3
+
+
 
 temp = [[key,mutation_counts[key]] for key in mutation_counts]
 sorted_temp = sorted(temp, key = lambda x: x[0].site.gene)
