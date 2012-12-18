@@ -20,6 +20,9 @@ from wrapper_decorator import *
 
 class wrapper(object):
 
+    def get_max_cache_size(self):
+        return 5
+
     def get_to_pickle(self):
         return True
 
@@ -447,6 +450,9 @@ class dadW(generic_dumper_wrapper):
         AlignIO.write(object, open(self.get_holding_location(),'w'), 'fasta')
 
 class wrapper_catalog(obj_wrapper):
+
+    def get_max_cache_size(self):
+        return 100
 
     def get_to_pickle(self):
         return False

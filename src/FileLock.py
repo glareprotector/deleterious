@@ -11,7 +11,7 @@ class FileLock(object):
     compatible as it doesn't rely on msvcrt or fcntl for the locking.
     """
 
-    def __init__(self, file_name, timeout=10, delay=.05):
+    def __init__(self, file_name, timeout=1000, delay=.05):
         """ Prepare the file locker. Specify the file to lock and optionally
         the maximum timeout and the delay between each attempt to lock.
         """
@@ -38,7 +38,7 @@ class FileLock(object):
                 if e.errno != errno.EEXIST:
                     raise
                 if (time.time() - start_time) >= self.timeout:
-                    raise FileLockExcepgtion("Timeout occured.")
+                    raise FileLockException("Timeout occured.")
                 time.sleep(self.delay)
         self.is_locked = True
 

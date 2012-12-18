@@ -343,6 +343,8 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
         msa = self.get_var_or_file(general_msa, params, recalculate, False, False)
 
+        pdb.set_trace()
+
         C = numpy.matrix(numpy.zeros(((q-1)*msa.get_alignment_length(),(q-1)*msa.get_alignment_length())),copy=False,dtype=numpy.float32)
 
         print 'C size: ', C.size
@@ -382,7 +384,10 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         
 
         node_counts = numpy.zeros((msa.get_alignment_length(),q)) + (pseudo_total / q)
-        node_sizes = numpy.zeros((msa.get_alignment_length())) + (pseudo_total / q)
+        node_sizes = numpy.zeros((msa.get_alignment_length())) + (pseudo_total)
+
+
+
         
         mapping = global_stuff.aa_to_num
         for i in range(msa.get_alignment_length()):
@@ -391,13 +396,16 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                     node_counts[i,helper.do_map(msa[j,i],mapping)] += weights[j]
                     node_sizes[i] += weights[j]
 
+
+
         for i in range(msa.get_alignment_length()):
             for j in range(q):
                 node_counts[i,j] /= node_sizes[i]
 
 
+
         edge_counts = numpy.zeros((msa.get_alignment_length(),msa.get_alignment_length(), q, q),dtype=numpy.uint16) + (pseudo_total / (q*q))
-        edge_sizes = numpy.zeros((msa.get_alignment_length(),msa.get_alignment_length()),dtype=numpy.uint16)  + (pseudo_total / (q*q))
+        edge_sizes = numpy.zeros((msa.get_alignment_length(),msa.get_alignment_length()),dtype=numpy.uint16)  + (pseudo_total)
         
         for i in range(msa.get_alignment_length()):
             for j in range(msa.get_alignment_length()):
@@ -459,23 +467,33 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                 return -1.0 * E[site_aa_to_index(i,j),site_aa_to_index(k,l)]
 
 
+
         h_node = numpy.zeros((msa.get_alignment_length(), q))
 
         for i in range(msa.get_alignment_length()):
+            mean = 0.0
             for j in range(q):
                 temp = math.log(node_counts[i,j])
                 for k in range(msa.get_alignment_length()):
                     if i != k:
                         for l in range(q-1):
+                            if i == 56 and j == 14 and k == 55:
+                                #pdb.set_trace()
+                                print '              b ', get_E(E,i,j,k,l), 'a', node_counts[k,l],i,j,k,l
                             temp -= get_E(E,i,j,k,l) * node_counts[k,l]
                 h_node[i,j] = temp
+                mean += temp
 
+
+
+        pdb.set_trace()
         
         def get_H(H,i,j):
             if j == q-1:
                 return 0
             else:
                 return H[i,j]
+        pdb.set_trace()
 
 
         for i in range(msa.get_alignment_length()):
@@ -485,9 +503,11 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                     for l in range(q):
                         try:
                             temp = get_E(E,i,k,j,l) + get_H(h_node,i,k) + get_H(h_node,j,l)
+                            if i == 56 and j == 55 and k == 14:
+                                print 'c', get_E(E,i,k,j,l) , get_H(h_node,i,k) , get_H(h_node,j,l)
                             directed[i,j,k,l] = temp
                         except:
-
+                            assert False
                             print temp
                         if total == 0:
                             try:
@@ -497,31 +517,70 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                                 x=2
                         else:
                             total = numpy.logaddexp(total, temp)
+                asdf = 0
+                if i == 56 and j == 55:
+                    pdb.set_trace()
+                    print 'aooo'
                 for k in range(q):
                     for l in range(q):
+
+                        #print directed[i,j,k,l], total
+                        if directed[i,j,k,l] > total:
+                            pdb.set_trace()
+                            print directed[i,j,k,l], total, 'bad'
                         directed[i,j,k,l] = math.exp(directed[i,j,k,l] - total)
+                        asdf += directed[i,j,k,l]
+                        #print directed[i,j,k,l], total
+                        #assert directed[i,j,k,l] <= 1
+                #print asdf, total
+                #pdb.set_trace()
 
         # get marginals of directed pairwise marginals
 
         dir_node_marg = numpy.zeros((msa.get_alignment_length(),q))
-        for i in range(msa.get_alignment_length()):
-            for k in range(q):
-                temp = 0
-                for j in range(msa.get_alignment_length()):
-                    for l in range(q):
-                        temp += directed[i,j,k,l]
-                dir_node_marg[i,k] = temp
-
-        dist = [ [0.0 for i in range(msa.get_alignment_length())] for j in range(msa.get_alignment_length())]
-
+        """
         for i in range(msa.get_alignment_length()):
             for j in range(msa.get_alignment_length()):
+                for k in range(q):
+                    temp = 0
+
+                    for l in range(q):
+                        temp += directed[i,j,k,l]
+                        if i == 56 and j == 36 and k == 14:
+                            print directed[i,j,k,l]
+#                    print 'marg: ', temp, i, j, k
+                dir_node_marg[i,k] = temp
+        pdb.set_trace()
+        """
+        dist = [ [0.0 for i in range(msa.get_alignment_length())] for j in range(msa.get_alignment_length())]
+
+        # need to get node mar
+
+        for i in range(msa.get_alignment_length()):
+            pdb.set_trace()
+            for j in range(msa.get_alignment_length()):
                 val = 0
+                for k in range(q):
+                    old = dir_node_marg[i,k]
+                    dir_node_marg[i,k] = 0.0
+                    for l in range(q):
+                        dir_node_marg[i,k] += directed[i,j,k,l]
+                    if j != 0:
+                        if abs(old - dir_node_marg[i,k]) > .000001:
+                            pdb.set_trace()
+                            x=2
+                        print old, dir_node_marg[i,k]
+                """
                 for k in range(q):
                     for l in range(q):
                         if directed[i,j,k,l] > 0:
                             #val += directed[i,j,k,l] * (math.log(directed[i,j,k,l]) - math.log(node_counts[i,k]) - math.log(node_counts[j,l]))
-                            val += directed[i,j,k,l] * (math.log(directed[i,j,k,l]) - math.log(dir_node_marg[i,k]) - math.log(dir_node_marg[j,l]))
+                            try:
+                                val += directed[i,j,k,l] * (math.log(directed[i,j,k,l]) - math.log(dir_node_marg[i,k]) - math.log(dir_node_marg[j,l]))
+                            except:
+                                pdb.set_trace()
+                                x=2
+                """
                 dist[i][j] = val
 
         print '                           FINISHED EVERYTHING', datetime.datetime.now() - past
