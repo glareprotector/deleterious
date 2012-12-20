@@ -512,4 +512,4 @@ class experiment_type_wrapper(wrapper):
 class by_uniprot_id_wrapper(wrapper):
     def get_folder(self, object_key):
         folder = str(self.get_param(object_key, 'uniprot_id', False))
-        return global_stuff.PROTEIN_BASE_FOLDER + folder + '/'
+        return global_stuff.base_folder + folder + '/'

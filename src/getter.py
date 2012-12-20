@@ -45,8 +45,8 @@ f = open(protein_list, 'r')
 
 print 'starting', which_job, total_jobs
 
-to_send = True
-whether_to_delete = True
+to_send = False
+whether_to_delete = False
 
 i = 0
 
@@ -86,16 +86,17 @@ import pdb
 used_ps = set()
 
 #this is the stuff to send over.  delete these when u send them over
-to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
+#to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
+to_gets = set([objects.general_msa])
 
 #this is the stuff to delete right after one protein is processed
-to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
+#to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
 
 sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 0)
 
 protein_list_file = protein_list.split('/')[-1]
 
-log_file = global_stuff.home + 'process_files/' + str(which_job) + '_' + str(total_jobs) + '_' + protein_list_file
+log_file = global_stuff.process_folder + str(which_job) + '_' + str(total_jobs) + '_' + protein_list_file
 
 import datetime
 past = (datetime.datetime.now())

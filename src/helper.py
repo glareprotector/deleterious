@@ -591,7 +591,7 @@ def write_mat_raw(mat, f_name, the_sep = ',', option = 'w'):
 
 def read_mat_to_int_float_tuple(f):
     import pdb
-    pdb.set_trace()
+
     f = open(f.name, 'r')
     ans = []
     for line in f:

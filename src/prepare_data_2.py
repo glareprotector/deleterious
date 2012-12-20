@@ -3,6 +3,12 @@ import string
 
 import global_stuff
 
+import sys
+"""
+output protein list file
+"""
+protein_list_file = sys.argv[1]
+
 def get_mutations(mutations_file, which, the_dict):
     f = open(mutations_file)
     for line in f:
@@ -64,7 +70,7 @@ for line in f:
             f2 = open(mutations_file, 'w')
             f2.close()
 
-f2 = open(global_stuff.protein_list_file, 'w')
+f2 = open(protein_list_file, 'w')
 
 for name in protein_list:
     f2.write(name + '\n')

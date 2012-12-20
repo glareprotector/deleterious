@@ -169,8 +169,8 @@ def dec(f):
             #print '           getting cached value in wrapper ', self
             obj = self.cache.get(object_key, recalculate)
             try:
-                if len(self.cache.dump) > global_stuff.CACHE_MAX_SIZE:
-                    self.cache.dump.clear()
+                #if len(self.cache.dump) > global_stuff.CACHE_MAX_SIZE:
+                #    self.cache.dump.clear()
                 self.cache.dump[object_key] = obj
                         
             except:

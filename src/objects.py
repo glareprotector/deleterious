@@ -43,7 +43,7 @@ class bW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
     def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
         # all this will do is read specified fasta file, and save it in my format
         protein_name = self.get_param(params, 'uniprot_id')
-        protein_folder = global_stuff.PROTEIN_BASE_FOLDER + protein_name + '/'
+        protein_folder = global_stuff.base_folder + protein_name + '/'
         existing_seq_file = protein_folder + 'seq'
 
         old_seq = SeqIO.read(open(existing_seq_file,'r'), 'fasta')
@@ -63,10 +63,12 @@ class dW(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
         seq_file_handle = self.get_var_or_file(bW, params, recalculate, True, False)
         asdf = SeqIO.read(seq_file_handle, 'fasta')
+        if asdf[-1] == '*':
+            asdf = asdf[0:len(asdf)-1]
         return asdf
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
 # blast results file wrapper(xml format)
 class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
@@ -91,10 +93,10 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         seq_records.append(query)
 
         print 'RUNNING BLAST!!!!!!!'
-        if self.get_param('which_blast') == 0:
-            psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'evalue'))
-        elif self.get_param('which_blast') == 1:
-            psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLASTP_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'evalue'))
+        if self.get_param(params, 'which_blast') == 0:
+            psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'))
+        elif self.get_param(params, 'which_blast') == 1:
+            psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLASTP_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'))
         #psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', out = self.get_holding_location())
         #pdb.set_trace()
         print psi_blast_cline
@@ -108,7 +110,7 @@ class aeW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        keys = adW.get_all_keys(params, self) | dW.get_all_keys(params, self) | set(['blmax', 'evalue']) 
+        keys = adW.get_all_keys(params, self) | dW.get_all_keys(params, self) | set(['blmax', 'ev']) 
         return keys
 
     @dec
@@ -127,12 +129,13 @@ class aeW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         seen.add(query.seq.tostring())
         # add high scoring pairs in alignments with sufficiently low evalue that have not been seen
         # add them to temp data structure so that i can sort by evalue before adding them
+        temp = []
         for alignment in record.alignments:
             for hsp in alignment.hsps:
                 if hsp.expect < self.get_param(params, 'ev') and not hsp.sbjct in seen:
-                    temp.append[hsp.expect, Bio.SeqRecord.SeqRecord(Bio.Seq.Seq(hsp.sbjct), id = alignment.hit_id)]
+                    temp.append([hsp.expect, Bio.SeqRecord.SeqRecord(Bio.Seq.Seq(hsp.sbjct), id = alignment.hit_id)])
         temp_sorted = sorted(temp, key = lambda x:x[0])
-        for i in range(self.get_param(params, 'blmax')):
+        for i in range(min(self.get_param(params, 'blmax'), len(temp_sorted))):
             seq_records.append(temp_sorted[i][1])
                 
         # write hits to fasta file
@@ -210,7 +213,8 @@ class their_agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
       
         name = self.get_param(params, 'uniprot_id')
-        their_file = global_stuff.polyphen_msa_directory + name + '.aln.mine'
+        #their_file = global_stuff.polyphen_msa_directory + name + '.aln.mine'
+        their_file = global_stuff.base_folder + name + '/fake_msa_short'
         f = open(their_file, 'r')
         msa = AlignIO.read(f, 'fasta')
         return msa
@@ -322,7 +326,7 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | mf_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -355,14 +359,14 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
         msa = self.get_var_or_file(general_msa, params, recalculate, False, False)
 
-        pdb.set_trace()
+
 
         C = numpy.matrix(numpy.zeros(((q-1)*msa.get_alignment_length(),(q-1)*msa.get_alignment_length())),copy=False,dtype=numpy.float32)
 
         print 'C size: ', C.size
 
 
-        directed = numpy.zeros((msa.get_alignment_length(), msa.get_alignment_length(), q, q),dtype=numpy.float32)
+        directed = numpy.zeros((msa.get_alignment_length(), q, msa.get_alignment_length(), q),dtype=numpy.float32)
 
         print 'directed_size: ', directed.size
 
@@ -383,6 +387,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         # make C and get node counts.  for each edge, need to get joint counts
 
         weights = self.get_var_or_file(general_seq_weights, params, recalculate, False, False)
+
 
 
         total_weight = numpy.array(weights).sum()
@@ -416,25 +421,23 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
 
-        edge_counts = numpy.zeros((msa.get_alignment_length(),msa.get_alignment_length(), q, q),dtype=numpy.uint16) + (pseudo_total / (q*q))
+        edge_counts = numpy.zeros((msa.get_alignment_length(),q,msa.get_alignment_length(),q),dtype=numpy.uint16) + (pseudo_total / (q*q))
         edge_sizes = numpy.zeros((msa.get_alignment_length(),msa.get_alignment_length()),dtype=numpy.uint16)  + (pseudo_total)
         
         for i in range(msa.get_alignment_length()):
             for j in range(msa.get_alignment_length()):
                 for k in range(len(msa)):
                     if msa[k,i] != '-' and msa[k,i] != 'X' and msa[k,j] != '-' and msa[k,j] != 'X':
-                        edge_counts[i,j,helper.do_map(msa[k,i],mapping),helper.do_map(msa[k,j],mapping)] += weights[k]
+                        edge_counts[i,helper.do_map(msa[k,i],mapping),j,helper.do_map(msa[k,j],mapping)] += weights[k]
                         edge_sizes[i,j] += weights[k]
 
         for i in range(msa.get_alignment_length()):
             for j in range(msa.get_alignment_length()):
                 for k in range(q):
                     for l in range(q):
-                        edge_counts[i,j,k,l] /= edge_sizes[i,j]
+                        edge_counts[i,k,j,l] /= edge_sizes[i,j]
 
 
-        #node_counts /= total_weight
-        #edge_counts /= total_weight
 
 
         def site_aa_to_index(i, aa):
@@ -449,21 +452,21 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                 for k in range(q-1):
                     for l in range(q-1):
                         try:
-                            C[site_aa_to_index(i,k), site_aa_to_index(j,l)] = edge_counts[i,j,k,l] - node_counts[i,k] * node_counts[j,l]
+                            C[site_aa_to_index(i,k), site_aa_to_index(j,l)] = edge_counts[i,k,j,l] - node_counts[i,k] * node_counts[j,l]
                         except:
                             x=2
 
                             x=2
 
+        pdb.set_trace()
 
-
-        C += .00005 * numpy.identity(C.shape[0])
+        C += .0000000005 * numpy.identity(C.shape[0])
 
         print '                           STARTING INVERSION', datetime.datetime.now() - past
         past = datetime.datetime.now()
 
         E = C.I
-
+        pdb.set_trace()
 
         print '                           FINISHED INVERSION', datetime.datetime.now() - past
         past = datetime.datetime.now()
@@ -498,14 +501,14 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
 
-        pdb.set_trace()
+
         
         def get_H(H,i,j):
             if j == q-1:
                 return 0
             else:
                 return H[i,j]
-        pdb.set_trace()
+
 
 
         for i in range(msa.get_alignment_length()):
@@ -517,7 +520,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                             temp = get_E(E,i,k,j,l) + get_H(h_node,i,k) + get_H(h_node,j,l)
                             if i == 56 and j == 55 and k == 14:
                                 print 'c', get_E(E,i,k,j,l) , get_H(h_node,i,k) , get_H(h_node,j,l)
-                            directed[i,j,k,l] = temp
+                            directed[i,k,j,l] = temp
                         except:
                             assert False
                             print temp
@@ -530,74 +533,49 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                         else:
                             total = numpy.logaddexp(total, temp)
                 asdf = 0
-                if i == 56 and j == 55:
-                    pdb.set_trace()
-                    print 'aooo'
+
+
                 for k in range(q):
                     for l in range(q):
 
                         #print directed[i,j,k,l], total
-                        if directed[i,j,k,l] > total:
-                            pdb.set_trace()
-                            print directed[i,j,k,l], total, 'bad'
-                        directed[i,j,k,l] = math.exp(directed[i,j,k,l] - total)
-                        asdf += directed[i,j,k,l]
-                        #print directed[i,j,k,l], total
-                        #assert directed[i,j,k,l] <= 1
-                #print asdf, total
-                #pdb.set_trace()
+                        if directed[i,k,j,l] > total:
+                            #pdb.set_trace()
+                            #print directed[i,j,k,l], total, 'bad'
+                            pass
+                        directed[i,k,j,l] = math.exp(directed[i,k,j,l] - total)
 
-        # get marginals of directed pairwise marginals
 
-        dir_node_marg = numpy.zeros((msa.get_alignment_length(),q))
-        """
-        for i in range(msa.get_alignment_length()):
-            for j in range(msa.get_alignment_length()):
-                for k in range(q):
-                    temp = 0
-
-                    for l in range(q):
-                        temp += directed[i,j,k,l]
-                        if i == 56 and j == 36 and k == 14:
-                            print directed[i,j,k,l]
-#                    print 'marg: ', temp, i, j, k
-                dir_node_marg[i,k] = temp
-        pdb.set_trace()
-        """
         dist = [ [0.0 for i in range(msa.get_alignment_length())] for j in range(msa.get_alignment_length())]
 
         # need to get node mar
 
         for i in range(msa.get_alignment_length()):
-            pdb.set_trace()
             for j in range(msa.get_alignment_length()):
                 val = 0
-                for k in range(q):
-                    old = dir_node_marg[i,k]
-                    dir_node_marg[i,k] = 0.0
-                    for l in range(q):
-                        dir_node_marg[i,k] += directed[i,j,k,l]
-                    if j != 0:
-                        if abs(old - dir_node_marg[i,k]) > .000001:
-                            pdb.set_trace()
-                            x=2
-                        print old, dir_node_marg[i,k]
-                """
+                dir_node_marg_a = numpy.zeros((q,))
+                dir_node_marg_b = numpy.zeros((q,))
                 for k in range(q):
                     for l in range(q):
-                        if directed[i,j,k,l] > 0:
-                            #val += directed[i,j,k,l] * (math.log(directed[i,j,k,l]) - math.log(node_counts[i,k]) - math.log(node_counts[j,l]))
+                        dir_node_marg_a[k] += directed[i,k,j,l]
+                        dir_node_marg_b[l] += directed[i,k,j,l]
+                for k in range(q):
+                    for l in range(q):
+                        if directed[i,k,j,l] > 0:
+                            val += directed[i,k,j,l] * (math.log(directed[i,k,j,l]) - math.log(dir_node_marg_a[k]) - math.log(dir_node_marg_b[l]))
+                            """
                             try:
                                 val += directed[i,j,k,l] * (math.log(directed[i,j,k,l]) - math.log(dir_node_marg[i,k]) - math.log(dir_node_marg[j,l]))
                             except:
                                 pdb.set_trace()
                                 x=2
-                """
+                                """
+
                 dist[i][j] = val
 
         print '                           FINISHED EVERYTHING', datetime.datetime.now() - past
         past = datetime.datetime.now()
-
+        pdb.set_trace()
         return dist
                     
             
@@ -640,6 +618,7 @@ class general_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | their_agW.get_all_keys(params, self)
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+
         which_msa = self.get_param(params, 'which_msa')
         if which_msa == 0:
             return self.get_var_or_file(agW, params, False, False, False)
@@ -775,7 +754,7 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
         return keys | edge_to_rank.get_all_keys(params, self) | dW.get_all_keys(params, self) | general_msa.get_all_keys(params, self) | dW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -941,28 +920,41 @@ def get_protein_info(params, protein_list, info_file):
         try:
             params.set_param('uniprot_id', name)
 
+            def get_name():
+                return [name]
 
-            params.set_param('which_dist', 0)
-            n1 = wc.get_stuff(general_distance, params, False, False, False)
-            params.set_param('which_dist', 1)
-            n2 = wc.get_stuff(general_distance, params, False, False, False)
+            def get_overlap():
+                params.set_param('which_dist', 0)
+                n1 = wc.get_stuff(general_distance, params, False, False, False)
+                params.set_param('which_dist', 1)
+                n2 = wc.get_stuff(general_distance, params, False, False, False)
+                n1set = set()
+                n2set = set()
+                for i in len(seq):
+                    for x in n1[i]:
+                        n1set.add((i,x[0]))
+                    for x in n2[i]:
+                        n2set.add((i,x[1]))
+                both = n1set.intersection(n2set)
+                frac = len(both) / float(len(n1set))
+                return [str(both), str(frac)]
 
-            seq = wc.get_stuff(dW, params, False, False, False)
+            def get_seq_length():
+                seq = wc.get_stuff(dW, params, False, False, False)
+                return [str(len(seq))]
             
+            def get_msa_length():
+                msa = wc.get_stuff(general_msa, params, False, False, False)
+                return [str(len(msa))]
 
-            n1set = set()
-            n2set = set()
-            for i in len(seq):
-                for x in n1[i]:
-                    n1set.add((i,x[0]))
-                for x in n2[i]:
-                    n2set.add((i,x[1]))
-            both = n1set.intersection(n2set)
-            frac = len(both) / float(len(n1set))
+            info = []
+            which_info = [get_name, get_seq_length, get_msa_length]
 
+            for which in which_info:
+                info = info + which()
             
-            msa = wc.get_stuff(their_agW, params, False, False, False)
-            g.write(name + ',' + str(msa.get_alignment_length()) + ',' + str(len(msa)) + ',' + str(frac) + '\n')
+            g.write(string.join(info,sep=',') + '\n')
+            
         except:
 
             print 'fail'
@@ -1091,7 +1083,7 @@ def get_roc_file(params, out_file, use_neighbor, ignore_pos, max_neighbors, weig
     import wc
     recalculate = False
     l = wc.get_stuff(filtered_mutation_list_given_protein_list, params, recalculate, False, False, False)
-    #outfile = global_stuff.dropbox_folder + out_file
+
     ans = []
     i = 0
     for mutation in l:
