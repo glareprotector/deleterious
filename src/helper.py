@@ -783,6 +783,7 @@ class file_sender(object):
         if dist_count > 0 or len(self.buildup) > self.buildup_size:
         #if len(self.buildup) > self.buildup_size:
             import FileLock
+
             with FileLock.FileLock(self.lock_file, timeout=2) as lock:
                 for it in self.buildup:
                     self.__send(it)

@@ -213,8 +213,8 @@ class their_agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
       
         name = self.get_param(params, 'uniprot_id')
-        #their_file = global_stuff.polyphen_msa_directory + name + '.aln.mine'
-        their_file = global_stuff.base_folder + name + '/fake_msa_short'
+        their_file = global_stuff.polyphen_msa_directory + name + '.aln.mine'
+        #their_file = global_stuff.base_folder + name + '/fake_msa_short'
         f = open(their_file, 'r')
         msa = AlignIO.read(f, 'fasta')
         return msa
