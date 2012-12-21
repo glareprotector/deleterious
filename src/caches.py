@@ -23,6 +23,7 @@ class file_cache_for_wrapper(object):
     def has(self, object_key, recalculate, check_remote=False):
 #        pdb.set_trace()
         object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
+
         if object_key in self.files_created:
             return True
         elif not recalculate:

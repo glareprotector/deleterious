@@ -6,6 +6,7 @@ import sys
 """
 in_list absolute path
 out_list absolute path
+optional specifying params
 """
 
 in_list = sys.argv[1]
@@ -22,7 +23,7 @@ completed = []
 import objects
 
 #to_check_for = [objects.general_distance, objects.general_msa, objects.neighbors_w_weight_w]
-to_check_for = [objects.general_distance]
+to_check_for = [objects.neighbors_w_weight_w]
 
 import wc
 

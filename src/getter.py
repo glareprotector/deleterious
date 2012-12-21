@@ -75,18 +75,7 @@ p = global_stuff.get_param()
 # get param values.
 print sys.argv
 assert (len(sys.argv)-6)%3 == 0
-for z in range(6,len(sys.argv),3):
-    param_name = sys.argv[z]
-    param_type = sys.argv[z+2]
-    val = sys.argv[z+1]
-    if param_type == 'i':
-        val = int(val)
-    elif param_type == 'f':
-        val = float(val)
-    elif param_type == 's':
-        val = val
-    p.set_param(param_name, val)
-
+helper.parse_p_input(p, sys.argv[6:])
 
 
 
