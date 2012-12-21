@@ -2,6 +2,8 @@
 which_job
 total_jobs
 protein_list absolute path
+whether_to_send T or F
+whether_to_delete T or F
 optional: params followed by their values and type(i,f,s)
 """
 
@@ -23,6 +25,16 @@ which_job = int(sys.argv[1])
 total_jobs = int(sys.argv[2])
 
 protein_list = sys.argv[3]
+
+if sys.argv[4] == 'T':
+    whether_to_send = True
+else:
+    whether_to_send = False
+
+if sys.argv[5] == 'T':
+    whether_to_delete = True
+else:
+    whether_to_delete = False
 
 try:
     to_skip = []
@@ -46,8 +58,7 @@ f = open(protein_list, 'r')
 
 print 'starting', which_job, total_jobs
 
-to_send = True
-whether_to_delete = True
+
 
 i = 0
 
@@ -63,8 +74,8 @@ p = global_stuff.get_param()
 
 # get param values.
 print sys.argv
-assert (len(sys.argv)-4)%3 == 0
-for z in range(4,len(sys.argv),3):
+assert (len(sys.argv)-6)%3 == 0
+for z in range(6,len(sys.argv),3):
     param_name = sys.argv[z]
     param_type = sys.argv[z+2]
     val = sys.argv[z+1]
@@ -109,7 +120,7 @@ used_ps = set()
 
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
-to_gets = set([objects.general_distance])
+to_gets = set([objects.neighbors_w_weight_w])
 
 #this is the stuff to delete right after one protein is processed
 to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
@@ -180,7 +191,7 @@ for line in f:
             past2 = datetime.datetime.now()
             g.flush()
 
-            if to_send:
+            if whether_to_send:
 
                 # move stuff to ent
                 # first try to create the folder
