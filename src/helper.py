@@ -791,3 +791,16 @@ class file_sender(object):
             import pdb
 
                     
+def parse_p_input(p, arg_string):
+
+    for z in range(0,len(arg_string),3):
+        param_name = arg_string[z]
+        param_type = arg_string[z+2]
+        val = arg_string[z+1]
+        if param_type == 'i':
+            val = int(val)
+        elif param_type == 'f':
+            val = float(val)
+        elif param_type == 's':
+            val = val
+        p.set_param(param_name, val)

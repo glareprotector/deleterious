@@ -59,7 +59,7 @@ BLASTDB_PATH = 'nr/nr'
 
 # random constants
 proc_id = 0
-whether_to_look_at_whether_to_override = True
+whether_to_look_at_whether_to_override = False
 to_reindex = True
 recalculate = False
 recalculate_nodewise_loss_f = True
