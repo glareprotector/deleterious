@@ -908,7 +908,7 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
                 
         return filtered_mutations
 
-def get_protein_info(params, protein_list, info_file):
+def get_protein_info(protein_list, info_file, params):
     import wc
     f = open(protein_list, 'r')
     g = open(info_file, 'w')
@@ -1045,41 +1045,59 @@ def get_overlap(params, protein_list, out_file):
     
 
 
-def get_mutation_info(params, out_file):
+def get_mutation_info(protein_list_file, out_file, params):
     import wc
+
+    params.set_param('protein_list_file', protein_list_file)
+    
     l = wc.get_stuff(mutation_list_given_protein_list, params, False, False, False, False)
 
     f = open(out_file, 'w')
+
+    avg_degs = [3]
+    
     i = 0
     for mutation in l:
-        if i%50 == 0:
-            print '                             asdf', i
-        i += 1
 
         name = mutation[0]
-        print '                                 asdf',name,i
-        pos = mutation[1]
+        params.set_param('uniprot_id', name)
 
+        def get_name():
+            return [mutation[0]]
 
+        def get_pos():
+            return [str(mutation[1])]
 
-        all_neighbors = {}
-        avg_degs = range(1,6)
-        for j in avg_degs:
-            params.set_param('avg_deg',j)
-            all_neighbors[j] = wc.get_stuff(neighbors_w_weight_w, params, False, False, False)
+        def get_deg():
+            ans = []
+            for deg in avg_degs:
+                params.set_param('avg_deg', deg)
+                all_neighbors = wc.get_stuff(neighbors_w_weight_w, params, False, False, False)
+                ans.append(str(len(all_neighbors[mutation[1]])))
+            return ans
+
+        def get_wild_num():
+            msa = wc.get_stuff(general_msa, params, False, False, False)
+            col = msa.get_column(mutation[1])
+            return [str(col.count(mutation[2]))]
         
-        msa = wc.get_stuff(their_agW, params, False, False, False)
-        col = msa.get_column(pos)
-        wild_num = col.count(wild)
-        mut_num = col.count(mut)
-        f.write(str(wild_num)+','+str(mut_num)+','+str(mutation[4]))
-        for j in avg_degs:
+        def get_mut_num():
+            msa = wc.get_stuff(general_msa, params, False, False, False)
+            col = msa.get_column(mutation[1])
+            return [str(col.count(mutation[3]))]
 
-                f.write(','+str(len(all_neighbors[j][pos])))
-        f.write('\n')
+        info = []
+        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_deg]
+
+        for which in which_info:
+            info = info + which()
+            
+        f.write(string.join(info,sep=',') + '\n')
+        
+
     f.close()
 
-def get_roc_file(params, out_file, use_neighbor, ignore_pos, max_neighbors, weighted):
+def get_roc_file(params, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials):
     import wc
     recalculate = False
     l = wc.get_stuff(filtered_mutation_list_given_protein_list, params, recalculate, False, False, False)
@@ -1090,7 +1108,7 @@ def get_roc_file(params, out_file, use_neighbor, ignore_pos, max_neighbors, weig
         if i % 50 == 0:
             print '      ', i
         i += 1
-        score = helper.predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbors, weighted)
+        score = helper.predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials)
 
         #print score
         ans.append([score, mutation[4]])

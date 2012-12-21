@@ -5,9 +5,13 @@ import global_stuff
 
 import sys
 """
+deleterious mutation file
+neutral mutation file
 output protein list file
 """
-protein_list_file = sys.argv[1]
+protein_list_file = sys.argv[3]
+deleterious_mutations_file = sys.argv[1]
+neutral_mutations_file = sys.argv[2]
 
 def get_mutations(mutations_file, which, the_dict):
     f = open(mutations_file)
@@ -30,10 +34,10 @@ def write_mutations(the_list, the_file):
 
 the_dict = {}
 
-get_mutations(global_stuff.deleterious_mutations_file, 0, the_dict)
+get_mutations(deleterious_mutations_file, 0, the_dict)
 import pdb
 pdb.set_trace()
-get_mutations(global_stuff.neutral_mutations_file, 1, the_dict)
+get_mutations(neutral_mutations_file, 1, the_dict)
 
 protein_list = the_dict.keys()
 
