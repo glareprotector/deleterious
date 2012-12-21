@@ -2,6 +2,7 @@
 which_job
 total_jobs
 protein_list absolute path
+optional: params followed by their values and type(i,f,s)
 """
 
 
@@ -33,7 +34,7 @@ except:
     skip_file = None
 
 username = 'fultonw'
-password = 'lc7140$$'
+password = 'lc7140$$$$'
 hostname = 'ent.csail.mit.edu'
 port = 22
 
@@ -45,8 +46,8 @@ f = open(protein_list, 'r')
 
 print 'starting', which_job, total_jobs
 
-to_send = False
-whether_to_delete = False
+to_send = True
+whether_to_delete = True
 
 i = 0
 
@@ -56,6 +57,27 @@ import os
 #p = param.param({'ev':1e-10, 'protein_list_file':'asdfdone', 'uniprot_id':'Q9NVL1', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':1, 'pseudo_c':1})
 
 p = global_stuff.get_param()
+
+
+
+
+# get param values.
+print sys.argv
+assert (len(sys.argv)-4)%3 == 0
+for z in range(4,len(sys.argv),3):
+    param_name = sys.argv[z]
+    param_type = sys.argv[z+2]
+    val = sys.argv[z+1]
+    if param_type == 'i':
+        val = int(val)
+    elif param_type == 'f':
+        val = float(val)
+    elif param_type == 's':
+        val = val
+    p.set_param(param_name, val)
+
+
+
 
 past = datetime.datetime.now()
 
@@ -87,10 +109,10 @@ used_ps = set()
 
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
-to_gets = set([objects.general_msa])
+to_gets = set([objects.general_distance])
 
 #this is the stuff to delete right after one protein is processed
-#to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
+to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
 
 sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 0)
 
@@ -175,7 +197,7 @@ for line in f:
                         file_name = instance.get_file_name(p_used)
                         there_file = there_folder + file_name
                         import pdb
-
+                        
                         sender.send(here_file, there_file, hostname, there_folder, username, password, port, instance, p_used)
                     except Exception, err:
                         pass
