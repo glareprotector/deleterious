@@ -31,7 +31,7 @@ class file_cache_for_wrapper(object):
             location = self.the_wrapper.get_file_location(object_key)
             # check if we want to override
 
-            print 'checking: ', location, os.path.isfile(location)
+            #print 'checking: ', location, os.path.isfile(location)
                 
 
             if os.path.isfile(location) or (check_remote and self.the_wrapper.was_transferred(object_key)):
@@ -39,6 +39,7 @@ class file_cache_for_wrapper(object):
                     if self.the_wrapper.whether_to_override(object_key):
                         return False
                 return True
+
         return False
 
     # get is only called if has was just called and returned true

@@ -2,7 +2,7 @@ import global_stuff
 import os
 import pdb
 import sys
-
+import helper
 """
 in_list absolute path
 out_list absolute path
@@ -18,12 +18,14 @@ f = open(in_list, 'r')
 
 p = global_stuff.get_param()
 
+helper.parse_p_input(p, sys.argv[3:])
+
 completed = []
 
 import objects
 
 #to_check_for = [objects.general_distance, objects.general_msa, objects.neighbors_w_weight_w]
-to_check_for = [objects.neighbors_w_weight_w]
+to_check_for = [objects.neighbors_w_weight_w, objects.general_msa, objects.general_seq_weights]
 
 import wc
 
