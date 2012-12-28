@@ -231,7 +231,7 @@ def normalize(vect):
     return [x/total for x in vect]
 
 
-def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbor, weighted, num_trials):
+def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbor, weighted, num_trials, pseudo_total):
 
     import wc
     import objects
@@ -242,18 +242,22 @@ def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor
     mut_res = mutation[3]
     params.set_param('uniprot_id', protein_name)
     seq = wc.get_stuff(objects.dW, params, recalculate, False, False)
+
     msa = wc.get_stuff(objects.general_msa, params, recalculate, False, False)
 
     score = 0
     
-    seq_weights = wc.get_stuff(objects.general_seq_weights, params, False, False, False)
+    #seq_weights = wc.get_stuff(objects.general_seq_weights, params, False, False, False)
+    seq_weights = [1.0 for i in range(len(msa))]
     
     if not ignore_pos:
-        mut_weight = sum([seq_weights[i] for i in range(len(col)) if msa[i][pos] == mut_res])
-        wild_weight = sum([seq_weights[i] for i in range(len(col)) if col[i][pos] == wild_res])
-        score += -1.0 * math.log(mut_weight + 1.0) / (wild_weight + 1.0)
-
-    neighbor_score = 0
+        mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == mut_res])
+        wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == wild_res])
+        score += math.log((mut_weight + 1) / (wild_weight))
+    
+    return score
+    #return 0.0 - score
+    actual_neighbor_score = 0
     
     if use_neighbor:
 
@@ -266,8 +270,8 @@ def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor
 
         # get pseudo_counts
         pseudo_count_dict = {}
-        for key in range(global_stuff.aa_to_num.keys()):
-            pseudo_count_dict[key] = 1.0 / global_stuff.q
+        for key in global_stuff.aa_to_num:
+            pseudo_count_dict[key] = pseudo_total / global_stuff.q
 
         # none of weights have to be normalized
         def get_neighbor_score(msa, weight_a, weight_b, neighbors, neighbor_weights, pseudo_count_dict):
@@ -275,41 +279,169 @@ def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor
             assert(len(neighbors) == len(neighbor_weights))
             score = 0
             neighbor_weights = normalize(neighbor_weights)
+
             for i in range(num_neighbors):
-                score += neighbor_weights[i] * get_KL_weighted(msa, weight_a, weight_b, neighbor, pseudo_total)
+                score += neighbor_weights[i] * get_KL_weighted(msa, weight_a, weight_b, neighbors[i], pseudo_count_dict)
+            return score
 
         def get_random_weight(weights, target):
             import random
-            weights_copy = weights[:]
-            random.shuffle(weights_copy)
+            new_weights = [0.0 for i in range(len(weights))]
+            temp = range(len(weights))
+            random.shuffle(temp)
             total = 0.0
             done = False
-            for i in range(len(weights_copy)):
-                if done:
-                    weights_copy[i] = 0.0
-                total += weights[i]
+            for i in range(len(new_weights)):
+                new_weights[temp[i]] = weights[temp[i]]
+                total += weights[temp[i]]
                 if total > target:
-                    done = True
-            return weights_copy
+                    break
+            return new_weights
                     
+
 
         actual_weight_a = [seq_weights[i] if msa[i][pos] == wild_res else 0.0 for i in range(len(msa))]
         actual_weight_b = [seq_weights[i] if msa[i][pos] == mut_res else 0.0 for i in range(len(msa))]
-        actual_score = get_neighbor_score(msa, actual_weight_a, actual_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
 
-        mut_weight = sum([seq_weights[i] for i in range(len(col)) if msa[i][pos] == mut_res])
-        wild_weight = sum([seq_weights[i] for i in range(len(col)) if col[i][pos] == wild_res])
+        actual_neighbor_score = get_neighbor_score(msa, actual_weight_a, actual_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
+        #return 0 - actual_neighbor_score
+        #return score - actual_neighbor_score
+
+        """
+        constraints_a = [(pos,wild_res)]
+        filter_a_msa = filter_msa_based_on_pos_constraint(msa, constraints_a)
+        constraints_b = [(pos,mut_res)]
+        filter_b_msa = filter_msa_based_on_pos_constraint(msa, constraints_b)
+        #all_neighbors = wc.get_stuff(objects.neighbors_w, params, recalculate, False, False)
+        neighbor = neighbors[0]
+        na_col = filter_a_msa.get_column(neighbor)
+        nb_col = filter_b_msa.get_column(neighbor)
+        na_col_no_skip = [x for x in na_col if x != '-']
+        nb_col_no_skip = [x for x in nb_col if x != '-']
+        asdf = get_KL_real(nb_col_no_skip, na_col_no_skip, seq_weights)
+        """
+
+
+        def rank(nums, x):
+            count = 0
+            for it in nums:
+                if x > it:
+                    count += 1
+            return float(count) / len(nums)
+
+
+
+        #return actual_score
+        mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == mut_res])
+        wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == wild_res])
         random_scores = []
         for i in range(num_trials):
             random_weight_a = get_random_weight(seq_weights, wild_weight)
             random_weight_b = get_random_weight(seq_weights, mut_weight)
-            random_scores.append(get_neighbor_score(msa, random_weight_a, random_weight_b, neighbors, neighbor_weights, pseudo_count_dict))
+
+            a_random_score = get_neighbor_score(msa, random_weight_a, random_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
+
+            random_scores.append(a_random_score)
+        """
+        ans = rank(random_scores, actual_neighbor_score)
+        print ans
+        return ans
+        """
 
 
-        return -1.0 * (score + neighbor_score)
+        def mean(s):
+            total = 0.0
+            for x in s:
+                total += x
+            return total / len(s)
+
+        def sd(s):
+            m = mean(s)
+            ans = 0.0
+            for x in s:
+                ans += (x-m) * (x-m)
+            ans /= len(s)
+            return ans ** 0.5
+
+        def normalize_to_unit(score, the_mean, the_sd):
+            return (score - the_mean) / the_sd
+
+        random_mean = mean(random_scores)
+        random_sd = sd(random_scores)
+        
+        try:
+            neighbor_score = normalize_to_unit(actual_neighbor_score, random_mean, random_sd)
+        except:
+            pdb.set_trace()
+            asdf=2
+            neighbor_score = 0
+
+
+        normalized_randoms = [normalize_to_unit(x, random_mean, random_sd) for x in random_scores]
+
+
+
+#        x = 0
+#        for score in random_scores:
+#            if actual_score > score:
+#                x += 1
+#        neighbor_score = float(x) / num_trials
+        print neighbor_score, len(msa)
+
+        return score - neighbor_score
+
+
+def get_KL_real(d1, d2, weights):
+
+    # keep dictionary of counts for each distribution
+
+
+    pseudo_count = 1.0 / 21000
 
 
     
+    d1_dict = {}
+    d1_weight = 0.0
+    d2_dict = {}
+    d2_weight = 0.0
+
+    for key in global_stuff.aa_to_num.keys():
+        d1_dict[key] = pseudo_count
+        d1_weight += pseudo_count
+        d2_dict[key] = pseudo_count
+        d2_weight += pseudo_count
+    
+    for i in range(len(d1)):
+        if d1[i] not in global_stuff.ignore_aas:
+            d1_weight += weights[i]
+            if d1[i] in d1_dict.keys():
+                d1_dict[d1[i]] = d1_dict[d1[i]] + weights[i]
+            else:
+                d1_dict[d1[i]] = weights[i]
+                
+    for k in d1_dict.keys():
+        d1_dict[k] = float(d1_dict[k]) / d1_weight
+        
+
+    for i in range(len(d2)):
+        if d2[i] not in global_stuff.ignore_aas:
+            d2_weight += weights[i]
+            if d2[i] in d2_dict.keys():
+                d2_dict[d2[i]] = d2_dict[d2[i]] + weights[i]
+            else:
+                d2_dict[d2[i]] = weights[i]
+
+
+
+    for k in d2_dict.keys():
+        d2_dict[k] = d2_dict[k] / d2_weight
+
+    ans = 0
+    for k in global_stuff.aa_to_num.keys():
+        ans += d1_dict[k] * math.log(d1_dict[k] / d2_dict[k])
+
+    return ans
+                                                                                                                                                                                                                                                        
             
 def filter_column_pair(x, y, escape):
 
@@ -484,14 +616,21 @@ def get_KL_weighted(msa, weight_1, weight_2, neighbor, pseudo_count_dict):
     d1_weight = 0.0
     d2_dict = {}
     d2_weight = 0.0
+    import pdb
+
+    """
     for key in pseudo_count_dict:
         d1_dict[key] = pseudo_count_dict[key]
         d1_weight += pseudo_count_dict[key]
         d2_dict[key] = pseudo_count_dict[key]
         d2_weight += pseudo_count_dict[key]
+    """
+
+    
+
         
     for i in range(len(msa)):
-        if msa[i][neighbor] != '-':
+        if msa[i][neighbor] not in global_stuff.ignore_aas:
             d1_weight += weight_1[i]
             if msa[i][neighbor] in d1_dict.keys():
                 d1_dict[msa[i][neighbor]] = d1_dict[msa[i][neighbor]] + weight_1[i]
@@ -504,18 +643,36 @@ def get_KL_weighted(msa, weight_1, weight_2, neighbor, pseudo_count_dict):
             else:
                 d2_dict[msa[i][neighbor]] = weight_2[i]
 
+    pseudo_count = 1.0 / len(msa)
+    #pseudo_count = 1.0
+    all_keys = set(d1_dict.keys()) | set(d2_dict.keys())
+    for key in d1_dict.keys():
+        d2_dict[key] += pseudo_count
+        d2_weight += pseudo_count
 
 
-    for k in d1_dict.keys():
-        d1_dict[k] = float(d1_dict[k]) / d1_weight
+    try:
+        for k in d1_dict.keys():
+            d1_dict[k] = float(d1_dict[k]) / d1_weight
+    except Exception, err:
+        raise Exception
+
+    
     for k in d1_dict.keys():
         d2_dict[k] = float(d2_dict[k]) / d2_weight
 
+    
+
 
     ans = 0
-    for k in d1_dict.keys():
-        if d1_dict[k] > 0:
-            ans += d1_dict[k] * math.log(d1_dict[k] / d2_dict[k])
+    try:
+        for k in d1_dict.keys():
+            if d1_dict[k] > 0:
+                ans += d1_dict[k] * math.log(d1_dict[k] / d2_dict[k])
+    except:
+        print d1_dict[k], d2_dict[k], k
+        pdb.set_trace()
+        x=2
     return ans
 
 
@@ -569,7 +726,7 @@ def write_mat(mat, f_name, the_sep = ',', option = 'w'):
     #print mat
     for row in mat:
         
-        line = string.join([('%.2f' % x)  for x in row], sep=the_sep)
+        line = string.join([('%.5f' % x)  for x in row], sep=the_sep)
         line = line + '\n'
         f.write(line)
     f.close()

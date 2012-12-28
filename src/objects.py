@@ -69,7 +69,7 @@ class dW(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return asdf
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
 # blast results file wrapper(xml format)
 class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
@@ -260,7 +260,7 @@ class their_agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return set(['uniprot_id'])
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -303,7 +303,7 @@ class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -352,7 +352,7 @@ class protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return set(['uniprot_id'])
 
     def whether_to_override(self, object_key):
-        return True
+        return False
     
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -379,7 +379,7 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | mf_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -403,7 +403,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return keys | general_msa.get_all_keys(params, self) | general_seq_weights.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -652,7 +652,10 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
         protein_list_file = self.get_param(params, 'protein_list_file')
         f = open(protein_list_file, 'r')
         mutation_list = []
+        i = 0
         for line in f:
+            print i
+            i += 1
             protein_name = line.strip()
             self.set_param(params, 'uniprot_id', protein_name)
 
@@ -696,7 +699,7 @@ class div_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 class general_seq_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -714,7 +717,7 @@ class general_seq_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrappe
             return self.get_var_or_file(div_weights, params, False, False, False)
         elif which_weight == 0:
             msa = self.get_var_or_file(general_msa, params, False, False, False)
-            return [1.0 for i in range(len(msa))]
+            return helper.normalize([1.0 for i in range(len(msa))])
                                         
 
 class edge_to_rank(wrapper.edge_to_int_obj_wrapper, wrapper.by_uniprot_id_wrapper):
@@ -724,7 +727,7 @@ class edge_to_rank(wrapper.edge_to_int_obj_wrapper, wrapper.by_uniprot_id_wrappe
         return general_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -807,12 +810,12 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
         return keys | edge_to_rank.get_all_keys(params, self) | dW.get_all_keys(params, self) | general_msa.get_all_keys(params, self) | dW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
 
-
+        pdb.set_trace()
         etr = self.get_var_or_file(edge_to_rank, params, recalculate, True, False, False)
 
         seq = self.get_var_or_file(dW, params, recalculate, True, False, False)
@@ -940,7 +943,9 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
                 #print pos, len(neighbors)
 
                 col = msa.get_column(pos)
-                if col.count(mutation[3]) > 5 and col.count(mutation[2]) > 0 and len(neighbors[pos]) > 0:
+                #if col.count(mutation[3]) > 3 and col.count(mutation[2]) > 3 and len(neighbors[pos]) > 0 and len(msa) > 200:
+                if len(msa) > 200:
+                    print 'added: ', protein_name
                     filtered_mutations.append(mutation)
                     num_add += 1
                 num += 1
@@ -1000,8 +1005,12 @@ def get_protein_info(protein_list, info_file, params):
                 msa = wc.get_stuff(general_msa, params, False, False, False)
                 return [str(len(msa))]
 
+            def get_num_mutations():
+                mutations = wc.get_stuff(protein_mutation_list, params, False, False, False)
+                return [str(len(mutations))]
+
             info = []
-            which_info = [get_name, get_seq_length, get_msa_length]
+            which_info = [get_name, get_seq_length, get_msa_length, get_num_mutations]
 
             for which in which_info:
                 info = info + which()
@@ -1102,7 +1111,7 @@ def get_mutation_info(protein_list_file, out_file, params):
     import wc
 
     params.set_param('protein_list_file', protein_list_file)
-    
+    pdb.set_trace()
     l = wc.get_stuff(mutation_list_given_protein_list, params, False, False, False, False)
 
     f = open(out_file, 'w')
@@ -1139,32 +1148,49 @@ def get_mutation_info(protein_list_file, out_file, params):
             col = msa.get_column(mutation[1])
             return [str(col.count(mutation[3]))]
 
-        info = []
-        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_deg]
+        def get_whether_bad():
+            return [str(mutation[4])]
 
-        for which in which_info:
-            info = info + which()
+        info = []
+        if i % 50 == 0:
+            print get_name(), i
+        i += 1
+        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_whether_bad, get_deg]
+        try:
+            for which in which_info:
+                info = info + which()
             
-        f.write(string.join(info,sep=',') + '\n')
+            f.write(string.join(info,sep=',') + '\n')
+        except:
+            pass
         
 
     f.close()
 
-def get_roc_file(params, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials):
+def get_roc_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total):
     import wc
     recalculate = False
+
+
+    params.set_param('protein_list_file', in_file)
+    
     l = wc.get_stuff(filtered_mutation_list_given_protein_list, params, recalculate, False, False, False)
 
     ans = []
     i = 0
+    bad_count = 0
     for mutation in l:
-        if i % 50 == 0:
+        if i % 100 == 0:
             print '      ', i
-        i += 1
-        score = helper.predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials)
 
-        #print score
-        ans.append([score, mutation[4]])
+
+        i += 1
+        try:
+            score = helper.predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total)
+            ans.append([score, mutation[4]])
+        except Exception, err:
+            bad_count += 1
+            print 'failed to get score', err, bad_count
 
     helper.write_mat(ans, out_file)
 

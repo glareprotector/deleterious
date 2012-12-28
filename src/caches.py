@@ -39,6 +39,7 @@ class file_cache_for_wrapper(object):
                     if self.the_wrapper.whether_to_override(object_key):
                         return False
                 return True
+
         return False
 
     # get is only called if has was just called and returned true
