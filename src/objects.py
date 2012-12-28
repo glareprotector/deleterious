@@ -308,8 +308,17 @@ class protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         mutations = []
         f = open(neutral_file)
         for line in f:
-            s = line.strip().split('\t')
-            mutations.append([protein_name, int(s[0])-1, s[1], s[2], int(s[3])])
+            if global_stuff.cosmic_or_humvar == 'humvar':
+                s = line.strip().split('\t')
+            elif global_stuff.cosmic_or_humvar == 'cosmic':
+                s = line.strip().split(',')
+            try:
+                if global_stuff.cosmic_or_humvar == 'humvar':
+                    mutations.append([protein_name, int(s[0])-1, s[1], s[2], int(s[3])])
+                elif global_stuff.cosmic_or_humvar == 'cosmic':
+                    mutations.append([protein_name, int(s[1])-1, s[2], s[3], int(s[4]), int(s[5]), int(s[6])])
+            except Exception, err:
+                print err
 
 
         return mutations
@@ -601,7 +610,8 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
         mutation_list = []
         i = 0
         for line in f:
-            print i
+            if i % 100 == 0:
+                print i
             i += 1
             protein_name = line.strip()
             self.set_param(params, 'uniprot_id', protein_name)
@@ -891,7 +901,7 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
 
                 col = msa.get_column(pos)
                 #if col.count(mutation[3]) > 3 and col.count(mutation[2]) > 3 and len(neighbors[pos]) > 0 and len(msa) > 200:
-                if len(msa) > 200:
+                if col.count(mutation[3]) > 0 and len(msa) > 200:
                     print 'added: ', protein_name
                     filtered_mutations.append(mutation)
                     num_add += 1
@@ -1089,11 +1099,44 @@ def get_mutation_info(protein_list_file, out_file, params):
             msa = wc.get_stuff(general_msa, params, False, False, False)
             col = msa.get_column(mutation[1])
             return [str(col.count(mutation[2]))]
+
+        def get_wild_category_num():
+            msa = wc.get_stuff(general_msa, params, False, False, False)
+            col = msa.get_column(mutation[1])
+            wild_res_cat = global_stuff.aa_to_class[mutation[2]]
+            count = 0
+            for aa in col:
+                if global_stuff.aa_to_class[aa] == wild_res_cat:
+                    count += 1
+            return [str(count)]
+
+        def get_mut_category_num():
+            msa = wc.get_stuff(general_msa, params, False, False, False)
+            col = msa.get_column(mutation[1])
+            mut_res_cat = global_stuff.aa_to_class[mutation[3]]
+            count = 0
+            for aa in col:
+                if global_stuff.aa_to_class[aa] == mut_res_cat:
+                    count += 1
+            return [str(count)]
+
+        def get_is_same_cat():
+            if global_stuff.aa_to_class[mutation[3]] == global_stuff.aa_to_class[mutation[2]]:
+                return ['1']
+            else:
+                return ['0']
         
         def get_mut_num():
             msa = wc.get_stuff(general_msa, params, False, False, False)
             col = msa.get_column(mutation[1])
             return [str(col.count(mutation[3]))]
+
+        def get_msa_length():
+            msa = wc.get_stuff(general_msa, params, False, False, False)
+            return [str(len(msa))]
+
+        def get_cosmic_info():
+            return [str(mutation[4]), str(mutation[5]), str(mutation[6])]
 
         def get_whether_bad():
             return [str(mutation[4])]
@@ -1102,19 +1145,20 @@ def get_mutation_info(protein_list_file, out_file, params):
         if i % 50 == 0:
             print get_name(), i
         i += 1
-        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_whether_bad, get_deg]
+        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_wild_category_num, get_mut_category_num, get_is_same_cat, get_cosmic_info, get_msa_length]
         try:
             for which in which_info:
                 info = info + which()
             
             f.write(string.join(info,sep=',') + '\n')
-        except:
+        except Exception, err:
+            print err
             pass
         
 
     f.close()
 
-def get_roc_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total):
+def get_roc_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f):
     import wc
     recalculate = False
 
@@ -1133,7 +1177,7 @@ def get_roc_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighb
 
         i += 1
         try:
-            score = helper.predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total)
+            score = helper.predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f)
             ans.append([score, mutation[4]])
         except Exception, err:
             bad_count += 1

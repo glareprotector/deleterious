@@ -230,8 +230,36 @@ def normalize(vect):
         total += x
     return [x/total for x in vect]
 
+def vanilla_similarity(aa1, aa2):
+    if aa1 not in global_stuff.ignore_aas and aa2 not in global_stuff.ignore_aas:
+        if aa1 == aa2:
+            return 1.0
+        else:
+            return 0.0
+    else:
+        return 0.0
 
-def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbor, weighted, num_trials, pseudo_total):
+def category_similarity(aa1, aa2):
+    if aa1 not in global_stuff.ignore_aas and aa2 not in global_stuff.ignore_aas:
+        if global_stuff.aa_to_class[aa1] == global_stuff.aa_to_class[aa2]:
+            return 1.0
+        else:
+            return 0.0
+    else:
+        return 0.0
+
+# distance function should return something between 0 and 1.  that means distance to each residue can have a max of 1
+def compute_similarity_score_to_residue(column, weights, residue, similarity_f):
+
+    similarity = 0
+    for i in range(len(column)):
+        similarity += weights[i] * similarity_f(residue, column[i])
+    return similarity
+
+    
+
+
+def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbor, weighted, num_trials, pseudo_total, sim_f):
 
     import wc
     import objects
@@ -247,13 +275,18 @@ def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor
 
     score = 0
     
-    #seq_weights = wc.get_stuff(objects.general_seq_weights, params, False, False, False)
-    seq_weights = [1.0 for i in range(len(msa))]
+    seq_weights = wc.get_stuff(objects.general_seq_weights, params, False, False, False)
+    #seq_weights = [1.0/len(msa) for i in range(len(msa))]
+
+    column = msa.get_column(pos)
     
     if not ignore_pos:
-        mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == mut_res])
-        wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == wild_res])
-        score += math.log((mut_weight + 1) / (wild_weight))
+        #mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == mut_res])
+        #wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == wild_res])
+        mut_similarity = compute_similarity_score_to_residue(column, seq_weights, mut_res, sim_f)
+        wild_similarity = compute_similarity_score_to_residue(column, seq_weights, wild_res, sim_f)
+        score += math.log((mut_similarity + 1) / wild_similarity)
+        #score += math.log((mut_weight + 1) / (wild_weight))
     
     return score
     #return 0.0 - score

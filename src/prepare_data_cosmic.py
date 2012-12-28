@@ -15,12 +15,16 @@ class mutation(object):
         self.mut = mut
         self.count = None
         self.gene_mult = None
+        self.site_count = None
 
     def __hash__(self):
         return self.site.__hash__() + self.wild.__hash__() + self.mut.__hash__()
 
     def set_count(self, count):
         self.count = count
+
+    def set_site_count(self, count):
+        self.site_count = count
 
     def set_gene_mult(self, mult):
         self.gene_mult = mult
@@ -32,7 +36,7 @@ class mutation(object):
         return self.__str__() == other.__str__()
 
     def __str__(self):
-        return str(self.site) + ','  + self.wild + ',' + self.mut + ',' + str(self.count) + ',' + str(self.gene_mult)
+        return str(self.site) + ','  + self.wild + ',' + self.mut + ',' + str(self.count) + ',' + str(self.site_count) + ',' + str(self.gene_mult)
 
 
 class site(object):
@@ -68,31 +72,34 @@ for line in f:
     if i%50 == 0:
         print i
 
+
     try:
         s = line.strip().split('\t')
-        gene = s[0]
-        raw = s[14]
-        raw = raw.split('.')[1]
-        length = len(raw)
-        wild = raw[0]
-        mut = raw[length-1]
-        pos = raw[1:(length-1)]
-        a_site = site(gene, pos)
-        to_add = mutation(a_site, wild, mut)
+        if s[15] == 'Substitution - Missense':
 
-        if mut != wild and mut != '*':
-            try:
-                mutation_counts[to_add] += 1
-            except:
-                mutation_counts[to_add] = 1
-            try:
-                site_counts[a_site] += 1
-            except:
-                site_counts[a_site] = 1
-            try:
-                gene_muts[gene].add(pos)
-            except:
-                gene_muts[gene] = set([pos])
+            gene = s[0]
+            raw = s[14]
+            raw = raw.split('.')[1]
+            length = len(raw)
+            wild = raw[0]
+            mut = raw[length-1]
+            pos = raw[1:(length-1)]
+            a_site = site(gene, pos)
+            to_add = mutation(a_site, wild, mut)
+
+            if mut != wild and mut != '*':
+                try:
+                    mutation_counts[to_add] += 1
+                except:
+                    mutation_counts[to_add] = 1
+                try:
+                    site_counts[a_site] += 1
+                except:
+                    site_counts[a_site] = 1
+                try:
+                    gene_muts[gene].add(to_add)
+                except:
+                    gene_muts[gene] = set([to_add])
     except Exception, err:
         x=2
         print err
@@ -106,7 +113,8 @@ sorted_temp = sorted(temp, key = lambda x: x[0].site.gene)
 for it in sorted_temp:
     print it[0]
     try:
-        it[0].set_count(site_counts[it[0].site])
+        it[0].set_count(it[1])
+        it[0].set_site_count(site_counts[it[0].site])
         it[0].set_gene_mult(len(gene_muts[it[0].site.gene]))
     except:
 
@@ -128,3 +136,21 @@ g.close()
 g = open(gene_file, 'w')
 for gene in gene_list:
     g.write(gene + '\n')
+
+import subprocess, os
+
+for gene in gene_muts:
+    folder = global_stuff.base_folder + gene + '/'
+    try:
+        os.makedirs(folder)
+    except Exception, err:
+        print err
+    seq_folder = global_stuff.cosmic_raw_data_folder + gene[0].upper() + '/'
+    seq_file = seq_folder + gene + '_protein.txt'
+    new_seq_file = folder + 'seq'
+    subprocess.call(['cp', seq_file, new_seq_file])
+    mutation_file = folder + 'all_mutations'
+    h = open(mutation_file, 'w')
+    for mutation in gene_muts[gene]:
+        h.write(str(mutation) + '\n')
+    h.close()

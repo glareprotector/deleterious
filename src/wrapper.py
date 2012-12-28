@@ -379,7 +379,7 @@ class generic_dumper_wrapper(file_wrapper):
         import datetime
         start = datetime.datetime.now()
         self.dump_object(obj)
-        print 'pickle: ', datetime.datetime.now() - start, self.source_wrapper
+        #print 'pickle: ', datetime.datetime.now() - start, self.source_wrapper
         return open(self.get_holding_location(), 'rb')
 
 class pkdW(generic_dumper_wrapper):
