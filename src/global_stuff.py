@@ -21,12 +21,16 @@ cosmic_or_humvar = 'cosmic'
 
 #home = '/home/fw27/d/deleterious/'
 home = '/mnt/work/fultonw/deleterious/'
+home = '/home/fw27/d/deleterious/'
+#home = '/mnt/work/fultonw/deleterious/'
 #base_folder = '../data/proteins/humvar_from_orchestra/'
 #base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
 #base_folder = '/mnt/work/fultonw/scratch/'
 base_folder = '/mnt/work/fultonw/scratch_cosmic/'
 #base_folder = '/home/fw27/d/deleterious/data/proteins/humvar_from_orchestra/'
 #base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
+#base_folder = '/home/fw27/d/deleterious/data/proteins/cosmic/'
+
 
 
 
@@ -49,18 +53,20 @@ cosmic_raw_data_folder = data_folder + 'fasta/'
 
 
 
-
 # path to programs
-MUSCLE_PATH = '/mnt/work/fultonw/deleterious/muscle/muscle3.8.31_i86linux64'
+MUSCLE_PATH = '/home/fw27/d/deleterious/muscle3.8.31_i86linux64'
 BLAST_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/psiblast'
-BLASTP_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/blastp'
+BLAST_PATH = '/home/fw27/d/deleterious/bin/psiblast'
+#BLASTP_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/blastp'
+BLASTP_PATH = '/home/fw27/d/deleterious/bin/blastp'
 #BLASTDB_PATH = '/mnt/work/fultonw/nr/'
-BLASTDB_PATH = 'nr/nr'
-
-
+#BLASTDB_PATH = 'nr/nr'
+BLASTDB_PATH = '/groups/shared_databases/blastdb/nr'
+MIP_PATH = 'MIp_wrapper.pl'
 
 
 # random constants
+query_gi_number = '123456789123456789'
 proc_id = 0
 whether_to_look_at_whether_to_override = False
 to_reindex = True

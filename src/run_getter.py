@@ -7,6 +7,7 @@ protein_list absolute path
 mode
 whether_to_send T or F
 whether_to_delete T or F
+whether_to_get_anything T or F
 queue(only for bsub)
 mem_limit(only for bsub)
 hours:minutes(only for bsub)
@@ -27,18 +28,19 @@ protein_list_file = protein_list.split('/')[-1]
 
 whether_to_send = sys.argv[4]
 whether_to_delete = sys.argv[5]
+whether_to_get_anything = sys.argv[6]
 
 if mode == 'b':
 
-    queue = sys.argv[6]
-    mem_limit = sys.argv[7]
-    time_limit = sys.argv[8]
+    queue = sys.argv[7]
+    mem_limit = sys.argv[8]
+    time_limit = sys.argv[9]
 import pdb
 
 if mode == 'b':
-    arg_start = 9
+    arg_start = 10
 elif mode == 'r':
-    arg_start = 6
+    arg_start = 7
 
 args = sys.argv[arg_start:]
 import string
@@ -53,7 +55,7 @@ import pdb
 for i in range(total_jobs):
     print i
 
-    cmd = 'python ' + getter_script + ' ' + str(i) + ' ' + str(total_jobs) + ' ' + protein_list + ' ' + whether_to_send + ' ' + whether_to_delete + ' ' + arg_string
+    cmd = 'python ' + getter_script + ' ' + str(i) + ' ' + str(total_jobs) + ' ' + protein_list + ' ' + whether_to_send + ' ' + whether_to_delete + ' ' + whether_to_get_anything + ' ' + arg_string
     print cmd
     if mode == 'b':
         log_file = log_dir + 'b'+ '_' + str(i) + '_' + str(total_jobs) + '_' + protein_list_file + '_' + 'log'

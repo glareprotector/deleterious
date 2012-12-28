@@ -4,6 +4,7 @@ total_jobs
 protein_list absolute path
 whether_to_send T or F
 whether_to_delete T or F
+whether_to_get_anything T or F
 optional: params followed by their values and type(i,f,s)
 """
 
@@ -36,14 +37,13 @@ if sys.argv[5] == 'T':
 else:
     whether_to_delete = False
 
-try:
-    to_skip = []
-    skip_file = sys.argv[4]
-    h = open(skip_file, 'r')
-    for line in h:
-        to_skip.append(line.strip())
-except:
-    skip_file = None
+if sys.argv[6] == 'T':
+    whether_to_get_anything = True
+else:
+    whether_to_get_anything = False
+
+
+skip_file = None
 
 username = 'fultonw'
 password = 'lc7140$$$$'
@@ -51,7 +51,7 @@ hostname = 'ent.csail.mit.edu'
 port = 22
 
 #remote_folder = '/mnt/work/fw27/deleterious/deleterious/data/proteins/humvar/'
-remote_base_folder = '/mnt/work/fultonw/scratch/'
+remote_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
 
 
 f = open(protein_list, 'r')
@@ -65,17 +65,17 @@ i = 0
 import datetime
 import helper
 import os
-#p = param.param({'ev':1e-10, 'protein_list_file':'asdfdone', 'uniprot_id':'Q9NVL1', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':1, 'pseudo_c':1})
+#p = param.param({'ev':1e-10, 'protein_list_file':'asdfdone', 'uniprot_id':'Q9NVL1', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':1, 'which_weight':1, 'which_dist':0, 'pseudo_c':1})
 
 p = global_stuff.get_param()
 
-
+to_skip = []
 
 
 # get param values.
 print sys.argv
-assert (len(sys.argv)-6)%3 == 0
-helper.parse_p_input(p, sys.argv[6:])
+assert (len(sys.argv)-7)%3 == 0
+helper.parse_p_input(p, sys.argv[7:])
 
 
 
@@ -91,11 +91,14 @@ def get(obj, p, gotten_stuff, used_ps, check = True):
         if wc.get_wrapper_instance(obj).has(p, False, True):
             to_get = False
     if to_get:
-        ans = wc.get_stuff(obj, p, False, False, False)
-        print 'took: ', datetime.datetime.now() - past
-        past = datetime.datetime.now()
+        global whether_to_get_anything
         gotten_stuff.append([obj, p.get_copy()])
-        return ans
+        if whether_to_get_anything:
+            ans = wc.get_stuff(obj, p, False, False, False)
+            print 'took: ', datetime.datetime.now() - past
+            past = datetime.datetime.now()
+            
+            return ans
     else:
         gotten_stuff.append([obj, p.get_copy()])
         print 'already have: ', p.get_param('uniprot_id'), obj
@@ -109,10 +112,12 @@ used_ps = set()
 
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
-to_gets = set([objects.neighbors_w_weight_w])
+to_gets = set([objects.general_msa, objects.general_seq_weights])
+#to_gets = set()
 
 #this is the stuff to delete right after one protein is processed
 to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
+
 
 sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 0)
 
@@ -154,14 +159,14 @@ for line in f:
 
             p.set_param('uniprot_id',protein_name)
 
-            seq = get(objects.dW, p, gotten_stuff, used_ps, False)
+            #seq = get(objects.dW, p, gotten_stuff, used_ps, False)
 
-            print 'seq length: ', len(seq)
+            #print 'seq length: ', len(seq)
 
-            for which_weight in range(1,2):
+            for which_weight in range(0,2):
                 p.set_param('which_weight',which_weight)
 
-                if len(seq) < 10000:
+                if 0 < 10000:
                     import pdb
 
                     try:
@@ -209,7 +214,7 @@ for line in f:
                         the_file = wc.get_wrapper_instance(to_delete).get_file_location(used_p)
                         try:
                             import subprocess
-
+                            print the_file
                             if os.path.isfile(the_file):
                                 print '              blind removing:', the_file
                                 subprocess.call(['rm', the_file])

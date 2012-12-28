@@ -4,18 +4,18 @@ import os
 import sys
 """
 cosmic_gene_list
-cosmic_base_folder - remember to add slash at the end
 cosmic_raw_data_folder - remember to add slash at the end
 """
 
 cosmic_gene_list = sys.argv[1]
 base_folder = global_stuff.base_folder
-cosmic_raw_data_folder = global_stuff.cosmic_raw_data_folder
+cosmic_raw_data_folder = sys.argv[2]
 
 f = open(cosmic_gene_list, 'r')
 
 for line in f:
     gene = line.strip()
+    print gene
     folder = base_folder + gene + '/'
     try:
         os.makedirs(folder)
