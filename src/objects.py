@@ -18,6 +18,7 @@ from Bio.Blast.Applications import NcbipsiblastCommandline
 from Bio.PDB import Polypeptide
 from Bio.Blast import NCBIXML
 from Bio.Align.Applications import MuscleCommandline
+from Bio.Align import MultipleSeqAlignment
 from Bio import AlignIO
 
 import math
@@ -96,6 +97,7 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         if self.get_param(params, 'which_blast') == 0:
             psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'))
         elif self.get_param(params, 'which_blast') == 1:
+            #psi_blast_cline = global_stuff.BLASTP_PATH + 
             psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLASTP_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'))
         #psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', out = self.get_holding_location())
         #pdb.set_trace()
@@ -161,6 +163,57 @@ class afW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
         subprocess.call(str(cline), shell=True, executable='/bin/bash')
         return open(self.get_holding_location())
+
+
+class MIP_input_msa(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return general_msa.get_all_keys(params, self)
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        # will read in each sequence in msa, and write to new msa, except that if the name is query, will write it with a specified GI number instead
+        msa = self.get_var_or_file(general_msa, params, False, False, False)
+        sequences = []
+        for seq in msa:
+            if seq.name != 'QUERY':
+                sequences.append(seq)
+            else:
+                seq.id = 'gi|' + global_stuff.query_gi_number + '|a|a|a|a'
+                seq.name = seq.id
+                seq.description = seq.id
+                sequences.append(seq)
+        return MultipleSeqAlignment(sequences)
+
+    def whether_to_override(self, object_key):
+        return True
+
+class MIP_input_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return MIP_input_msa.get_all_keys(params, self)
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        msa = self.get_var_or_file(MIP_input_msa, params, False, False, False)
+        AlignIO.write(msa, self.get_holding_location(), 'fasta')
+        return open(self.get_holding_location(), 'r')
+        
+
+class MIP_distance_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return MIP_input_msa_file.get_all_keys(params, self)
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        modified_alignment_file = self.get_var_or_file(MIP_input_msa_file, params, False, False, False)
+        cmd = global_stuff.MIP_PATH + ' -i ' + '\'' + modified_alignment_file.name + '\'' + ' -o ' + self.get_holding_location() + ' -n ' + str(1) + ' -g ' + global_stuff.query_gi_number
+        print cmd
+        subprocess.call(cmd, shell=True, executable='/bin/bash')
 
 
 # processed msa output(columns with skips removed)
@@ -626,7 +679,7 @@ class general_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return self.get_var_or_file(their_agW, params, False, False, False)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
 class div_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 

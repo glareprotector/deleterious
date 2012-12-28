@@ -13,7 +13,7 @@ import pdb
 
 def get_param():
     import param
-    p = param.param({'ev':.1e-10, 'protein_list_file':'mf_done', 'uniprot_id':'test', 'avg_deg':3, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':1, 'which_dist':0, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700})
+    p = param.param({'ev':.05, 'protein_list_file':'mf_done', 'uniprot_id':'test', 'avg_deg':3, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':1, 'which_dist':0, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700})
     return p
 
 home = '/home/fw27/d/deleterious/'
@@ -22,9 +22,9 @@ home = '/home/fw27/d/deleterious/'
 #base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
 #base_folder = '/mnt/work/fultonw/scratch/'
 #base_folder = '/mnt/work/fultonw/scratch_cosmic/'
-base_folder = '/home/fw27/d/deleterious/data/proteins/humvar_from_orchestra/'
+#base_folder = '/home/fw27/d/deleterious/data/proteins/humvar_from_orchestra/'
 #base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
-
+base_folder = '/home/fw27/d/deleterious/data/proteins/cosmic/'
 
 
 BIN_FOLDER = home + 'data/bin/'
@@ -46,20 +46,22 @@ deleterious_mutations_file = '../data/humvar-2011_12.deleterious.pph.input'
 
 
 
-
 # path to programs
-MUSCLE_PATH = '/mnt/work/fultonw/deleterious/muscle/muscle3.8.31_i86linux64'
+MUSCLE_PATH = '/home/fw27/d/deleterious/muscle3.8.31_i86linux64'
 BLAST_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/psiblast'
-BLASTP_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/blastp'
+BLAST_PATH = '/home/fw27/d/deleterious/bin/psiblast'
+#BLASTP_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/blastp'
+BLASTP_PATH = '/home/fw27/d/deleterious/bin/blastp'
 #BLASTDB_PATH = '/mnt/work/fultonw/nr/'
-BLASTDB_PATH = 'nr/nr'
-
-
+#BLASTDB_PATH = 'nr/nr'
+BLASTDB_PATH = '/groups/shared_databases/blastdb/nr'
+MIP_PATH = 'MIp_wrapper.pl'
 
 
 # random constants
+query_gi_number = '123456789123456789'
 proc_id = 0
-whether_to_look_at_whether_to_override = False
+whether_to_look_at_whether_to_override = True
 to_reindex = True
 recalculate = False
 recalculate_nodewise_loss_f = True
