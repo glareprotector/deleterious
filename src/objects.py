@@ -1280,6 +1280,39 @@ def get_mutation_info(protein_list_file, out_file, params):
 
     f.close()
 
+# outputs file.  could be roc file input, or other input.  one argument is function that assigns a number to each mutation.  the function determines the output
+def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f, norm_f, mut_to_num_f):
+
+    params.set_file('protein_list_file', protein_list_file)
+    l = wc.get_stuff(filtered_mutation_list_given_protein_list, params)
+    i = 0
+    scores = []
+    labels = []
+    for mutation in l:
+        if i%100 == 0:
+            print i
+        i += 1
+        try:
+            score = helper.predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f)
+            scores.append(score)
+            labels.append(mut_to_num_f(mutation))
+        except Exception, err:
+            bad_count += 1
+            print err, mutation, bad_count
+
+    assert len(scores) == len(labels)
+    normed_scores = norm_f(scores)
+    ans = [ [0 0] for i in range(len(scores))]
+    for i in range(len(scores)):
+        ans[i][0] = normed_scores[i]
+        ans[i][1] = labels[i]
+
+    helper.write_mat(ans, out_file)
+
+def get_normalized_score_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f, which_norm):
+    
+    
+
 def get_roc_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f):
     import wc
     recalculate = False
