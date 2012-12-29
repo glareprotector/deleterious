@@ -69,7 +69,7 @@ class dW(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return asdf
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
 # blast results file wrapper(xml format)
 class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
@@ -165,25 +165,49 @@ class afW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         return open(self.get_holding_location())
 
 
-class MIP_input_msa(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+
+
+class MIP_input_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return general_msa.get_all_keys(params, self)
+        return set(['which_impute']) | general_msa.get_all_keys(params, self)
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
         # will read in each sequence in msa, and write to new msa, except that if the name is query, will write it with a specified GI number instead
+        # will also replace gaps
         msa = self.get_var_or_file(general_msa, params, False, False, False)
+
+        filtered_msa = helper.filter_msa(msa, self.get_param(params, 'filter_co'))
+
         sequences = []
-        for seq in msa:
+
+        which_impute = self.get_param(params, 'which_impute')
+        for seq in filtered_msa:
+            s = seq.seq.tostring()
+            new_s = ''
+            if which_impute == 0:
+                for i in range(len(s)):
+                    if s[i] in global_stuff.ignore_aas:
+                        new_s += global_stuff.MIP_wild_char
+                    else:
+                        new_s += s[i]
+            elif which_impute == 1:
+                for i in range(len(s)):
+                    if s[i] in global_stuff.ignore_aas:
+                        new_s += random.choice(global_stuff.aa_to_num.keys())
+                    else:
+                        new_s += s[i]
+
             if seq.name != 'QUERY':
-                sequences.append(seq)
+                the_id = seq.id
             else:
-                seq.id = 'gi|' + global_stuff.query_gi_number + '|a|a|a|a'
-                seq.name = seq.id
-                seq.description = seq.id
-                sequences.append(seq)
+
+                the_id = 'gi|' + global_stuff.query_gi_number + '|a|a|a|a'
+            sequences.append(SeqIO.SeqRecord(seq=SeqIO.Seq(new_s), id = the_id))
+
         return MultipleSeqAlignment(sequences)
 
     def whether_to_override(self, object_key):
@@ -200,7 +224,9 @@ class MIP_input_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         msa = self.get_var_or_file(MIP_input_msa, params, False, False, False)
         AlignIO.write(msa, self.get_holding_location(), 'fasta')
         return open(self.get_holding_location(), 'r')
-        
+
+    def whether_to_override(self, object_key):
+        return True
 
 class MIP_distance_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -214,6 +240,37 @@ class MIP_distance_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         cmd = global_stuff.MIP_PATH + ' -i ' + '\'' + modified_alignment_file.name + '\'' + ' -o ' + self.get_holding_location() + ' -n ' + str(1) + ' -g ' + global_stuff.query_gi_number
         print cmd
         subprocess.call(cmd, shell=True, executable='/bin/bash')
+        subprocess.call('mv ' + self.get_holding_location() + '_MIp.txt ' + self.get_holding_location(), shell=True, executable='/bin/bash')
+        subprocess.call('rm ' + self.get_holding_location() + '_count.txt', shell=True, executable='/bin/bash')
+        subprocess.call('rm ' + self.get_holding_location() + '_MIp.dot', shell=True, executable='/bin/bash')
+        return open(self.get_holding_location(), 'r')
+
+    def whether_to_override(self, object_key):
+        return True
+
+
+class MIP_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return MIP_distance_file.get_all_keys(params, self)
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        f = self.get_var_or_file(MIP_distance_file, params)
+        #skip first line
+        f.next()
+        # get length of sequence
+        seq = self.get_var_or_file(dW, params)
+        length = len(seq)
+        distances = [[0 for i in range(length)] for j in range(length)]
+        for line in f:
+            s = line.strip().split('\t')
+            x = int(s[0]) - 1
+            y = int(s[1]) - 1
+            d = float(s[8])
+            distances[x][y] = d
+        return distances
 
 
 # processed msa output(columns with skips removed)
@@ -303,7 +360,7 @@ class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -352,7 +409,7 @@ class protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return set(['uniprot_id'])
 
     def whether_to_override(self, object_key):
-        return False
+        return True
     
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -386,9 +443,11 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | pairwise_dist.get_all_keys(params, self)
         elif which_dist == 1:
             return keys | mf_distance.get_all_keys(params, self)
+        elif which_dist == 2:
+            return keys | MIP_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -402,6 +461,8 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             ans = self.get_var_or_file(mf_distance, params, recalculate, True, False)
 
             return ans
+        elif which_dist == 2:
+            return self.get_var_or_file(MIP_distance, params)
         
 
 class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
@@ -737,7 +798,7 @@ class edge_to_rank(wrapper.edge_to_int_obj_wrapper, wrapper.by_uniprot_id_wrappe
         return general_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -820,12 +881,12 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
         return keys | edge_to_rank.get_all_keys(params, self) | dW.get_all_keys(params, self) | general_msa.get_all_keys(params, self) | dW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
 
-        pdb.set_trace()
+
         etr = self.get_var_or_file(edge_to_rank, params, recalculate, True, False, False)
 
         seq = self.get_var_or_file(dW, params, recalculate, True, False, False)
@@ -860,8 +921,12 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
         num_bad = 0
         for i in range(length):
             for j in range(length):
-                if not ok(pct,i,j):
-                    num_bad += 1
+                try:
+                    if not ok(pct,i,j):
+                        num_bad += 1
+                except:
+                    x=2
+                    pdb.set_trace()
 
         rank_cutoff += num_bad
 
@@ -869,8 +934,12 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
             edges.append([])
             for j in range(length):
                 if i != j:
-                    if etr[(i,j)] < rank_cutoff and ok(pct,i,j):
-                        edges[-1].append((j,dists[i][j]))
+                    try:
+                        if etr[(i,j)] < rank_cutoff and ok(pct,i,j):
+                            edges[-1].append((j,dists[i][j]))
+                    except:
+                        x=2
+                        pdb.set_trace()
                     """
                     if etr[(i,j)] < rank_cutoff:
                         if len(edges[-1]) == 0:

@@ -8,6 +8,7 @@ import math
 import global_stuff
 import pdb
 import param
+import random
 
 from Bio.Align import MultipleSeqAlignment
 
@@ -256,7 +257,30 @@ def compute_similarity_score_to_residue(column, weights, residue, similarity_f):
         similarity += weights[i] * similarity_f(residue, column[i])
     return similarity
 
-    
+def mean(s):
+    total = 0.0
+    for x in s:
+        total += x
+    return total / len(s)
+
+def sd(s):
+    m = mean(s)
+    ans = 0.0
+    for x in s:
+        ans += (x-m) * (x-m)
+    ans /= len(s)
+    return ans ** 0.5
+
+def normalize_to_unit(score, the_mean, the_sd):
+    return (score - the_mean) / the_sd
+
+
+def rank(nums, x):
+    count = 0
+    for it in nums:
+        if x > it:
+            count += 1
+    return float(count) / len(nums)
 
 
 def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbor, weighted, num_trials, pseudo_total, sim_f):
@@ -355,12 +379,7 @@ def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor
         """
 
 
-        def rank(nums, x):
-            count = 0
-            for it in nums:
-                if x > it:
-                    count += 1
-            return float(count) / len(nums)
+        
 
 
 
@@ -382,22 +401,7 @@ def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor
         """
 
 
-        def mean(s):
-            total = 0.0
-            for x in s:
-                total += x
-            return total / len(s)
-
-        def sd(s):
-            m = mean(s)
-            ans = 0.0
-            for x in s:
-                ans += (x-m) * (x-m)
-            ans /= len(s)
-            return ans ** 0.5
-
-        def normalize_to_unit(score, the_mean, the_sd):
-            return (score - the_mean) / the_sd
+        
 
         random_mean = mean(random_scores)
         random_sd = sd(random_scores)
@@ -979,6 +983,58 @@ class file_sender(object):
                     self.__send(it)
             self.buildup = []
             import pdb
+
+def hamming_distance(s1, s2):
+    assert(len(s1) == len(s2))
+    count = 0.0
+    for i in range(len(s1)):
+        if s1[i] != s2[i]:
+            count += 1
+    return count / len(s1)
+
+
+def get_num_wild(msa):
+    ans = [ 0 for i in range(msa.get_alignment_length())]
+    for i in range(msa.get_alignment_length()):
+        c = msa.get_column(i)
+        ans[i] = c.count('-')
+    return ans
+
+
+
+# works with unimputed msa
+def filter_msa(msa, cut_off):
+
+    # choose a random order to add sequences
+    order = random.shuffle(range(len(msa)))
+    sequences = []
+    added_indicies = []
+    # convert msa to list of sequences
+    new_msa = [ [msa[i][j] for j in range(msa.get_alignment_length())] for i in range(len(msa))]
+
+    for i in range(len(msa)):
+        to_add = True
+        candidate = new_msa[i]
+        print msa[i].id, msa[i].name
+        if msa[i].id == 'QUERY':
+            to_add = True
+        else:
+            for j in range(len(added_indicies)):
+                if hamming_distance(candidate, new_msa[added_indicies[j]]) < cut_off:
+                    to_add = False
+                    break
+        if to_add:
+            sequences.append(candidate)
+            added_indicies.append(i)
+    sequences = []
+    for idx in added_indicies:
+        sequences.append(msa[idx])
+
+    return MultipleSeqAlignment(sequences)
+
+
+
+
 
                     
 def parse_p_input(p, arg_string):

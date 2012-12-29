@@ -125,7 +125,7 @@ class wrapper(object):
 
     # wrapper refers to which class, not a specific wrapper instance
     @print_stuff_dec
-    def get_var_or_file(self, wrapper, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False):
+    def get_var_or_file(self, wrapper, params, recalculate = False, to_pickle = False, to_filelize = False, always_recalculate = False):
 #        print '                      called  ', self, wrapper, recalculate, to_pickle, to_filelize, always_recalculate
         #pdb.set_trace()
         self.set_param(params, "which_wrapper_class", wrapper)
