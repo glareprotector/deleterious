@@ -271,6 +271,21 @@ def sd(s):
     ans /= len(s)
     return ans ** 0.5
 
+
+def normalize_z(scores):
+    the_mean = mean(scores)
+    the_sd = sd(scores)
+    return [normalize_to_unit(score, the_mean, the_sd) for score in scores]
+
+def normalize_rank(scores):
+    temp = [[scores[i],i] for i in range(len(scores))]
+    sorted_temp = sorted(temp, key = lambda x: x[0])
+    ans = [ 0 for i in range(len(temp))]
+    for i in range(len(temp)):
+        ans[sorted_temp[i][1]] = float(i) / len(temp)
+    return ans
+
+
 def normalize_to_unit(score, the_mean, the_sd):
     return (score - the_mean) / the_sd
 
@@ -1034,6 +1049,16 @@ def filter_msa(msa, cut_off):
     return MultipleSeqAlignment(sequences)
 
 
+# for cosmic, mutation is of form name, pos, wild, mut, # of that mutation, # of that site, # of that gene
+
+def mutation_to_class(mutation):
+    return mutation[4]
+
+def temp_cosmic(mutation):
+    if mutation[5] > 1:
+        return 1
+    else:
+        return 0
 
 
 

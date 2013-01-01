@@ -7,9 +7,16 @@ out_file = sys.argv[1]
 
 def read_score(in_file):
     f=open(in_file,'r')
+    # first line holds possible labels
     scores = []
     for line in f:
-        scores.append(float(line.strip()))
+        s = line.strip().split(',')
+        label = s[1]
+        score = float(s[1])
+        try:
+            scores[label].append(score)
+        else:
+            scores[label] = [score]
     return scores
 
 in_files = sys.argv[2:]
@@ -18,7 +25,8 @@ pdf = PdfFile(out_file)
 
 for in_file in in_files:
     scores = read_score(in_file)
-    plt.hist(scores, cumulative=True, histtype='step', bins=1000, label=in_file)
+    for label in scores:
+        plt.hist(scores[label], cumulative=True, histtype='step', bins=1000, label=in_file + '_' + label)
 
 plt.legend()
 savefig(infile)
