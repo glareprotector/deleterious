@@ -25,14 +25,17 @@ completed = []
 import objects
 
 #to_check_for = [objects.general_distance, objects.general_msa, objects.neighbors_w_weight_w]
-to_check_for = [objects.neighbors_w_weight_w, objects.general_msa, objects.general_seq_weights]
+to_check_for = [objects.general_msa]
 
 
 
 import wc
-
+i = 0
 for line in f:
     name = line.strip()
+    if i % 50 == 0:
+        print i
+    i += 1
 
     p.set_param('uniprot_id',name)
 

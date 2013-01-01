@@ -669,23 +669,23 @@ def get_KL_weighted(msa, weight_1, weight_2, neighbor, pseudo_count_dict):
     for i in range(len(msa)):
         if msa[i][neighbor] not in global_stuff.ignore_aas:
             d1_weight += weight_1[i]
-            if msa[i][neighbor] in d1_dict.keys():
-                d1_dict[msa[i][neighbor]] = d1_dict[msa[i][neighbor]] + weight_1[i]
+            if global_stuff.aa_to_num[msa[i][neighbor]] in d1_dict.keys():
+                d1_dict[global_stuff.aa_to_num[msa[i][neighbor]]] = d1_dict[global_stuff.aa_to_num[msa[i][neighbor]]] + weight_1[i]
             else:
-                d1_dict[msa[i][neighbor]] = weight_1[i]
+                d1_dict[global_stuff.aa_to_num[msa[i][neighbor]]] = weight_1[i]
 
             d2_weight += weight_2[i]
-            if msa[i][neighbor] in d2_dict.keys():
-                d2_dict[msa[i][neighbor]] = d2_dict[msa[i][neighbor]] + weight_2[i]
+            if global_stuff.aa_to_num[msa[i][neighbor]] in d2_dict.keys():
+                d2_dict[global_stuff.aa_to_num[msa[i][neighbor]]] = d2_dict[global_stuff.aa_to_num[msa[i][neighbor]]] + weight_2[i]
             else:
-                d2_dict[msa[i][neighbor]] = weight_2[i]
+                d2_dict[global_stuff.aa_to_num[msa[i][neighbor]]] = weight_2[i]
 
-    pseudo_count = 1.0 / len(msa)
+#    pseudo_count = 1.0 / len(msa)
     #pseudo_count = 1.0
-    all_keys = set(d1_dict.keys()) | set(d2_dict.keys())
-    for key in d1_dict.keys():
-        d2_dict[key] += pseudo_count
-        d2_weight += pseudo_count
+#    all_keys = set(d1_dict.keys()) | set(d2_dict.keys())
+#    for key in d1_dict.keys():
+#        d2_dict[key] += pseudo_count
+#        d2_weight += pseudo_count
 
 
     try:
@@ -943,7 +943,8 @@ class file_sender(object):
             print '\t\t\tsending:', here_file, there_file
             sftp.put(here_file, there_file)
             wrapper.record_transferred_file(object_key)
-        except:
+        except Exception, err:
+            print err
             print '\t\t\tfailed to send:', here_file, there_file
 
         try:
@@ -977,7 +978,7 @@ class file_sender(object):
         if dist_count > 0 or len(self.buildup) > self.buildup_size:
         #if len(self.buildup) > self.buildup_size:
             import FileLock
-
+            print "trying to send before lock: ", here_file
             with FileLock.FileLock(self.lock_file, timeout=2) as lock:
                 for it in self.buildup:
                     self.__send(it)
@@ -1015,7 +1016,7 @@ def filter_msa(msa, cut_off):
     for i in range(len(msa)):
         to_add = True
         candidate = new_msa[i]
-        print msa[i].id, msa[i].name
+
         if msa[i].id == 'QUERY':
             to_add = True
         else:

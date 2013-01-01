@@ -107,6 +107,7 @@ class wrapper(object):
     def __init__(self, maker, params = param({})):
 #        pdb.set_trace()
         maker, params = self.before_init(maker, params)
+        self.base_folder = global_stuff.base_folder
         self.other_init(maker, params)
         self.basic_init(maker, params)
 
@@ -310,7 +311,7 @@ class file_wrapper(wrapper):
         return global_stuff.BIN_FOLDER + str(id(self)) + '.backup'
 
     def get_holding_location(self):
-        return global_stuff.HOLDING_FOLDER + str(id(self))
+        return global_stuff.get_holding_folder() + str(id(self))
 
     def get_file_location(self, object_key):
 
@@ -322,7 +323,7 @@ class file_wrapper(wrapper):
         
     @print_stuff_dec
     def get_holding_folder(self):
-        return global_stuff.HOLDING_FOLDER
+        return global_stuff.get_holding_folder()
 
     
 # for now, assume source_wrapper instance is available.  if instance is available, that means it wasn't created yet, so wouldn't be in wrapper registry, so don't need to fetch it from there.  in the future, might separately create source instance first, in which case might instead pass in the parameters needed to fetch the param.  or could fetch the instance first externally, then pass to this __init__

@@ -15,33 +15,43 @@ import pdb
 
 cosmic_or_humvar = 'cosmic'
 
-#home = '/home/fw27/d/deleterious/'
-home = '/mnt/work/fultonw/deleterious/'
+real_home = '/home/fw27/d/deleterious/'
+#home = '/mnt/work/fultonw/deleterious/'
 #home = '/home/fw27/d/deleterious/'
 #home = '/mnt/work/fultonw/deleterious/'
-#base_folder = '../data/proteins/humvar_from_orchestra/'
-#base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
-#base_folder = '/mnt/work/fultonw/scratch/'
-base_folder = '/mnt/work/fultonw/scratch_cosmic/'
-#base_folder = '/home/fw27/d/deleterious/data/proteins/humvar_from_orchestra/'
-#base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
-#base_folder = '/home/fw27/d/deleterious/data/proteins/cosmic/'
+#real_base_folder = '../data/proteins/humvar_from_orchestra/'
+#real_base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
+#real_base_folder = '/mnt/work/fultonw/scratch/'
+#real_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
+#real_base_folder = '/home/fw27/d/deleterious/data/proteins/humvar_from_orchestra/'
+#real_base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
+real_base_folder = '/home/fw27/d/deleterious/data/proteins/cosmic/'
+temp_home = '/tmp/fw27/'
+temp_base_folder = temp_home + 'cosmic/'
 
+base_folder = real_base_folder
 
 def get_param():
     import param
-    p = param.param({'ev':.05, 'uniprot_id':'test', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':0, 'which_dist':2, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':1})
+    p = param.param({'ev':.05, 'uniprot_id':'A1BG', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':0, 'which_dist':2, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35})
     return p
 
+home = real_home
 
+def get_home():
+    global home
+    return home
 
+def get_holding_folder():
+    return get_home() + 'data/holding_folder/'
 
-BIN_FOLDER = home + 'data/bin/'
-HOLDING_FOLDER = home + 'data/holding_folder/'
-lock_folder = home + 'lock_folder/'
-process_folder = home + 'process_files/'
-polyphen_msa_directory = home + 'data/polyphen-2.2.2/precomputed/alignments/'
-data_folder = home + 'data/'
+BIN_FOLDER = real_home + 'data/bin/'
+HOLDING_FOLDER = get_home() + 'data/holding_folder/'
+lock_folder = real_home + 'lock_folder/'
+process_folder = real_home + 'process_files/'
+log_folder = real_home + 'dump/'
+polyphen_msa_directory = real_home + 'data/polyphen-2.2.2/precomputed/alignments/'
+data_folder = real_home + 'data/'
 
 
 # path to files

@@ -5,6 +5,7 @@ protein_list absolute path
 whether_to_send T or F
 whether_to_delete T or F
 whether_to_get_anything T or F
+whether_to_temp T or F
 optional: params followed by their values and type(i,f,s)
 """
 
@@ -17,9 +18,10 @@ import objects
 import sys
 
 import ssh
-
+import os
 import pdb
-
+import shutil
+import subprocess
 print  sys.argv
 
 which_job = int(sys.argv[1])
@@ -41,6 +43,11 @@ if sys.argv[6] == 'T':
     whether_to_get_anything = True
 else:
     whether_to_get_anything = False
+
+if sys.argv[7] == 'T':
+    whether_to_temp = True
+else:
+    whether_to_temp = False
 
 
 skip_file = None
@@ -74,8 +81,8 @@ to_skip = []
 
 # get param values.
 print sys.argv
-assert (len(sys.argv)-7)%3 == 0
-helper.parse_p_input(p, sys.argv[7:])
+assert (len(sys.argv)-8)%3 == 0
+helper.parse_p_input(p, sys.argv[8:])
 
 
 
@@ -86,13 +93,13 @@ def get(obj, p, gotten_stuff, used_ps, check = True):
     used_ps.add(p.get_copy())
     print 'starting: ', p.get_param('uniprot_id'), obj, which_job, total_jobs
     to_get = True
+    gotten_stuff.append([obj, p.get_copy()])
     if check:
-        gotten_stuff.append([obj, p.get_copy()])
+
         if wc.get_wrapper_instance(obj).has(p, False, True):
             to_get = False
     if to_get:
         global whether_to_get_anything
-        gotten_stuff.append([obj, p.get_copy()])
         if whether_to_get_anything:
             ans = wc.get_stuff(obj, p, False, False, False)
             print 'took: ', datetime.datetime.now() - past
@@ -100,7 +107,7 @@ def get(obj, p, gotten_stuff, used_ps, check = True):
             
             return ans
     else:
-        gotten_stuff.append([obj, p.get_copy()])
+
         print 'already have: ', p.get_param('uniprot_id'), obj
 
 import pdb
@@ -112,16 +119,20 @@ used_ps = set()
 
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
-to_gets = set([objects.general_msa, objects.general_seq_weights])
+to_gets = set([objects.general_distance, objects.neighbors_w_weight_w])
+
 #to_gets = set()
 
 #this is the stuff to delete right after one protein is processed
-to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.general_msa, objects.div_weights, objects.general_seq_weights]) - to_gets
+to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.aeW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.div_weights, objects.general_seq_weights, objects.MIP_input_msa, objects.MIP_input_msa_file, objects.MIP_distance_file, objects.MIP_distance, objects.bW])# - to_gets
 
 
 sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 0)
 
 protein_list_file = protein_list.split('/')[-1]
+
+
+
 
 log_file = global_stuff.process_folder + str(which_job) + '_' + str(total_jobs) + '_' + protein_list_file
 
@@ -145,8 +156,41 @@ for line in f:
 
         
         protein_name = line.strip()
+        p.set_param('uniprot_id',protein_name)
+
         
-        if protein_name not in to_skip:
+        
+        import wc
+        seq = wc.get_stuff(objects.dW,p)
+
+        print protein_name, len(seq)
+        
+        if len(seq) < 500:
+
+
+
+            if whether_to_temp:
+                global_stuff.home = global_stuff.temp_home
+                assert global_stuff.base_folder == global_stuff.real_base_folder
+
+                try:
+                    os.makedirs(global_stuff.temp_base_folder)
+                except:
+                    pass
+                try:
+                    os.makedirs(global_stuff.get_holding_folder())
+                except:
+                    pass
+                real_uniprot_folder = wc.get_wrapper_instance(objects.dW).get_folder(p)
+                global_stuff.base_folder = global_stuff.temp_base_folder
+                temp_uniprot_folder = wc.get_wrapper_instance(objects.dW).get_folder(p)
+                if os.path.isdir(temp_uniprot_folder):
+                    shutil.rmtree(temp_uniprot_folder)
+                mv_cmd = 'cp -r ' + real_uniprot_folder + ' ' + temp_uniprot_folder
+                subprocess.call(mv_cmd, shell=True, executable='/bin/bash')
+
+
+
 
             print 'hhhhhhhhhhhhhh', past
             g.write('started: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
@@ -157,16 +201,15 @@ for line in f:
 
             print '                        TRAVERSED:', i
 
-            p.set_param('uniprot_id',protein_name)
-
-            #seq = get(objects.dW, p, gotten_stuff, used_ps, False)
+            
 
             #print 'seq length: ', len(seq)
 
-            for which_weight in range(0,2):
-                p.set_param('which_weight',which_weight)
-
-                if 0 < 10000:
+            for which_filter_co in [0.2,0.35,0.5]:
+                for avg_deg in [1,2,3]:
+                    p.set_param('avg_deg', avg_deg)
+                    p.set_param('filter_co',which_filter_co)
+                    
                     import pdb
 
                     try:
@@ -176,9 +219,6 @@ for line in f:
 
                     except Exception, err:
                         print 'fail', protein_name, err
-                else:
-                    print 'skipping', protein_name
-
 
 
             g.write('finished: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
@@ -214,7 +254,7 @@ for line in f:
                         the_file = wc.get_wrapper_instance(to_delete).get_file_location(used_p)
                         try:
                             import subprocess
-                            print the_file
+                            #print the_file
                             if os.path.isfile(the_file):
                                 print '              blind removing:', the_file
                                 subprocess.call(['rm', the_file])
@@ -222,6 +262,20 @@ for line in f:
                         except Exception, err:
                             #print err
                             pass
+            if whether_to_temp:
+                #make copy of old folder, delete old folder, move temp folder, delete copy
+                real_uniprot_folder_copy = real_uniprot_folder[:-1] + '.backup'
+                if os.path.isdir(real_uniprot_folder_copy):
+                    subprocess.call('rm -r ' + real_uniprot_folder_copy, shell=True, executable='/bin/bash')
+                try:
+                    subprocess.call('mv ' + real_uniprot_folder + ' ' + real_uniprot_folder_copy, shell=True, executable='/bin/bash')
+                    shutil.move(temp_uniprot_folder, real_uniprot_folder[:-1])
+                    subprocess.call('rm -r ' + real_uniprot_folder_copy, shell=True, executable='/bin/ash')
+                except Exception, err:
+                    print Exception, err
+                    
+                global_stuff.base_folder = global_stuff.real_base_folder
+                global_stuff.home = global_stuff.real_home
         else:
             print 'skipping ', protein_name
     i += 1
