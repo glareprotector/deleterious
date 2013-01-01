@@ -13,7 +13,7 @@ import pdb
 
 
 
-cosmic_or_humvar = 'cosmic'
+cosmic_or_humvar = 'humvar'
 
 #home = '/home/fw27/d/deleterious/'
 home = '/mnt/work/fultonw/deleterious/'
@@ -31,6 +31,7 @@ base_folder = '/mnt/work/fultonw/scratch_cosmic/'
 def get_param():
     import param
     p = param.param({'ev':.05, 'uniprot_id':'test', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':0, 'which_dist':2, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':1})
+    
     return p
 
 
@@ -70,7 +71,7 @@ MIP_PATH = 'MIp_wrapper.pl'
 # random constants
 query_gi_number = '123456789123456789'
 proc_id = 0
-whether_to_look_at_whether_to_override = True
+whether_to_look_at_whether_to_override = False
 to_reindex = True
 recalculate = False
 recalculate_nodewise_loss_f = True

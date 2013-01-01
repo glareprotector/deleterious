@@ -112,7 +112,8 @@ used_ps = set()
 
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
-to_gets = set([objects.general_msa, objects.general_seq_weights])
+#to_gets = set([objects.general_msa, objects.general_seq_weights])
+to_gets = set([objects.dW])
 #to_gets = set()
 
 #this is the stuff to delete right after one protein is processed

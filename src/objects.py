@@ -69,7 +69,7 @@ class dW(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return asdf
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
 # blast results file wrapper(xml format)
 class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
@@ -417,6 +417,7 @@ class protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         neutral_file = global_stuff.base_folder + protein_name + '/' + 'all_mutations'
         mutations = []
         f = open(neutral_file)
+
         for line in f:
             if global_stuff.cosmic_or_humvar == 'humvar':
                 s = line.strip().split('\t')
@@ -727,6 +728,8 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
             if i % 100 == 0:
                 print i
             i += 1
+            if i == 200:
+                break
             protein_name = line.strip()
             self.set_param(params, 'uniprot_id', protein_name)
 
@@ -886,7 +889,7 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
 
-
+        pdb.set_trace()
         etr = self.get_var_or_file(edge_to_rank, params, recalculate, True, False, False)
 
         seq = self.get_var_or_file(dW, params, recalculate, True, False, False)
@@ -1282,34 +1285,40 @@ def get_mutation_info(protein_list_file, out_file, params):
 
 # outputs file.  could be roc file input, or other input.  one argument is function that assigns a number to each mutation.  the function determines the output
 def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f, norm_f, mut_to_num_f):
-
-    params.set_file('protein_list_file', protein_list_file)
-    l = wc.get_stuff(filtered_mutation_list_given_protein_list, params)
+    import wc
+    params.set_param('protein_list_file', protein_list_file)
+    l = wc.get_stuff(mutation_list_given_protein_list, params)
     i = 0
     scores = []
     labels = []
+    bad_count = 0
     for mutation in l:
         if i%100 == 0:
             print i
         i += 1
         try:
-            score = helper.predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f)
+
+            score = helper.predict_position_energy_weighted(params, False, mutation, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f)
             scores.append(score)
             labels.append(mut_to_num_f(mutation))
         except Exception, err:
             bad_count += 1
+            pdb.set_trace()
             print err, mutation, bad_count
 
+    pdb.set_trace()
+
     assert len(scores) == len(labels)
+    pdb.set_trace()
     normed_scores = norm_f(scores)
-    ans = [ [0 0] for i in range(len(scores))]
+    ans = [ [0, 0] for i in range(len(scores))]
     for i in range(len(scores)):
         ans[i][0] = normed_scores[i]
         ans[i][1] = labels[i]
 
     helper.write_mat(ans, out_file)
 
-def get_normalized_score_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f, which_norm):
+
     
     
 

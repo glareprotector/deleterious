@@ -283,6 +283,7 @@ def normalize_rank(scores):
     ans = [ 0 for i in range(len(temp))]
     for i in range(len(temp)):
         ans[sorted_temp[i][1]] = float(i) / len(temp)
+    pdb.set_trace()
     return ans
 
 
@@ -311,6 +312,7 @@ def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor
     seq = wc.get_stuff(objects.dW, params, recalculate, False, False)
 
     msa = wc.get_stuff(objects.general_msa, params, recalculate, False, False)
+
 
     score = 0
     
