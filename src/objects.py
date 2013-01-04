@@ -76,10 +76,10 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return set(['ev']) | bW.get_all_keys(params, self)
+        return set(['ev', 'which_blast']) | bW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
         #if the file size is too small, we know there was something wrong
         import os
         location = self.get_file_location(object_key)
@@ -95,7 +95,9 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
         print >> sys.stderr, 'RUNNING BLAST!!!!!!!'
         if self.get_param(params, 'which_blast') == 0:
-            psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'), num_iterations = 5)
+
+            psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'), num_iterations = self.get_param(params, 'psiblast_iter'))
+
         elif self.get_param(params, 'which_blast') == 1:
             #psi_blast_cline = global_stuff.BLASTP_PATH + 
             psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLASTP_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'))
@@ -118,9 +120,14 @@ class aeW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
         # parse blast xml file, then do processing
-
+        
         blast_xml_handle = self.get_var_or_file(adW, params, recalculate, False, False, False)
-        record = NCBIXML.read(blast_xml_handle)
+        if self.get_param(params, 'which_blast') == 1:
+            record = NCBIXML.read(blast_xml_handle)
+        elif self.get_param(params, 'which_blast') == 0:
+            records = NCBIXML.parse(blast_xml_handle)
+            iters = [x for x in records]
+            record = iters[-1]
         seen = set()
         seq_records = []
         # add the query sequence, and have a set so that only add each sequence once
@@ -167,6 +174,97 @@ class afW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
 
+class psicov_input_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return general_msa.get_all_keys(params, self)
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        msa = self.get_var_or_file(general_msa, params, False, False, False)
+        # first, find the query index
+        query_idx = None
+        for i in range(len(msa)):
+            if msa[i].name == 'QUERY':
+                query_idx = i
+                break
+        assert query_idx != None
+        f = open(self.get_holding_location(), 'w')
+        f.write(msa[query_idx].seq.tostring() + '\n')
+        for i in range(len(msa)):
+            if i != query_idx:
+                f.write(msa[i].seq.tostring() + '\n')
+        f.close()
+        return open(self.get_holding_location(), 'r')
+
+    def whether_to_override(self, object_key):
+        return True
+
+class psicov_output_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return psicov_input_file.get_all_keys(params, self)
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        separating_dist = self.get_param(params, 'psicov_sep')
+        gap_ignore = self.get_param(params, 'psicov_gap')
+        r = self.get_param(params, 'psicov_r')
+        input_file = self.get_var_or_file(psicov_input_file, params, False, False, False)
+        cmd = global_stuff.PSICOV_PATH + ' -p ' + ' -r ' + str(r) + ' -j ' + str(separating_dist) + ' -g ' + str(gap_ignore) + ' ' + '\''+input_file.name+'\'' + ' > ' + self.get_holding_location()
+        pdb.set_trace()
+        subprocess.call(cmd, shell=True, executable='/bin/bash')
+        return open(self.get_holding_location(), 'r')
+
+    def whether_to_override(self, object_key):
+        return True
+
+class psicov_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return psicov_output_file.get_all_keys(params, self)
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+
+        psicov_output = self.get_var_or_file(psicov_output_file, params, False, False, False)
+        f = open(psicov_output.name, 'r')
+        seq = self.get_var_or_file(dW, params, False, False, False)
+        dist = [ [0.0 for i in range(len(seq))] for j in range(len(seq))]
+        for line in f:
+            s = line.strip().split(' ')
+            i = int(s[0])
+            j = int(s[1])
+            val = float(s[4])
+            dist[i][j] = val
+            dist[j][i] = val
+        return dist
+
+
+    def whether_to_override(self, object_key):
+        return True
+
+class msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return general_msa.get_all_keys(params, self)
+
+    def whether_to_override(self, object_key):
+        return True
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        msa = self.get_var_or_file(general_msa, params, False, False, False)
+        f = open(self.get_holding_location(),'w')
+        for i in range(len(msa)):
+            f.write(msa[i].seq.tostring()+'\n')
+        f.close()
+        #AlignIO.write(msa, self.get_holding_location(), 'fasta')
+        return open(self.get_holding_location(),'r')
 
 class MIP_input_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -201,6 +299,7 @@ class MIP_input_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
                     else:
                         new_s += s[i]
 
+            assert new_s.count('X')==0
             if seq.name != 'QUERY':
                 the_id = seq.id
             else:
@@ -236,6 +335,7 @@ class MIP_distance_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+
         modified_alignment_file = self.get_var_or_file(MIP_input_msa_file, params, False, False, False)
         cmd = global_stuff.MIP_PATH + ' -i ' + '\'' + modified_alignment_file.name + '\'' + ' -o ' + self.get_holding_location() + ' -n ' + str(1) + ' -g ' + global_stuff.query_gi_number
         print >> sys.stderr, cmd
@@ -417,6 +517,7 @@ class protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         neutral_file = global_stuff.base_folder + protein_name + '/' + 'all_mutations'
         mutations = []
         f = open(neutral_file)
+
         for line in f:
             if global_stuff.cosmic_or_humvar == 'humvar':
                 s = line.strip().split('\t')
@@ -445,6 +546,8 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | mf_distance.get_all_keys(params, self)
         elif which_dist == 2:
             return keys | MIP_distance.get_all_keys(params, self)
+        elif which_dist == 3:
+            return keys | psicov_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
         return False
@@ -463,6 +566,8 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return ans
         elif which_dist == 2:
             return self.get_var_or_file(MIP_distance, params)
+        elif which_dist == 3:
+            return self.get_var_or_file(psicov_distance, params)
         
 
 class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
@@ -727,6 +832,7 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
             if i % 100 == 0:
                 print >> sys.stderr, i
             i += 1
+
             protein_name = line.strip()
             self.set_param(params, 'uniprot_id', protein_name)
 
@@ -753,7 +859,7 @@ class general_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return self.get_var_or_file(their_agW, params, False, False, False)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
 class div_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -958,6 +1064,8 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
 
 
 
+
+
 class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
 
     @classmethod
@@ -965,7 +1073,7 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
         return mutation_list_given_protein_list.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -987,12 +1095,14 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
         for mutation in all_mutations:
 
             protein_name = mutation[0]
+
             print >> sys.stderr, protein_name
+
             self.set_param(params, 'uniprot_id', protein_name)
 
             seq = self.get_var_or_file(dW, params, recalculate, False, False)
-            if len(seq) < 500000:
-                """
+
+            """
                 try:
                     neighbors = n_dict[protein_name]
                 except:
@@ -1004,8 +1114,8 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
                 except:
                     query = self.get_var_or_file(dW, params, recalculate, True, False)
                     q_dict[protein_name ] = query
-                """
-
+                    """
+            """
                 try:
                     neighbors = n_dict[protein_name]
                 except:
@@ -1018,15 +1128,26 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
                     msa = self.get_var_or_file(general_msa, params, recalculate, True, False)
                     m_dict[protein_name ] = msa
 
-                pos = mutation[1]
-                #print >> sys.stderr, pos, len(neighbors)
 
-                col = msa.get_column(pos)
-                #if col.count(mutation[3]) > 3 and col.count(mutation[2]) > 3 and len(neighbors[pos]) > 0 and len(msa) > 200:
-                if col.count(mutation[3]) > 0 and len(msa) > 200:
-                    print >> sys.stderr, 'added: ', protein_name
-                    filtered_mutations.append(mutation)
-                    num_add += 1
+                    """
+            if len(seq) < 500000:
+                neighbors = self.get_var_or_file(neighbors_w_weight_w, params, recalculate, True, False)
+                msa = self.get_var_or_file(general_msa, params, recalculate, True, False)
+
+                try:    
+                    pos = mutation[1]
+
+
+                    col = msa.get_column(pos)
+                
+                    if col.count(mutation[3]) > 5 and len(msa) > 200 and len(neighbors[pos])>0:
+                    #if True:
+                        #print 'added: ', protein_name
+                        filtered_mutations.append(mutation)
+                        num_add += 1
+                except Exception, err:
+                    print err
+
                 num += 1
                 if num % 50 == 0:
                     print >> sys.stderr, '                               ', num_add, num
@@ -1195,7 +1316,7 @@ def get_mutation_info(protein_list_file, out_file, params):
 
     f = open(out_file, 'w')
 
-    avg_degs = [3]
+    avg_degs = [2]
     
     i = 0
     for mutation in l:
@@ -1267,7 +1388,10 @@ def get_mutation_info(protein_list_file, out_file, params):
         if i % 50 == 0:
             print >> sys.stderr, get_name(), i
         i += 1
-        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_wild_category_num, get_mut_category_num, get_is_same_cat, get_cosmic_info, get_msa_length]
+        if global_stuff.cosmic_or_humvar == 'cosmic':
+            which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_deg, get_cosmic_info, get_msa_length]
+        elif global_stuff.cosmic_or_humvar == 'humvar':
+            which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_deg, get_whether_bad, get_msa_length]
         try:
             for which in which_info:
                 info = info + which()
@@ -1281,26 +1405,37 @@ def get_mutation_info(protein_list_file, out_file, params):
     f.close()
 
 # outputs file.  could be roc file input, or other input.  one argument is function that assigns a number to each mutation.  the function determines the output
-def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f, norm_f, mut_to_num_f):
-
-    params.set_file('protein_list_file', protein_list_file)
+def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f, norm_f, mut_to_num_f):
+    import wc
+    params.set_param('protein_list_file', protein_list_file)
     l = wc.get_stuff(filtered_mutation_list_given_protein_list, params)
     i = 0
     scores = []
     labels = []
+    bad_count = 0
+
     for mutation in l:
-        if i%100 == 0:
-            print >> sys.stderr, i
+
+        if i%1 == 0:
+            print i, 'calculating'
+
+
         i += 1
         try:
-            score = helper.predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f)
+
+            score = helper.predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f)
             scores.append(score)
             labels.append(mut_to_num_f(mutation))
         except Exception, err:
             bad_count += 1
+            pdb.set_trace()
             print >> sys.stderr, err, mutation, bad_count
 
+
+
+
     assert len(scores) == len(labels)
+
     normed_scores = norm_f(scores)
     ans = [ [0, 0] for i in range(len(scores))]
     for i in range(len(scores)):
@@ -1308,6 +1443,7 @@ def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_po
         ans[i][1] = labels[i]
 
     helper.write_mat(ans, out_file)
+
 
     
     

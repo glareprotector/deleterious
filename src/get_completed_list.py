@@ -25,9 +25,10 @@ completed = []
 import objects
 
 #to_check_for = [objects.general_distance, objects.general_msa, objects.neighbors_w_weight_w]
+#to_check_for = [objects.neighbors_w_weight_w]
 to_check_for = [objects.general_msa]
 
-
+global_stuff.whether_to_look_at_whether_to_override = False
 
 import wc
 i = 0
@@ -41,11 +42,12 @@ for line in f:
 
     ok = True
     for obj in to_check_for:
+        for filter_co in [0.35]:
+            p.set_param('filter_co', filter_co)
+            inst = wc.get_wrapper_instance(obj)
 
-        inst = wc.get_wrapper_instance(obj)
-
-        if not inst.has(p, False):
-            ok = False
+            if not inst.has(p, False):
+                ok = False
             
 
     if ok:

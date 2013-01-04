@@ -99,6 +99,7 @@ def get(obj, p, gotten_stuff, used_ps, check = True):
     used_ps.add(p.get_copy())
     print >> sys.stderr, 'starting: ', p.get_param('uniprot_id'), obj, which_job, total_jobs
     to_get = True
+
     gotten_stuff.append([obj, p.get_copy()])
     if check:
 
@@ -109,6 +110,7 @@ def get(obj, p, gotten_stuff, used_ps, check = True):
         if whether_to_get_anything:
             if not wc.get_wrapper_instance(obj).has(p, False, check):
                 ans = wc.get_stuff(obj, p, False, False, False)
+
                 print >> sys.stderr, 'took: ', datetime.datetime.now() - past
                 past = datetime.datetime.now()
             
@@ -116,6 +118,7 @@ def get(obj, p, gotten_stuff, used_ps, check = True):
 
 
     print >> sys.stderr, 'already have: ', p.get_param('uniprot_id'), obj
+
 
 import pdb
 
@@ -125,11 +128,10 @@ import pdb
 used_ps = set()
 
 #this is the stuff to send over.  delete these when u send them over
-#to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
-#to_gets = set([objects.neighbors_w_weight_w])
-to_gets = set([objects.general_msa])
+to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
 
-to_blind_sends = set([objects.general_msa, objects.general_distance])
+to_blind_sends = set([objects.general_msa, objects.general_distance, objects.neighbors_w_weight_w])
+
 
 #to_gets = set()
 
@@ -181,6 +183,7 @@ for line in f:
 
 
 
+
             if whether_to_temp:
                 global_stuff.home = global_stuff.temp_home
                 assert global_stuff.base_folder == global_stuff.real_base_folder
@@ -218,7 +221,8 @@ for line in f:
             #print >> sys.stderr, 'seq length: ', len(seq)
 
             for which_filter_co in [0.2]:
-                for avg_deg in [1]:
+                for avg_deg in [1,2,3,4,5,6,7,8]:
+
                     p.set_param('avg_deg', avg_deg)
                     p.set_param('filter_co',which_filter_co)
                     
