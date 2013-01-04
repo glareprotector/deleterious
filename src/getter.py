@@ -6,6 +6,7 @@ whether_to_send T or F
 whether_to_delete T or F
 whether_to_get_anything T or F
 whether_to_temp T or F
+whether_to_check_remote T or F
 optional: params followed by their values and type(i,f,s)
 """
 
@@ -49,6 +50,10 @@ if sys.argv[7] == 'T':
 else:
     whether_to_temp = False
 
+if sys.argv[8] == 'T':
+    whether_to_check_remote = True
+else:
+    whether_to_check_remote = False
 
 skip_file = None
 
@@ -58,12 +63,12 @@ hostname = 'ent.csail.mit.edu'
 port = 22
 
 #remote_folder = '/mnt/work/fw27/deleterious/deleterious/data/proteins/humvar/'
-remote_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
-
+#remote_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
+#remote_base_folder = '/mnt/work/fultonw/scratch/'
 
 f = open(protein_list, 'r')
 
-print 'starting', which_job, total_jobs
+print >> sys.stderr, 'starting', which_job, total_jobs
 
 
 
@@ -80,18 +85,19 @@ to_skip = []
 
 
 # get param values.
-print sys.argv
-assert (len(sys.argv)-8)%3 == 0
-helper.parse_p_input(p, sys.argv[8:])
+print >> sys.stderr, sys.argv
+assert (len(sys.argv)-9)%3 == 0
+helper.parse_p_input(p, sys.argv[9:])
 
 
 
 past = datetime.datetime.now()
 
 def get(obj, p, gotten_stuff, used_ps, check = True):
+
     global past
     used_ps.add(p.get_copy())
-    print 'starting: ', p.get_param('uniprot_id'), obj, which_job, total_jobs
+    print >> sys.stderr, 'starting: ', p.get_param('uniprot_id'), obj, which_job, total_jobs
     to_get = True
     gotten_stuff.append([obj, p.get_copy()])
     if check:
@@ -101,14 +107,15 @@ def get(obj, p, gotten_stuff, used_ps, check = True):
     if to_get:
         global whether_to_get_anything
         if whether_to_get_anything:
-            ans = wc.get_stuff(obj, p, False, False, False)
-            print 'took: ', datetime.datetime.now() - past
-            past = datetime.datetime.now()
+            if not wc.get_wrapper_instance(obj).has(p, False, check):
+                ans = wc.get_stuff(obj, p, False, False, False)
+                print >> sys.stderr, 'took: ', datetime.datetime.now() - past
+                past = datetime.datetime.now()
             
-            return ans
-    else:
+                return ans
 
-        print 'already have: ', p.get_param('uniprot_id'), obj
+
+    print >> sys.stderr, 'already have: ', p.get_param('uniprot_id'), obj
 
 import pdb
 
@@ -119,7 +126,10 @@ used_ps = set()
 
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_distance, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.general_msa])
-to_gets = set([objects.general_distance, objects.neighbors_w_weight_w])
+#to_gets = set([objects.neighbors_w_weight_w])
+to_gets = set([objects.general_msa])
+
+to_blind_sends = set([objects.general_msa, objects.general_distance])
 
 #to_gets = set()
 
@@ -139,7 +149,7 @@ log_file = global_stuff.process_folder + str(which_job) + '_' + str(total_jobs) 
 import datetime
 past = (datetime.datetime.now())
 past2 = (datetime.datetime.now())
-print 'ggggggggggg', past
+print >> sys.stderr, 'ggggggggggg', past
 g = open(log_file,'w')
 
 f2 = open(protein_list, 'r')
@@ -161,11 +171,13 @@ for line in f:
         
         
         import wc
+        import pdb
+
         seq = wc.get_stuff(objects.dW,p)
 
-        print protein_name, len(seq)
+        print >> sys.stderr, protein_name, len(seq)
         
-        if len(seq) < 500:
+        if len(seq) < 6000:
 
 
 
@@ -192,21 +204,21 @@ for line in f:
 
 
 
-            print 'hhhhhhhhhhhhhh', past
+            print >> sys.stderr, 'hhhhhhhhhhhhhh', past
             g.write('started: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
             past2  = datetime.datetime.now()
 
             g.flush()
             
 
-            print '                        TRAVERSED:', i
+            print >> sys.stderr, '                        TRAVERSED:', i
 
             
 
-            #print 'seq length: ', len(seq)
+            #print >> sys.stderr, 'seq length: ', len(seq)
 
-            for which_filter_co in [0.2,0.35,0.5]:
-                for avg_deg in [1,2,3]:
+            for which_filter_co in [0.2]:
+                for avg_deg in [1]:
                     p.set_param('avg_deg', avg_deg)
                     p.set_param('filter_co',which_filter_co)
                     
@@ -218,7 +230,7 @@ for line in f:
                             get(to_get, p, gotten_stuff, used_ps)
 
                     except Exception, err:
-                        print 'fail', protein_name, err
+                        print >> sys.stderr, 'fail', protein_name, err
 
 
             g.write('finished: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
@@ -229,16 +241,25 @@ for line in f:
 
                 # move stuff to ent
                 # first try to create the folder
-                there_folder = remote_base_folder + protein_name + '/'
+                there_folder = global_stuff.remote_base_folder + protein_name + '/'
 
+
+                # also try sending other stuff if it's there
+                copy = []
                 for gotten in gotten_stuff:
+                    copy.append(gotten)
+                    for to_blind_send in to_blind_sends:
+                        copy.append([to_blind_send, gotten[1]])
+
+
+                for gotten in copy:
                     try:
 
                         obj = gotten[0]
                         p_used = gotten[1]
                         instance = wc.get_wrapper_instance(obj)
                         here_file = instance.get_file_location(p_used)
-                        there_folder = remote_base_folder + p_used.get_param('uniprot_id') + '/'
+                        there_folder = global_stuff.remote_base_folder + p_used.get_param('uniprot_id') + '/'
                         file_name = instance.get_file_name(p_used)
                         there_file = there_folder + file_name
                         import pdb
@@ -254,13 +275,13 @@ for line in f:
                         the_file = wc.get_wrapper_instance(to_delete).get_file_location(used_p)
                         try:
                             import subprocess
-                            #print the_file
+                            #print >> sys.stderr, the_file
                             if os.path.isfile(the_file):
-                                print '              blind removing:', the_file
+                                print >> sys.stderr, '              blind removing:', the_file
                                 subprocess.call(['rm', the_file])
 
                         except Exception, err:
-                            #print err
+                            #print >> sys.stderr, err
                             pass
             if whether_to_temp:
                 #make copy of old folder, delete old folder, move temp folder, delete copy
@@ -272,13 +293,13 @@ for line in f:
                     shutil.move(temp_uniprot_folder, real_uniprot_folder[:-1])
                     subprocess.call('rm -r ' + real_uniprot_folder_copy, shell=True, executable='/bin/ash')
                 except Exception, err:
-                    print Exception, err
+                    print >> sys.stderr, Exception, err
                     
                 global_stuff.base_folder = global_stuff.real_base_folder
                 global_stuff.home = global_stuff.real_home
         else:
-            print 'skipping ', protein_name
+            print >> sys.stderr, 'skipping ', protein_name
     i += 1
 
-print 'ending', which_job, total_jobs
+print >> sys.stderr, 'ending', which_job, total_jobs
         

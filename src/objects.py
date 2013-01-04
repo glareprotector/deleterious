@@ -32,7 +32,7 @@ import re
 
 import global_stuff
 
-
+import sys
 
 class bW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -93,15 +93,15 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         query = SeqIO.parse(f, 'fasta')
         seq_records.append(query)
 
-        print 'RUNNING BLAST!!!!!!!'
+        print >> sys.stderr, 'RUNNING BLAST!!!!!!!'
         if self.get_param(params, 'which_blast') == 0:
-            psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'))
+            psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'), num_iterations = 5)
         elif self.get_param(params, 'which_blast') == 1:
             #psi_blast_cline = global_stuff.BLASTP_PATH + 
             psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLASTP_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'))
         #psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', out = self.get_holding_location())
         #pdb.set_trace()
-        print psi_blast_cline
+        print >> sys.stderr, psi_blast_cline
         subprocess.call(str(psi_blast_cline), shell=True, executable='/bin/bash')
 
         return open(self.get_holding_location())
@@ -143,7 +143,7 @@ class aeW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         # write hits to fasta file
         output_handle = open(self.get_holding_location(), 'w')
         SeqIO.write(seq_records, output_handle, 'fasta')
-        print 'WROTE ', self.get_holding_location()
+        print >> sys.stderr, 'WROTE ', self.get_holding_location()
 
         return output_handle
 
@@ -238,7 +238,7 @@ class MIP_distance_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
         modified_alignment_file = self.get_var_or_file(MIP_input_msa_file, params, False, False, False)
         cmd = global_stuff.MIP_PATH + ' -i ' + '\'' + modified_alignment_file.name + '\'' + ' -o ' + self.get_holding_location() + ' -n ' + str(1) + ' -g ' + global_stuff.query_gi_number
-        print cmd
+        print >> sys.stderr, cmd
         subprocess.call(cmd, shell=True, executable='/bin/bash')
         subprocess.call('mv ' + self.get_holding_location() + '_MIp.txt ' + self.get_holding_location(), shell=True, executable='/bin/bash')
         subprocess.call('rm ' + self.get_holding_location() + '_count.txt', shell=True, executable='/bin/bash')
@@ -295,7 +295,7 @@ class agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         i = 0
 
         while msa[idx,i] == '-':
-            #print msa[idx,i]
+            #print >> sys.stderr, msa[idx,i]
             i = i + 1
             #pdb.set_trace()
 
@@ -304,7 +304,7 @@ class agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
         for k in range(i+1, msa.get_alignment_length()):
             if msa[idx,k] != '-':
-                #print k
+                #print >> sys.stderr, k
                 to_return = to_return + msa[:,k:(k+1)]
 
         return to_return
@@ -348,7 +348,7 @@ class easy_to_read_msa_format(wrapper.file_wrapper, wrapper.by_uniprot_id_wrappe
             to_write = ''
             for j in range(msa.get_alignment_length()):
                 to_write = to_write + msa[i,j]
-            #print len(to_write), to_write
+            #print >> sys.stderr, len(to_write), to_write
             f.write(to_write + '\n')
         return f
 
@@ -369,7 +369,7 @@ class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
         msa = self.get_var_or_file(general_msa, params, False, True, False, False)
-        print 'length: ', msa.get_alignment_length(), len(msa)
+        print >> sys.stderr, 'length: ', msa.get_alignment_length(), len(msa)
         import pdb
         import datetime
         start = datetime.datetime.now()
@@ -381,7 +381,7 @@ class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
 
-        print datetime.datetime.now() - start
+        print >> sys.stderr, datetime.datetime.now() - start
 
         for i in range(msa.get_alignment_length()):
             for j in range(msa.get_alignment_length()):
@@ -398,7 +398,7 @@ class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                 dists[i][j] = helper.get_KL_fast_alt(new_msa, i, j, global_stuff.aa_to_num, weights)
                 dists[j][i] = dists[i][j]
         end = datetime.datetime.now()
-        print 'calc: ', end - start
+        print >> sys.stderr, 'calc: ', end - start
         return dists
 
 # right now, only know how to read/write float mats, so make this a regular wrapper
@@ -428,7 +428,7 @@ class protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
                 elif global_stuff.cosmic_or_humvar == 'cosmic':
                     mutations.append([protein_name, int(s[1])-1, s[2], s[3], int(s[4]), int(s[5]), int(s[6])])
             except Exception, err:
-                print err
+                print >> sys.stderr, err
 
 
         return mutations
@@ -447,7 +447,7 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | MIP_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -486,19 +486,19 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
         C = numpy.matrix(numpy.zeros(((q-1)*msa.get_alignment_length(),(q-1)*msa.get_alignment_length())),copy=False,dtype=numpy.float32)
 
-        print 'C size: ', C.size
+        print >> sys.stderr, 'C size: ', C.size
 
 
         directed = numpy.zeros((msa.get_alignment_length(), q, msa.get_alignment_length(), q),dtype=numpy.float32)
 
-        print 'directed_size: ', directed.size
+        print >> sys.stderr, 'directed_size: ', directed.size
 
 
 
         import datetime
         past=datetime.datetime.now()
 
-        print '                   STARTING MF ', params.get_param('uniprot_id')
+        print >> sys.stderr, '                   STARTING MF ', params.get_param('uniprot_id')
 
 
 
@@ -585,13 +585,13 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
         C += .0000000005 * numpy.identity(C.shape[0])
 
-        print '                           STARTING INVERSION', datetime.datetime.now() - past
+        print >> sys.stderr, '                           STARTING INVERSION', datetime.datetime.now() - past
         past = datetime.datetime.now()
 
         E = C.I
         pdb.set_trace()
 
-        print '                           FINISHED INVERSION', datetime.datetime.now() - past
+        print >> sys.stderr, '                           FINISHED INVERSION', datetime.datetime.now() - past
         past = datetime.datetime.now()
 
 
@@ -617,7 +617,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                         for l in range(q-1):
                             if i == 56 and j == 14 and k == 55:
                                 #pdb.set_trace()
-                                print '              b ', get_E(E,i,j,k,l), 'a', node_counts[k,l],i,j,k,l
+                                print >> sys.stderr, '              b ', get_E(E,i,j,k,l), 'a', node_counts[k,l],i,j,k,l
                             temp -= get_E(E,i,j,k,l) * node_counts[k,l]
                 h_node[i,j] = temp
                 mean += temp
@@ -642,11 +642,11 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                         try:
                             temp = get_E(E,i,k,j,l) + get_H(h_node,i,k) + get_H(h_node,j,l)
                             if i == 56 and j == 55 and k == 14:
-                                print 'c', get_E(E,i,k,j,l) , get_H(h_node,i,k) , get_H(h_node,j,l)
+                                print >> sys.stderr, 'c', get_E(E,i,k,j,l) , get_H(h_node,i,k) , get_H(h_node,j,l)
                             directed[i,k,j,l] = temp
                         except:
                             assert False
-                            print temp
+                            print >> sys.stderr, temp
                         if total == 0:
                             try:
                                 total = temp
@@ -661,10 +661,10 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
                 for k in range(q):
                     for l in range(q):
 
-                        #print directed[i,j,k,l], total
+                        #print >> sys.stderr, directed[i,j,k,l], total
                         if directed[i,k,j,l] > total:
                             #pdb.set_trace()
-                            #print directed[i,j,k,l], total, 'bad'
+                            #print >> sys.stderr, directed[i,j,k,l], total, 'bad'
                             pass
                         directed[i,k,j,l] = math.exp(directed[i,k,j,l] - total)
 
@@ -696,7 +696,7 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
                 dist[i][j] = val
 
-        print '                           FINISHED EVERYTHING', datetime.datetime.now() - past
+        print >> sys.stderr, '                           FINISHED EVERYTHING', datetime.datetime.now() - past
         past = datetime.datetime.now()
         pdb.set_trace()
         return dist
@@ -725,7 +725,7 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
         i = 0
         for line in f:
             if i % 100 == 0:
-                print i
+                print >> sys.stderr, i
             i += 1
             protein_name = line.strip()
             self.set_param(params, 'uniprot_id', protein_name)
@@ -803,11 +803,11 @@ class edge_to_rank(wrapper.edge_to_int_obj_wrapper, wrapper.by_uniprot_id_wrappe
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
 
-        print "beginning edge_to_rank ", params.get_param('uniprot_id')
+        print >> sys.stderr, "beginning edge_to_rank ", params.get_param('uniprot_id')
 
         dists = self.get_var_or_file(general_distance, params, recalculate, True, False, False)
 
-        print 'got dists: ', len(dists)
+        print >> sys.stderr, 'got dists: ', len(dists)
 
         
         the_dict = {}
@@ -823,7 +823,7 @@ class edge_to_rank(wrapper.edge_to_int_obj_wrapper, wrapper.by_uniprot_id_wrappe
             the_dict[elt[0]] = i
             i += 1
 
-        print 'finish etr'
+        print >> sys.stderr, 'finish etr'
 
         return the_dict
 
@@ -841,14 +841,14 @@ class neighbors_w(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
         seq = self.get_var_or_file(dW, params, recalculate, True, False, False)
 
-        print 'start to retrieve dists'
+        print >> sys.stderr, 'start to retrieve dists'
         dists = self.get_var_or_file(pairwise_dist, params, recalculate, True, False, False)
-        print 'finish to retrieve dists'
+        print >> sys.stderr, 'finish to retrieve dists'
         length = len(seq)
         avg_deg = self.get_param(params, 'avg_deg')
         edges = []
 
-        print 'start neighbor'
+        print >> sys.stderr, 'start neighbor'
 
         rank_cutoff = ((length * 1.0) * avg_deg)
         #pdb.set_trace()
@@ -868,7 +868,7 @@ class neighbors_w(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
                     """
         #pdb.set_trace()
 
-        print 'end neighbor'
+        print >> sys.stderr, 'end neighbor'
 
         
         return edges
@@ -881,7 +881,7 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
         return keys | edge_to_rank.get_all_keys(params, self) | dW.get_all_keys(params, self) | general_msa.get_all_keys(params, self) | dW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -891,14 +891,14 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
 
         seq = self.get_var_or_file(dW, params, recalculate, True, False, False)
 
-        print 'start to retrieve dists'
+        print >> sys.stderr, 'start to retrieve dists'
         dists = self.get_var_or_file(general_distance, params, recalculate, True, False, False)
-        print 'finish to retrieve dists'
+        print >> sys.stderr, 'finish to retrieve dists'
         length = len(seq)
         avg_deg = self.get_param(params, 'avg_deg')
         edges = []
 
-        print 'start neighbor'
+        print >> sys.stderr, 'start neighbor'
 
         rank_cutoff = ((length * 1.0) * avg_deg)
 
@@ -950,7 +950,7 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
                     """
         #pdb.set_trace()
 
-        print 'end neighbor'
+        print >> sys.stderr, 'end neighbor'
 
         
         return edges
@@ -987,7 +987,7 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
         for mutation in all_mutations:
 
             protein_name = mutation[0]
-            print protein_name
+            print >> sys.stderr, protein_name
             self.set_param(params, 'uniprot_id', protein_name)
 
             seq = self.get_var_or_file(dW, params, recalculate, False, False)
@@ -1019,26 +1019,26 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
                     m_dict[protein_name ] = msa
 
                 pos = mutation[1]
-                #print pos, len(neighbors)
+                #print >> sys.stderr, pos, len(neighbors)
 
                 col = msa.get_column(pos)
                 #if col.count(mutation[3]) > 3 and col.count(mutation[2]) > 3 and len(neighbors[pos]) > 0 and len(msa) > 200:
                 if col.count(mutation[3]) > 0 and len(msa) > 200:
-                    print 'added: ', protein_name
+                    print >> sys.stderr, 'added: ', protein_name
                     filtered_mutations.append(mutation)
                     num_add += 1
                 num += 1
                 if num % 50 == 0:
-                    print '                               ', num_add, num
+                    print >> sys.stderr, '                               ', num_add, num
 
                 """
                 filtered_column = helper.filter_msa_based_on_pos_neighbors_and_query(query, pos, msa, neighbors[pos])
 
-                print '       ', len(neighbors[pos]), len(filtered_column), neighbor_cutoff, filter_cutoff
+                print >> sys.stderr, '       ', len(neighbors[pos]), len(filtered_column), neighbor_cutoff, filter_cutoff
 
                 if len(neighbors[pos]) > neighbor_cutoff and len(filtered_column) > filter_cutoff:
                     filtered_mutations.append(mutation)
-                    print '                                   YES'
+                    print >> sys.stderr, '                                   YES'
                 """
 
 
@@ -1052,7 +1052,7 @@ def get_protein_info(protein_list, info_file, params):
     i = 0
     for line in f:
         name = line.strip()
-        print name,i
+        print >> sys.stderr, name,i
         i += 1
         try:
             params.set_param('uniprot_id', name)
@@ -1098,7 +1098,7 @@ def get_protein_info(protein_list, info_file, params):
             
         except:
 
-            print 'fail'
+            print >> sys.stderr, 'fail'
     f.close()
     g.close()
 
@@ -1114,7 +1114,7 @@ def get_every_site_info(params, protein_list, dist_file):
 
     for line in h:
         protein_name = line.strip()
-        print protein_name, k
+        print >> sys.stderr, protein_name, k
         k += 1
         params.set_param('uniprot_id', protein_name)
         #params.set_param('which_dist', 0)
@@ -1181,7 +1181,7 @@ def get_overlap(params, protein_list, out_file):
         params.set_param('which_dist', 1)
         n2 = wc.get_stuff(neighbors_w_weight_w, params, False, False, False)
 
-        print helper.get_overlap(n1,n2)
+        print >> sys.stderr, helper.get_overlap(n1,n2)
 
     
 
@@ -1265,7 +1265,7 @@ def get_mutation_info(protein_list_file, out_file, params):
 
         info = []
         if i % 50 == 0:
-            print get_name(), i
+            print >> sys.stderr, get_name(), i
         i += 1
         which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_wild_category_num, get_mut_category_num, get_is_same_cat, get_cosmic_info, get_msa_length]
         try:
@@ -1274,7 +1274,7 @@ def get_mutation_info(protein_list_file, out_file, params):
             
             f.write(string.join(info,sep=',') + '\n')
         except Exception, err:
-            print err
+            print >> sys.stderr, err
             pass
         
 
@@ -1290,7 +1290,7 @@ def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_po
     labels = []
     for mutation in l:
         if i%100 == 0:
-            print i
+            print >> sys.stderr, i
         i += 1
         try:
             score = helper.predict_position_energy_weighted(params, recalculate, mutation, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f)
@@ -1298,18 +1298,17 @@ def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_po
             labels.append(mut_to_num_f(mutation))
         except Exception, err:
             bad_count += 1
-            print err, mutation, bad_count
+            print >> sys.stderr, err, mutation, bad_count
 
     assert len(scores) == len(labels)
     normed_scores = norm_f(scores)
-    ans = [ [0 0] for i in range(len(scores))]
+    ans = [ [0, 0] for i in range(len(scores))]
     for i in range(len(scores)):
         ans[i][0] = normed_scores[i]
         ans[i][1] = labels[i]
 
     helper.write_mat(ans, out_file)
 
-def get_normalized_score_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighbors, weighted, num_trials, pseudo_total, sim_f, which_norm):
     
     
 
@@ -1327,7 +1326,7 @@ def get_roc_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighb
     bad_count = 0
     for mutation in l:
         if i % 100 == 0:
-            print '      ', i
+            print >> sys.stderr, '      ', i
 
 
         i += 1
@@ -1336,7 +1335,7 @@ def get_roc_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighb
             ans.append([score, mutation[4]])
         except Exception, err:
             bad_count += 1
-            print 'failed to get score', err, bad_count
+            print >> sys.stderr, 'failed to get score', err, bad_count
 
     helper.write_mat(ans, out_file)
 

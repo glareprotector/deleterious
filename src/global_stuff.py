@@ -23,17 +23,19 @@ real_home = '/home/fw27/d/deleterious/'
 #real_base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
 #real_base_folder = '/mnt/work/fultonw/scratch/'
 #real_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
-#real_base_folder = '/home/fw27/d/deleterious/data/proteins/humvar_from_orchestra/'
-#real_base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
 real_base_folder = '/home/fw27/d/deleterious/data/proteins/cosmic/'
+#real_base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
+#real_base_folder = '/home/fw27/d/deleterious/data/proteins/humvar_from_orchestra/'
 temp_home = '/tmp/fw27/'
 temp_base_folder = temp_home + 'cosmic/'
+
+remote_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
 
 base_folder = real_base_folder
 
 def get_param():
     import param
-    p = param.param({'ev':.05, 'uniprot_id':'A1BG', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':0, 'which_dist':2, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35})
+    p = param.param({'ev':.05, 'uniprot_id':'A1BG', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':0, 'which_dist':2, 'pseudo_c':0.1, 'which_blast':0, 'blmax':999999, 'which_impute':0, 'filter_co':0.35})
     return p
 
 home = real_home
@@ -67,7 +69,7 @@ cosmic_raw_data_folder = data_folder + 'fasta/'
 
 # path to programs
 MUSCLE_PATH = '/home/fw27/d/deleterious/muscle3.8.31_i86linux64'
-BLAST_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/psiblast'
+#BLAST_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/psiblast'
 BLAST_PATH = '/home/fw27/d/deleterious/bin/psiblast'
 #BLASTP_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/blastp'
 BLASTP_PATH = '/home/fw27/d/deleterious/bin/blastp'

@@ -9,7 +9,7 @@ import global_stuff
 import pdb
 import param
 import random
-
+import sys
 from Bio.Align import MultipleSeqAlignment
 
 # also sets global_stuff.RESULTS_FOLDER to proper value
@@ -24,7 +24,7 @@ def read_param(file_location):
     global_stuff.RESULTS_FOLDER = global_stuff.RESULTS_BASE_FOLDER + folder_name + '/'
 
     for line in f.readlines():
-        print line
+        print >> sys.stderr, line
         if line[0] != '#':
             s = line.strip().split(',')
             if s[0] != 'hp':
@@ -197,7 +197,7 @@ def predict_position_energy(params, recalculate, mutation, use_neighbor, ignore_
         except:
             pdb.set_trace()
             x=2
-        print score
+        print >> sys.stderr, score
     if col.count(mut_res) == 0:
             return -1.0 * score
     
@@ -411,7 +411,7 @@ def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor
             random_scores.append(a_random_score)
         """
         ans = rank(random_scores, actual_neighbor_score)
-        print ans
+        print >> sys.stderr, ans
         return ans
         """
 
@@ -438,7 +438,7 @@ def predict_position_energy_weighted(params, recalculate, mutation, use_neighbor
 #            if actual_score > score:
 #                x += 1
 #        neighbor_score = float(x) / num_trials
-        print neighbor_score, len(msa)
+        print >> sys.stderr, neighbor_score, len(msa)
 
         return score - neighbor_score
 
@@ -592,7 +592,7 @@ def get_KL(d1, d2):
     d2d = {}
     d1d2d = {}
     assert len(d1) == len(d2)
-    #print len(d1)
+    #print >> sys.stderr, len(d1)
     for i in range(len(d1)):
         if d1[i] in d1d:
             d1d[d1[i]] += 1.0 / len(d1)
@@ -722,7 +722,7 @@ def get_KL_weighted(msa, weight_1, weight_2, neighbor, pseudo_count_dict):
             if d1_dict[k] > 0:
                 ans += d1_dict[k] * math.log(d1_dict[k] / d2_dict[k])
     except:
-        print d1_dict[k], d2_dict[k], k
+        print >> sys.stderr, d1_dict[k], d2_dict[k], k
         pdb.set_trace()
         x=2
     return ans
@@ -739,9 +739,9 @@ def physical_distance(x):
 def print_stuff_dec(f):
 
     def g(*args, **kwargs):
-        #print 'calling ', f.func_name, ' with ', args, kwargs
+        #print >> sys.stderr, 'calling ', f.func_name, ' with ', args, kwargs
         ans = f(*args, **kwargs)
-        #print f.func_name, ' returned ', ans
+        #print >> sys.stderr, f.func_name, ' returned ', ans
         return ans
     
     return g
@@ -775,7 +775,7 @@ def list_union(a, b):
 
 def write_mat(mat, f_name, the_sep = ',', option = 'w'):
     f = open(f_name, option)
-    #print mat
+    #print >> sys.stderr, mat
     for row in mat:
         
         line = string.join([('%.5f' % x)  for x in row], sep=the_sep)
@@ -785,7 +785,7 @@ def write_mat(mat, f_name, the_sep = ',', option = 'w'):
 
 def write_mat_raw(mat, f_name, the_sep = ',', option = 'w'):
     f = open(f_name, option)
-    #print mat
+    #print >> sys.stderr, mat
     for row in mat:
         
         line = string.join([str(x)  for x in row], sep=the_sep)
@@ -811,9 +811,9 @@ def read_mat_to_int_float_tuple(f):
                     b = float(spp[1])
                     this.append((a,b))
             except Exception, err:
-                print err
+                print >> sys.stderr, err
                 pdb.set_trace()
-                print s
+                print >> sys.stderr, s
                 
         ans.append(this)
     return ans
@@ -914,7 +914,7 @@ def get_representative_atom(res):
     elif 'CB' in res.child_dict.keys():
         return res['CB']
     else:
-        print 'no CA or CB atom in residue'
+        print >> sys.stderr, 'no CA or CB atom in residue'
             #pdb.set_trace()
         return res.child_list[0]
 
@@ -955,21 +955,34 @@ class file_sender(object):
 
         sftp = ssh.SFTPClient.from_transport(t)
         try:
-            print '\t\t\tsending:', here_file, there_file
+            print >> sys.stderr, '\t\t\tsending:', here_file, there_file
             sftp.put(here_file, there_file)
             wrapper.record_transferred_file(object_key)
         except Exception, err:
-            print err
-            print '\t\t\tfailed to send:', here_file, there_file
+            print >> sys.stderr, err
+            print >> sys.stderr, '\t\t\tfailed to send:', here_file, there_file
 
         try:
             import subprocess
-            print '               removing:', here_file
+            print >> sys.stderr, '               removing:', here_file
             subprocess.call(['rm', here_file])
 
         except Exception, err:
-            print err
+            print >> sys.stderr, err
 
+        try:
+            client.close()
+        except Exception, err:
+            print err
+        try:
+            sftp.close()
+        except Exception, err:
+            print err
+        try:
+            t.close()
+        except Exception, err:
+            print err
+        
 
         
         
@@ -993,8 +1006,8 @@ class file_sender(object):
         if dist_count > 0 or len(self.buildup) > self.buildup_size:
         #if len(self.buildup) > self.buildup_size:
             import FileLock
-            print "trying to send before lock: ", here_file
-            with FileLock.FileLock(self.lock_file, timeout=2) as lock:
+            print >> sys.stderr, "trying to send before lock: ", here_file
+            with FileLock.FileLock(self.lock_file, timeout=200) as lock:
                 for it in self.buildup:
                     self.__send(it)
             self.buildup = []

@@ -189,7 +189,10 @@ class wrapper(object):
         try:
 
             folder_transferred_files = helper.get_file_string_set(self.get_transferred_files_location(object_key))
-            return self.get_file_name(object_key) in folder_transferred_files
+            ans = self.get_file_name(object_key) in folder_transferred_files
+            if ans:
+                print 'checked remote and found: ', self, object_key
+            return ans    
         except:
 
             return False

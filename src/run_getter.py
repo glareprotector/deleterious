@@ -9,6 +9,7 @@ whether_to_send T or F
 whether_to_delete T or F
 whether_to_get_anything T or F
 whether to operate in temp folder T or F
+whether_to_check_remote T or F
 queue(only for bsub)
 mem_limit(only for bsub)
 hours:minutes(only for bsub)
@@ -17,7 +18,7 @@ then possibly param arguments to pass to getter
 """
 import os
 import global_stuff
-
+import pdb
 
 getter_script = 'getter.py'
 
@@ -47,19 +48,20 @@ whether_to_send = sys.argv[4]
 whether_to_delete = sys.argv[5]
 whether_to_get_anything = sys.argv[6]
 whether_to_temp = sys.argv[7]
+whether_to_check_remote = sys.argv[8]
 
 if mode == 'b':
 
-    queue = sys.argv[8]
-    mem_limit = sys.argv[9]
-    time_limit = sys.argv[10]
-    temp_mem_limit = sys.argv[11]
+    queue = sys.argv[9]
+    mem_limit = sys.argv[10]
+    time_limit = sys.argv[11]
+    temp_mem_limit = sys.argv[12]
 import pdb
 
 if mode == 'b':
-    arg_start = 12
+    arg_start = 13
 elif mode == 'r':
-    arg_start = 8
+    arg_start = 9
 
 args = sys.argv[arg_start:]
 import string
@@ -72,10 +74,10 @@ import pdb
 
 
 for i in range(total_jobs):
-    print i
+    print >> sys.stderr, i
 
-    cmd = 'python ' + getter_script + ' ' + str(i) + ' ' + str(total_jobs) + ' ' + protein_list + ' ' + whether_to_send + ' ' + whether_to_delete + ' ' + whether_to_get_anything + ' ' + whether_to_temp + ' ' + arg_string
-    print cmd
+    cmd = 'python ' + getter_script + ' ' + str(i) + ' ' + str(total_jobs) + ' ' + protein_list + ' ' + whether_to_send + ' ' + whether_to_delete + ' ' + whether_to_get_anything + ' ' + whether_to_temp + ' ' + whether_to_check_remote + ' ' + arg_string
+    print >> sys.stderr, cmd
     if mode == 'b':
         log_file = global_stuff.log_folder + 'b'+ '_' + str(i) + '_' + str(total_jobs) + '_' + protein_list_file + '_' + 'log'
         error_file = global_stuff.log_folder + 'b' + '_' + str(i) + '_' + str(total_jobs) + '_' + protein_list_file + '_' + 'err'
@@ -92,7 +94,7 @@ for i in range(total_jobs):
             #subprocess.Popen(cmd.split())
             subprocess.Popen(cmd.split(), stdout = open(log_file,'w'), stderr = open(error_file,'w'))
         if mode == 'b':
-            print mem_limit, 'fdsa', time_limit, temp_mem_limit, log_file, error_file
+            print >> sys.stderr, mem_limit, 'fdsa', time_limit, temp_mem_limit, log_file, error_file
             import string
             bsub_cmd = string.join(['bsub', '-q', queue, '-o', log_file, '-e', error_file,'-W', time_limit, '-R', '\"rusage[mem='+mem_limit+']' + ' && ' + 'rusage[tmp='+temp_mem_limit+']\"', cmd],sep = ' ')
             subprocess.call(bsub_cmd, shell=True, executable='/bin/bash')

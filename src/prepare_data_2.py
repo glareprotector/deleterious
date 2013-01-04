@@ -19,7 +19,7 @@ def get_mutations(mutations_file, which, the_dict):
         s = line.strip().split('\t')
         protein_name = s[0]
         to_add = (s[1], s[2], s[3], which)
-        print protein_name, to_add
+        #print protein_name, to_add
         try:
             the_dict[protein_name].append(to_add)
         except KeyError:
@@ -48,6 +48,9 @@ f = open(global_stuff.all_seqs_file, 'r')
 i = 0
 
 for line in f:
+    if i % 50 == 0:
+        print i
+    i += 1
     seq_name = string.split(line, sep = '|')[1]
     import pdb
     if seq_name not in protein_list:
