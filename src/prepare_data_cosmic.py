@@ -111,7 +111,7 @@ temp = [[key,mutation_counts[key]] for key in mutation_counts]
 sorted_temp = sorted(temp, key = lambda x: x[0].site.gene)
 
 for it in sorted_temp:
-    print it[0]
+    
     try:
         it[0].set_count(it[1])
         it[0].set_site_count(site_counts[it[0].site])

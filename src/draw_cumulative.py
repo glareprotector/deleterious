@@ -4,6 +4,12 @@ from pylab import *
 import matplotlib.pyplot as plt
 import pdb
 
+"""
+out_file
+in_files.  possibly more than one
+
+"""
+
 out_file = sys.argv[1]
 
 def read_score(in_file):
@@ -27,9 +33,8 @@ pdf = PdfFile(out_file)
 
 for in_file in in_files:
     scores = read_score(in_file)
-    pdb.set_trace()
     for label in scores:
-        plt.hist(scores[label], cumulative=True, histtype='step', bins=1000, label=in_file + '_' + label)
+        plt.hist(scores[label], cumulative=True, histtype='step', bins=1000, label=in_file + '_' + label, normed=True)
 
 plt.legend()
 savefig(out_file)
