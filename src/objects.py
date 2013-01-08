@@ -79,7 +79,7 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         return set(['ev', 'which_blast']) | bW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
         #if the file size is too small, we know there was something wrong
         import os
         location = self.get_file_location(object_key)
@@ -101,6 +101,8 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         elif self.get_param(params, 'which_blast') == 1:
             #psi_blast_cline = global_stuff.BLASTP_PATH + 
             psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLASTP_PATH, outfmt = 5, query = '\''+f.name+'\'', db = global_stuff.BLASTDB_PATH, out = self.get_holding_location(), evalue = self.get_param(params, 'ev'))
+        elif self.get_param(params, 'which_blast') == 2:
+            psi_blast_cline = global_stuff.DELTABLAST_PATH + ' -outfmt ' + '5' + ' -evalue ' + str(self.get_param(params, 'ev')) + ' -query ' + '\''+f.name+'\'' + ' -db ' + global_stuff.BLASTDB_PATH + ' -out ' + self.get_holding_location() + ' -rpsdb ' + global_stuff.CDD_PATH
         #psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', out = self.get_holding_location())
         #pdb.set_trace()
         print >> sys.stderr, psi_blast_cline
@@ -122,12 +124,13 @@ class aeW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         # parse blast xml file, then do processing
         
         blast_xml_handle = self.get_var_or_file(adW, params, recalculate, False, False, False)
-        if self.get_param(params, 'which_blast') == 1:
+        try:
             record = NCBIXML.read(blast_xml_handle)
-        elif self.get_param(params, 'which_blast') == 0:
+        except Exception, err:
             records = NCBIXML.parse(blast_xml_handle)
             iters = [x for x in records]
             record = iters[-1]
+
         seen = set()
         seq_records = []
         # add the query sequence, and have a set so that only add each sequence once
@@ -155,23 +158,59 @@ class aeW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         return output_handle
 
 
-# gets the result of muscle
+# gets the result of msa in fasta file.  gaps not removed yet.  query should have name of 'QUERY'
 class afW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    def whether_to_override(self, object_key):
+        return True
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return aeW.get_all_keys(params, self)
+        if params.get_param('which_msa') == 0:
+            return set(['which_msa']) | aeW.get_all_keys(params, self)
+        elif params.get_param('which_msa') == 2:
+            return set(['which_msa']) | hhblits_msa_file.get_all_keys(params, self)
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-        msa_input_handle = self.get_var_or_file(aeW, params, recalculate, to_pickle, to_filelize, always_recalculate)
-        cline = MuscleCommandline(cmd = global_stuff.MUSCLE_PATH, input = '\''+msa_input_handle.name+'\'', out = self.get_holding_location(), clw = False, maxiters = 2)
-        #cline()
 
-        subprocess.call(str(cline), shell=True, executable='/bin/bash')
-        return open(self.get_holding_location())
+        if self.get_param(params, 'which_msa') == 0:
+            msa_input_handle = self.get_var_or_file(aeW, params, recalculate, to_pickle, to_filelize, always_recalculate)
+            cline = MuscleCommandline(cmd = global_stuff.MUSCLE_PATH, input = '\''+msa_input_handle.name+'\'', out = self.get_holding_location(), clw = False, maxiters = 2)
+            subprocess.call(str(cline), shell=True, executable='/bin/bash')
+            return open(self.get_holding_location())
+        elif self.get_param(params, 'which_msa') == 2:
 
+            #get the a3m file, convert to fasta, read in, find query, write out msa but with query renamed
+            hhblits_msa = self.get_var_or_file(hhblits_msa_file, params)
+            temp_fasta_f = self.get_holding_location() + '.temp_fasta'
+            convert_cmd = global_stuff.HHBLITS_CONVERT_A3M_TO_FASTA + ' a3m ' + ' fas ' + '\''+hhblits_msa.name+'\'' + ' ' + temp_fasta_f
+            subprocess.call(convert_cmd, shell=True, executable='/bin/bash')
 
+            try:
+                import os
+                os.remove(temp_fasta_f)
+            except Exception, err:
+                print err
+
+            
+            temp_msa = AlignIO.read(temp_fasta_f, 'fasta')
+
+            query_seq = self.get_var_or_file(dW, params)
+            query_name = query_seq.name
+            
+
+            sequences_to_write = []
+            
+            for seq in temp_msa:
+                if seq.id != query_name:
+                    sequences_to_write.append(seq)
+                else:
+                    sequences_to_write.append(Bio.SeqRecord.SeqRecord(Bio.Seq.Seq(seq.seq.tostring()), id = 'QUERY'))
+
+            output_handle = open(self.get_holding_location(), 'w')
+            SeqIO.write(sequences_to_write, output_handle, 'fasta')
+            return output_handle
 
 
 class psicov_input_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
@@ -214,7 +253,7 @@ class psicov_output_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         r = self.get_param(params, 'psicov_r')
         input_file = self.get_var_or_file(psicov_input_file, params, False, False, False)
         cmd = global_stuff.PSICOV_PATH + ' -p ' + ' -r ' + str(r) + ' -j ' + str(separating_dist) + ' -g ' + str(gap_ignore) + ' ' + '\''+input_file.name+'\'' + ' > ' + self.get_holding_location()
-        pdb.set_trace()
+
         subprocess.call(cmd, shell=True, executable='/bin/bash')
         return open(self.get_holding_location(), 'r')
 
@@ -839,24 +878,46 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
             mutation_list = mutation_list + self.get_var_or_file(protein_mutation_list, params, False, False, False)
         return mutation_list
 
+class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    def whether_to_override(self, object_key):
+        return False
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set(['hhblits_iter', 'ev']) | bW.get_all_keys(params, self)
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+
+        f = self.get_var_or_file(bW, params, False, False, False)
+        cmd = global_stuff.HHBLITS_PATH + ' -i ' + '\''+f.name+'\'' + ' -d ' + global_stuff.HHBLITS_DB_PATH + ' -oa3m ' + self.get_holding_location() + ' -cpu ' + str(1) + ' -n ' + str(self.get_param(params, 'hhblits_iter')) + ' -e ' + str(self.get_param(params, 'ev'))
+        subprocess.call(cmd, shell=True, executable='/bin/bash')
+        return open(self.get_holding_location(), 'r')
+
+
+        
 class general_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
         keys = set(['which_msa'])
         which_msa = params.get_param('which_msa')
-        if which_msa == 0:
-            return keys | agW.get_all_keys(params, self)
-        elif which_msa == 1:
+        if which_msa == 1:
             return keys | their_agW.get_all_keys(params, self)
+        else:
+            return keys | agW.get_all_keys(params, self)
+        
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
 
         which_msa = self.get_param(params, 'which_msa')
-        if which_msa == 0:
-            return self.get_var_or_file(agW, params, False, False, False)
-        elif which_msa == 1:
+        if which_msa == 1:
             return self.get_var_or_file(their_agW, params, False, False, False)
+        else:
+            return self.get_var_or_file(agW, params, False, False, False)
+        
+
 
     def whether_to_override(self, object_key):
         return False
