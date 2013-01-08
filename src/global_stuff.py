@@ -15,16 +15,16 @@ import pdb
 
 cosmic_or_humvar = 'humvar'
 
-#real_home = '/home/fw27/d/deleterious/'
-real_home = '/mnt/work/fultonw/deleterious/'
+real_home = '/home/fw27/d/deleterious/'
+#real_home = '/mnt/work/fultonw/deleterious/'
 #home = '/home/fw27/d/deleterious/'
 #home = '/mnt/work/fultonw/deleterious/'
 #real_base_folder = '../data/proteins/humvar_from_orchestra/'
 #real_base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
-real_base_folder = '/mnt/work/fultonw/scratch/'
+#real_base_folder = '/mnt/work/fultonw/scratch/'
 #real_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
 
-real_base_folder = '/home/fw27/d/deleterious/data/proteins/cosmic/'
+real_base_folder = '/home/fw27/d/deleterious/data/proteins/humvar/'
 #real_base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
 #real_base_folder = '/home/fw27/d/deleterious/data/proteins/humvar_from_orchestra/'
 
@@ -35,7 +35,7 @@ real_base_folder = '/home/fw27/d/deleterious/data/proteins/cosmic/'
 temp_home = '/tmp/fw27/'
 temp_base_folder = temp_home + 'humvar/'
 
-remote_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
+remote_base_folder = '/mnt/work/fultonw/scratch/'
 
 base_folder = real_base_folder
 
@@ -43,7 +43,7 @@ def get_param():
     import param
 
 
-    p = param.param({'ev':.05, 'uniprot_id':'Q9NVL1', 'avg_deg':2, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':0, 'blmax':999999, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':10})
+    p = param.param({'ev':.05, 'uniprot_id':'Q9NVL1', 'avg_deg':2, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':2, 'blmax':999999, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2})
 
 
     return p
@@ -79,20 +79,25 @@ cosmic_raw_data_folder = data_folder + 'fasta/'
 
 # path to programs
 
-#MUSCLE_PATH = '/home/fw27/d/deleterious/muscle3.8.31_i86linux64'
-MUSCLE_PATH = '/mnt/work/fultonw/deleterious/muscle/muscle3.8.31_i86linux64'
-BLAST_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/psiblast'
-#BLAST_PATH = '/home/fw27/d/deleterious/bin/psiblast'
-BLASTP_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/blastp'
-#BLASTP_PATH = '/home/fw27/d/deleterious/bin/blastp'
+MUSCLE_PATH = '/home/fw27/d/deleterious/muscle3.8.31_i86linux64'
+#MUSCLE_PATH = '/mnt/work/fultonw/deleterious/muscle/muscle3.8.31_i86linux64'
+#BLAST_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/psiblast'
+BLAST_PATH = '/home/fw27/d/deleterious/bin/psiblast'
+#BLASTP_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/blastp'
+BLASTP_PATH = '/home/fw27/d/deleterious/bin/blastp'
 
-#BLASTDB_PATH = '/mnt/work/fultonw/nr/'
+BLASTDB_PATH = '/groups/shared_databases/blastdb/nr'
 #BLASTDB_PATH='/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/nr/nr'
-BLASTDB_PATH = 'nr/nr'
+#BLASTDB_PATH = 'nr/nr'
+DELTABLAST_PATH = '/home/fw27/d/deleterious/src/deltablast'
+CDD_PATH = '/home/fw27/d/deleterious/bin/cdd/cdd_delta'
 #BLASTDB_PATH = 'nr/nr'
 #BLASTDB_PATH = '/groups/shared_databases/blastdb/nr'
 MIP_PATH = 'MIp_wrapper.pl'
 PSICOV_PATH = 'psicov'
+HHBLITS_PATH = 'hhblits'
+HHBLITS_DB_PATH = '/home/fw27/d/deleterious/hh/hhdb/nr20_12Aug11'
+HHBLITS_CONVERT_A3M_TO_FASTA = '/home/fw27/d/deleterious/hh/hhsuite-2.0.15-linux-x86_64/lib/hh/scripts/reformat.pl'
 
 # random constants
 query_gi_number = '123456789123456789'

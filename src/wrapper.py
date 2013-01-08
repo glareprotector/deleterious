@@ -119,9 +119,10 @@ class wrapper(object):
         self.temp_new_param_keys[-1].add(key)
         return params
 
-    def get_param(self, params, key, record = True):
+    def get_param(self, params, key, record = False):
         if record:
             self.temp_used_keys[-1].add(key)
+
         return params.get_param(key)
 
     # wrapper refers to which class, not a specific wrapper instance
@@ -477,7 +478,7 @@ class wrapper_catalog(obj_wrapper):
     @dec
     def constructor(self, params, recalculate = False, to_pickle = False, to_filelize = False, always_recalculate = False):
 #        pdb.set_trace()
-        wrapper_instance = self.get_param(params, "which_wrapper_class")(self, params)
+        wrapper_instance = self.get_param(params, "which_wrapper_class", True)(self, params)
         return wrapper_instance
 
 # only purpose of this class is to give wrapper_catalog instance a "maker"

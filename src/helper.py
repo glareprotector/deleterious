@@ -963,6 +963,7 @@ class file_sender(object):
         port = it[6]
         wrapper = it[7]
         object_key = it[8]
+        to_remove = it[9]
 
 
 
@@ -985,13 +986,14 @@ class file_sender(object):
             print >> sys.stderr, err
             print >> sys.stderr, '\t\t\tfailed to send:', here_file, there_file
 
-        try:
-            import subprocess
-            print >> sys.stderr, '               removing:', here_file
-            subprocess.call(['rm', here_file])
+        if to_remove:
+            try:
+                import subprocess
+                print >> sys.stderr, '               removing:', here_file
+                subprocess.call(['rm', here_file])
 
-        except Exception, err:
-            print >> sys.stderr, err
+            except Exception, err:
+                print >> sys.stderr, err
 
         try:
             client.close()
