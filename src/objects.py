@@ -185,16 +185,22 @@ class afW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
             hhblits_msa = self.get_var_or_file(hhblits_msa_file, params)
             temp_fasta_f = self.get_holding_location() + '.temp_fasta'
             convert_cmd = global_stuff.HHBLITS_CONVERT_A3M_TO_FASTA + ' a3m ' + ' fas ' + '\''+hhblits_msa.name+'\'' + ' ' + temp_fasta_f
-            subprocess.call(convert_cmd, shell=True, executable='/bin/bash')
+            pdb.set_trace()
+            try:
+                code = subprocess.call(convert_cmd, shell=True, stderr = sys.stderr, executable='/bin/bash')
+            except Exception, err:
+                print err
+
+
+            print code
+            
+            temp_msa = AlignIO.read(temp_fasta_f, 'fasta')
 
             try:
                 import os
                 os.remove(temp_fasta_f)
             except Exception, err:
                 print err
-
-            
-            temp_msa = AlignIO.read(temp_fasta_f, 'fasta')
 
             query_seq = self.get_var_or_file(dW, params)
             query_name = query_seq.name
@@ -881,7 +887,7 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
 class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -892,7 +898,7 @@ class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
         f = self.get_var_or_file(bW, params, False, False, False)
         cmd = global_stuff.HHBLITS_PATH + ' -i ' + '\''+f.name+'\'' + ' -d ' + global_stuff.HHBLITS_DB_PATH + ' -oa3m ' + self.get_holding_location() + ' -cpu ' + str(1) + ' -n ' + str(self.get_param(params, 'hhblits_iter')) + ' -e ' + str(self.get_param(params, 'ev'))
-        subprocess.call(cmd, shell=True, executable='/bin/bash')
+        subprocess.call(cmd, shell=True, stderr = sys.stderr, stdout = sys.stderr, executable='/bin/bash')
         return open(self.get_holding_location(), 'r')
 
 

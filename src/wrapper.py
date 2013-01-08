@@ -451,6 +451,9 @@ class dfdW(generic_dumper_wrapper):
         
 class dadW(generic_dumper_wrapper):
 
+    def read_object_from_file(self, f):
+        return AlignIO.read(f, 'fasta')
+
     def dump_object(self, object):
         AlignIO.write(object, open(self.get_holding_location(),'w'), 'fasta')
 

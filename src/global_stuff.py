@@ -22,7 +22,7 @@ if orchestra_or_no  == 'orchestra':
     temp_home = '/tmp/fw27/'
     
     if cosmic_or_humvar == 'humvar':
-        real_base_folder = '/mnt/work/fultonw/deleterious/data/proteins/humvar/'
+        real_base_folder = '/home/fw27/d/deleterious/data/proteins/humvar/'
         temp_base_folder = temp_home + 'humvar/'
         remote_base_folder = '/mnt/work/fultonw/scratch/'
     elif cosmic_or_humvar == 'cosmic':
@@ -77,7 +77,8 @@ def get_param():
 
 
 
-    p = param.param({'ev':.05, 'uniprot_id':'Q9NVL1', 'avg_deg':2, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':2, 'blmax':999999, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2})
+    p = param.param({'ev':.05, 'uniprot_id':'Q9NY46', 'avg_deg':2, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':2, 'blmax':999999, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2})
+
 
 
 

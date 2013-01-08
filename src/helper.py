@@ -1011,7 +1011,7 @@ class file_sender(object):
 
         
         
-    def send(self, here_file, there_file, hostname, there_folder, username, password, port, wrapper, object_key):
+    def send(self, here_file, there_file, hostname, there_folder, username, password, port, wrapper, object_key, whether_to_delete):
         #first check if if it is a file
         import pdb
 
@@ -1019,7 +1019,7 @@ class file_sender(object):
         if os.path.isfile(here_file):
             import pdb
 
-            self.buildup.append([here_file, there_file, there_folder, hostname, username, password, port, wrapper, object_key, wrapper, object_key])
+            self.buildup.append([here_file, there_file, there_folder, hostname, username, password, port, wrapper, object_key, wrapper, object_key, whether_to_delete])
 
         import wc
         dist_count = 0
