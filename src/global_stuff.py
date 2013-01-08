@@ -14,7 +14,7 @@ import pdb
 
 
 cosmic_or_humvar = 'humvar'
-orchestra_or_no = 'orchestra'
+orchestra_or_no = 'no'
 
 if orchestra_or_no  == 'orchestra':
 
@@ -28,7 +28,7 @@ if orchestra_or_no  == 'orchestra':
     elif cosmic_or_humvar == 'cosmic':
         real_base_folder = '/home/fw27/d/deleterious/data/proteins/cosmic/'
         temp_base_folder = temp_home + 'cosmic/'
-        remote_base_folder '/mnt/work/fultonw/scratch_cosmic/'
+        remote_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
 
     MUSCLE_PATH = '/home/fw27/d/deleterious/muscle3.8.31_i86linux64'
     BLAST_PATH = '/home/fw27/d/deleterious/bin/psiblast'
@@ -42,7 +42,7 @@ if orchestra_or_no  == 'orchestra':
     HHBLITS_DB_PATH = '/home/fw27/d/deleterious/hh/hhdb/nr20_12Aug11'
     HHBLITS_CONVERT_A3M_TO_FASTA = '/home/fw27/d/deleterious/hh/hhsuite-2.0.15-linux-x86_64/lib/hh/scripts/reformat.pl'
 
-elif orchestra_or_no = 'no':
+elif orchestra_or_no == 'no':
 
     real_home = '/mnt/work/fultonw/deleterious/'
     temp_home = None
