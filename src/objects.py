@@ -897,13 +897,14 @@ class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
 
         f = self.get_var_or_file(bW, params, False, False, False)
+
         cmd = global_stuff.HHBLITS_PATH + ' -i ' + '\''+f.name+'\'' + ' -d ' + global_stuff.HHBLITS_DB_PATH + ' -oa3m ' + self.get_holding_location() + ' -cpu ' + str(1) + ' -n ' + str(self.get_param(params, 'hhblits_iter')) + ' -e ' + str(self.get_param(params, 'ev'))
         subprocess.call(cmd, shell=True, stderr = sys.stderr, stdout = sys.stderr, executable='/bin/bash')
         return open(self.get_holding_location(), 'r')
 
 
         
-class general_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+class general_msa(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
