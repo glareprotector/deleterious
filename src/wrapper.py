@@ -480,7 +480,7 @@ class wrapper_catalog(obj_wrapper):
     # params contains which_wrapper, and if which_wrapper is a generic_dumper_wrapper, contains 
     @dec
     def constructor(self, params, recalculate = False, to_pickle = False, to_filelize = False, always_recalculate = False):
-#        pdb.set_trace()
+
         wrapper_instance = self.get_param(params, "which_wrapper_class", True)(self, params)
         return wrapper_instance
 
