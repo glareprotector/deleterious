@@ -859,7 +859,7 @@ class general_msa(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return self.get_var_or_file(their_agW, params, False, False, False)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
 class div_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -1201,7 +1201,13 @@ def get_protein_info(protein_list, info_file, params):
                 seq = wc.get_stuff(dW, params, False, False, False)
                 return [str(len(seq))]
             
-            def get_msa_length():
+            def get_blastp_msa_length():
+                params.set_param('which_blast', 1)
+                msa = wc.get_stuff(general_msa, params, False, False, False)
+                return [str(len(msa))]
+
+            def get_delta_blast_msa_length():
+                params.set_param('which_blast', 2)
                 msa = wc.get_stuff(general_msa, params, False, False, False)
                 return [str(len(msa))]
 
@@ -1210,8 +1216,8 @@ def get_protein_info(protein_list, info_file, params):
                 return [str(len(mutations))]
 
             info = []
-            #which_info = [get_name, get_seq_length, get_msa_length, get_num_mutations]
-            which_info = [get_name, get_seq_length, get_msa_length]
+            which_info = [get_name, get_seq_length, get_delta_blast_msa_length, get_num_mutations]
+            #which_info = [get_name, get_seq_length, get_msa_length]
             for which in which_info:
                 info = info + which()
             
