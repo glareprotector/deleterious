@@ -259,7 +259,8 @@ class psicov_output_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         r = self.get_param(params, 'psicov_r')
         input_file = self.get_var_or_file(psicov_input_file, params, False, False, False)
         cmd = global_stuff.PSICOV_PATH + ' -p ' + ' -r ' + str(r) + ' -j ' + str(separating_dist) + ' -g ' + str(gap_ignore) + ' ' + '\''+input_file.name+'\'' + ' > ' + self.get_holding_location()
-
+        print cmd
+        pdb.set_trace()
         subprocess.call(cmd, shell=True, executable='/bin/bash')
         return open(self.get_holding_location(), 'r')
 
@@ -595,7 +596,7 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | psicov_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -1276,6 +1277,7 @@ def get_protein_info(protein_list, info_file, params):
 
             def get_delta_blast_msa_length():
                 params.set_param('which_blast', 2)
+                assert params.get_param('which_msa') == 2
                 msa = wc.get_stuff(general_msa, params, False, False, False)
                 return [str(len(msa))]
 

@@ -26,7 +26,7 @@ import objects
 
 #to_check_for = [objects.general_distance, objects.general_msa, objects.neighbors_w_weight_w]
 #to_check_for = [objects.neighbors_w_weight_w]
-to_check_for = [objects.general_msa]
+to_check_for = [objects.general_distance]
 
 global_stuff.whether_to_look_at_whether_to_override = False
 
