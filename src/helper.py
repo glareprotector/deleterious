@@ -1098,8 +1098,48 @@ def temp_cosmic(mutation):
     else:
         return 1
 
+import numpy
 
+class my_msa:
 
+    # mat is list of strings where each string is a column
+    def __init__(self, mat):
+        self.mat = mat
+
+    @classmethod
+    def msa_from_file(cls, file):
+        f = open(f, 'r')
+        first = f.readline()
+        s = first.split(' ')
+        length = int(s[0])
+        alignment_length = int(s[1])
+        self.mat = [None for j in range(alignment_length)]
+        i = 0
+        for line in f:
+            self.mat[i] = line.strip()
+            assert len(self.mat[i]) = length
+            i += 1
+        
+        return cls(mat)
+
+    def __len__(self):
+        try:
+            len(self.mat[0])
+        except:
+            return 0
+
+    def get_alignment_length(self):
+        return len(self.mat)
+
+    def write_to_file(self, file):
+        f = open(f, 'w')
+        f.write(str(self.__len__()) + ' ' + str(self.get_alignment_length()) + '\n')
+        for column in self.mat:
+            f.write(column + '\n')
+        f.close()
+
+    def get_column(self, i):
+        return self.mat[i]
                     
 def parse_p_input(p, arg_string):
 
