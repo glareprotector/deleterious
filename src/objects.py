@@ -1292,12 +1292,13 @@ def get_protein_info(protein_list, info_file, params):
                 info = info + which()
             
             g.write(string.join(info,sep=',') + '\n')
-            
+            print global_stuff.time_total
         except:
 
             print >> sys.stderr, 'fail'
     f.close()
     g.close()
+    print global_stuff.time_total
 
 
 def get_every_site_info(params, protein_list, dist_file):

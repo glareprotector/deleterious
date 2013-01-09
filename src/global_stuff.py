@@ -8,10 +8,10 @@ import csv
 import string
 import re
 import math
-
+import datetime
 import pdb
 
-
+time_total = datetime.timedelta(0)
 
 cosmic_or_humvar = 'humvar'
 orchestra_or_no = 'no'
