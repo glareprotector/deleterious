@@ -34,6 +34,8 @@ import global_stuff
 
 import sys
 
+import wrapper
+
 class bW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
@@ -555,7 +557,7 @@ class protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return set(['uniprot_id'])
 
     def whether_to_override(self, object_key):
-        return True
+        return False
     
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -1181,7 +1183,7 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
 
             protein_name = mutation[0]
 
-            print >> sys.stderr, protein_name
+
 
             self.set_param(params, 'uniprot_id', protein_name)
 
@@ -1216,8 +1218,9 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
 
                     """
             if len(seq) < 500000:
+
                 neighbors = self.get_var_or_file(neighbors_w_weight_w, params, recalculate, True, False)
-                msa = self.get_var_or_file(general_msa, params, recalculate, True, False)
+                msa = self.get_var_or_file(wrapper.my_msa_obj_wrapper, params, recalculate, True, False)
 
                 try:    
                     pos = mutation[1]
@@ -1288,7 +1291,7 @@ def get_protein_info(protein_list, info_file, params):
             
             def get_blastp_msa_length():
                 params.set_param('which_blast', 1)
-                msa = wc.get_stuff(general_msa, params, False, False, False)
+                msa = wc.get_stuff(my_msa_obj_wrapper, params, False, False, False)
                 return [str(len(msa))]
 
             def get_delta_blast_msa_length():
@@ -1410,7 +1413,7 @@ def get_mutation_info(protein_list_file, out_file, params):
 
     f = open(out_file, 'w')
 
-    avg_degs = [2]
+    avg_degs = [1,2,3,4]
     
     i = 0
     for mutation in l:
@@ -1433,12 +1436,12 @@ def get_mutation_info(protein_list_file, out_file, params):
             return ans
 
         def get_wild_num():
-            msa = wc.get_stuff(general_msa, params, False, False, False)
+            msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params, False, False, False)
             col = msa.get_column(mutation[1])
             return [str(col.count(mutation[2]))]
 
         def get_wild_category_num():
-            msa = wc.get_stuff(general_msa, params, False, False, False)
+            msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params, False, False, False)
             col = msa.get_column(mutation[1])
             wild_res_cat = global_stuff.aa_to_class[mutation[2]]
             count = 0
@@ -1448,7 +1451,7 @@ def get_mutation_info(protein_list_file, out_file, params):
             return [str(count)]
 
         def get_mut_category_num():
-            msa = wc.get_stuff(general_msa, params, False, False, False)
+            msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params, False, False, False)
             col = msa.get_column(mutation[1])
             mut_res_cat = global_stuff.aa_to_class[mutation[3]]
             count = 0
@@ -1464,12 +1467,12 @@ def get_mutation_info(protein_list_file, out_file, params):
                 return ['0']
         
         def get_mut_num():
-            msa = wc.get_stuff(general_msa, params, False, False, False)
+            msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params, False, False, False)
             col = msa.get_column(mutation[1])
             return [str(col.count(mutation[3]))]
 
         def get_msa_length():
-            msa = wc.get_stuff(general_msa, params, False, False, False)
+            msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params, False, False, False)
             return [str(len(msa))]
 
         def get_cosmic_info():
@@ -1489,7 +1492,7 @@ def get_mutation_info(protein_list_file, out_file, params):
         try:
             for which in which_info:
                 info = info + which()
-            
+
             f.write(string.join(info,sep=',') + '\n')
         except Exception, err:
             print >> sys.stderr, err
@@ -1499,10 +1502,10 @@ def get_mutation_info(protein_list_file, out_file, params):
     f.close()
 
 # outputs file.  could be roc file input, or other input.  one argument is function that assigns a number to each mutation.  the function determines the output
-def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f, norm_f, mut_to_num_f):
+def get_output_obj(params, l, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f, norm_f, mut_to_num_f):
     import wc
-    params.set_param('protein_list_file', protein_list_file)
-    l = wc.get_stuff(filtered_mutation_list_given_protein_list, params)
+    #params.set_param('protein_list_file', protein_list_file)
+    #l = wc.get_stuff(filtered_mutation_list_given_protein_list, params)
     i = 0
     scores = []
     labels = []
@@ -1511,10 +1514,18 @@ def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_po
     for mutation in l:
 
         if i%1 == 0:
-            print i, 'calculating'
+            try:
+                from mpi4py import MPI
+
+                comm = MPI.COMM_WORLD
+                rank = comm.Get_rank()
+            except:
+                rank = 0
+            print i, 'calculating, rank: ', rank
 
 
         i += 1
+
         try:
 
             score = helper.predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f)
@@ -1522,7 +1533,8 @@ def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_po
             labels.append(mut_to_num_f(mutation))
         except Exception, err:
             bad_count += 1
-            pdb.set_trace()
+
+
             print >> sys.stderr, err, mutation, bad_count
 
 
@@ -1536,7 +1548,9 @@ def get_output_file(params, protein_list_file, out_file, use_neighbor, ignore_po
         ans[i][0] = normed_scores[i]
         ans[i][1] = labels[i]
 
-    helper.write_mat(ans, out_file)
+    return ans
+
+    #helper.write_mat(ans, out_file)
 
 
     

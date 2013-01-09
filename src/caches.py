@@ -120,7 +120,15 @@ class object_cache_for_wrapper(object):
             # replace with dumper wrapper(file)'s read_object function
             # obj = pickle.load(open(f.name, 'rb'))
             obj = self.pickle_dumper_wrapper.read_object_from_file(f)
+
+
+            if len(self.dump) > self.the_wrapper.get_max_cache_size():
+                #print 'CLEARING!! IN GET', self.the_wrapper
+                self.dump.clear()
+
+            
             return obj
+
         raise KeyError
     
     # is it possible that set is called when the pickled object is accurate.  yes, only if you created the object, pickled, then deleted the used_keys and all_keys_cache pickles
@@ -132,9 +140,8 @@ class object_cache_for_wrapper(object):
         object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
 
         to_pickle = self.the_wrapper.get_to_pickle()
-
         if len(self.dump) > self.the_wrapper.get_max_cache_size():
-            print 'CLEARING!!'
+            #print 'CLEARING!!', self.the_wrapper
             self.dump.clear()
 
         

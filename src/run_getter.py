@@ -10,7 +10,7 @@ whether_to_delete T or F
 whether_to_get_anything T or F
 whether to operate in temp folder T or F
 whether_to_check_remote T or F
-queue(only for bsub)
+fqueue(only for bsub)
 mem_limit(only for bsub)
 hours:minutes(only for bsub)
 tmp space

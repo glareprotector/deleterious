@@ -130,7 +130,7 @@ used_ps = set()
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_msa, objects.general_distance, objects.general_seq_weights, objects.edge_to_rank, objects.neighbors_w_weight_w])
 import wrapper
-to_gets = set([wrapper.my_msa_obj_wrapper])
+to_gets = set([wrapper.my_msa_obj_wrapper, objects.neighbors_w_weight_w])
 to_blind_sends = set([objects.general_msa, objects.general_distance, objects.neighbors_w_weight_w])
 
 

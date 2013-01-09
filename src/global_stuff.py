@@ -77,7 +77,7 @@ def get_param():
 
 
 
-    p = param.param({'ev':.05, 'uniprot_id':'P16455', 'avg_deg':2, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':2, 'blmax':999999, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2})
+    p = param.param({'ev':.05, 'uniprot_id':'P16455', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':2, 'blmax':999999, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2})
 
 
 
@@ -124,7 +124,7 @@ aa_to_aa = {'A':0,'R':1,'N':2,'D':3,'C':4,'Q':5,'E':6,'G':7,'H':8,'I':9,'L':10,'
 aa_to_class = {'A':0, 'G':0, 'V':0, 'I':1, 'L':1, 'P':1, 'F':1, 'Y':2, 'T':2, 'M':2, 'S':2, 'C':2, 'H':3, 'N':3, 'E':3, 'W':3, 'R':4, 'K':4, 'D':5, 'Q':5}
 ignore_aas = ['-','X', 'B', 'Z']
 aa_to_num = aa_to_class
-q = max(aa_to_num.values())
+q = max(aa_to_num.values())+1
 MIP_wild_char = 'Z'
 
 #aa_to_num = {'A':2,'M':1,'C':0}

@@ -131,7 +131,7 @@ def get_weight_of_msa_seqs(msa):
     except:
         x = 2
         import pdb
-        pdb.set_trace()
+#        pdb.set_trace()
     return normalized
 
 def predict_position(params, recalculate, mutation, use_neighbor):
@@ -313,7 +313,7 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
     params.set_param('uniprot_id', protein_name)
     seq = wc.get_stuff(objects.dW, params)
 
-    msa = wc.get_stuff(objects.general_msa, params)
+    msa = wc.get_stuff(objects.my_msa_wrapper_obj, params)
 
 
     score = 0
@@ -399,64 +399,55 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
 
         actual_neighbor_score = get_neighbor_score(neighbor_cols, actual_weight_a, actual_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
-        #return 0 - actual_neighbor_score
-        #return score - actual_neighbor_score
 
-        """
-        constraints_a = [(pos,wild_res)]
-        filter_a_msa = filter_msa_based_on_pos_constraint(msa, constraints_a)
-        constraints_b = [(pos,mut_res)]
-        filter_b_msa = filter_msa_based_on_pos_constraint(msa, constraints_b)
-        #all_neighbors = wc.get_stuff(objects.neighbors_w, params, recalculate, False, False)
-        neighbor = neighbors[0]
-        na_col = filter_a_msa.get_column(neighbor)
-        nb_col = filter_b_msa.get_column(neighbor)
-        na_col_no_skip = [x for x in na_col if x != '-']
-        nb_col_no_skip = [x for x in nb_col if x != '-']
-        asdf = get_KL_real(nb_col_no_skip, na_col_no_skip, seq_weights)
-        """
+        normalize_neighbor_score = False
+
+        if normalize_neighbor_score:
+        
+
 
 
         
 
 
 
-        #return actual_score
-        mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == mut_res])
-        wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == wild_res])
-        random_scores = []
-        for i in range(num_trials):
-            random_weight_a = get_random_weight(seq_weights, wild_weight)
-            random_weight_b = get_random_weight(seq_weights, mut_weight)
 
-            a_random_score = get_neighbor_score(neighbor_cols, random_weight_a, random_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
 
-            random_scores.append(a_random_score)
-        """
-        ans = rank(random_scores, actual_neighbor_score)
-        print >> sys.stderr, ans
-        return ans
-        """
+            mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == mut_res])
 
-        normalize_neighbor_by_z = False
+            wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == wild_res])
         
-        if normalize_neighbor_by_z:
-            random_mean = mean(random_scores)
-            random_sd = sd(random_scores)
-        
-            try:
-                neighbor_score = normalize_to_unit(actual_neighbor_score, random_mean, random_sd)
-            except:
-                pdb.set_trace()
-                asdf=2
-                neighbor_score = 0
+            random_scores = []
+            for i in range(num_trials):
 
+                random_weight_a = get_random_weight(seq_weights, wild_weight)
+                random_weight_b = get_random_weight(seq_weights, mut_weight)
+
+                a_random_score = get_neighbor_score(neighbor_cols, random_weight_a, random_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
+
+                random_scores.append(a_random_score)
+
+
+            normalize_neighbor_by_z = False
+        
+            if normalize_neighbor_by_z:
+                random_mean = mean(random_scores)
+                random_sd = sd(random_scores)
+        
+                try:
+                    neighbor_score = normalize_to_unit(actual_neighbor_score, random_mean, random_sd)
+                except:
+
+                    asdf=2
+                    neighbor_score = 0
+
+
+            else:
+
+                neighbor_score = rank(random_scores, actual_neighbor_score)
 
         else:
-
-            neighbor_score = rank(random_scores, actual_neighbor_score)
-
-
+            neighbor_score = actual_neighbor_score
 
         print >> sys.stderr, neighbor_score, len(msa)
 
@@ -744,9 +735,10 @@ def get_KL_weighted(col, weight_1, weight_2, pseudo_count_dict):
         for k in d1_dict.keys():
             if d1_dict[k] > 0:
                 ans += d1_dict[k] * math.log(d1_dict[k] / d2_dict[k])
-    except:
+    except Exception, err:
+        print err
         print >> sys.stderr, d1_dict[k], d2_dict[k], k
-        pdb.set_trace()
+
         x=2
     return ans
 
@@ -835,7 +827,7 @@ def read_mat_to_int_float_tuple(f):
                     this.append((a,b))
             except Exception, err:
                 print >> sys.stderr, err
-                pdb.set_trace()
+
                 print >> sys.stderr, s
                 
         ans.append(this)
