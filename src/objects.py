@@ -1553,4 +1553,3 @@ def get_roc_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighb
     helper.write_mat(ans, out_file)
 
 
-
