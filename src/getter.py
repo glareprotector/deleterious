@@ -129,7 +129,7 @@ used_ps = set()
 
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_msa, objects.general_distance, objects.general_seq_weights, objects.edge_to_rank, objects.neighbors_w_weight_w])
-to_gets = set([objects.general_msa])
+to_gets = set([objects.general_msa, objects.general_distance, objects.neighbors_w_weight_w])
 to_blind_sends = set([objects.general_msa, objects.general_distance, objects.neighbors_w_weight_w])
 
 

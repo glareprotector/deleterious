@@ -185,7 +185,7 @@ class afW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
             hhblits_msa = self.get_var_or_file(hhblits_msa_file, params)
             temp_fasta_f = self.get_holding_location() + '.temp_fasta'
             convert_cmd = global_stuff.HHBLITS_CONVERT_A3M_TO_FASTA + ' a3m ' + ' fas ' + '\''+hhblits_msa.name+'\'' + ' ' + temp_fasta_f
-            pdb.set_trace()
+         
             try:
                 code = subprocess.call(convert_cmd, shell=True, stderr = sys.stderr, executable='/bin/bash')
             except Exception, err:
@@ -264,7 +264,7 @@ class psicov_output_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         return open(self.get_holding_location(), 'r')
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
 class psicov_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -887,7 +887,7 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
 class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -927,7 +927,7 @@ class general_msa(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
 class div_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
