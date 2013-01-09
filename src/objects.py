@@ -187,9 +187,9 @@ class afW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
             hhblits_msa = self.get_var_or_file(hhblits_msa_file, params)
             temp_fasta_f = self.get_holding_location() + '.temp_fasta'
             convert_cmd = global_stuff.HHBLITS_CONVERT_A3M_TO_FASTA + ' a3m ' + ' fas ' + '\''+hhblits_msa.name+'\'' + ' ' + temp_fasta_f
-            pdb.set_trace()
+         
             try:
-                code = subprocess.call(convert_cmd, shell=True, stderr = sys.stderr, executable='/bin/bash')
+                code = subprocess.call(convert_cmd, shell=True, stdout = sys.stderr, stderr = sys.stderr, executable='/bin/bash')
             except Exception, err:
                 print err
 
@@ -267,7 +267,7 @@ class psicov_output_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         return open(self.get_holding_location(), 'r')
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
 class psicov_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -598,7 +598,7 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | psicov_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -890,7 +890,7 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
 class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -1058,7 +1058,7 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
         return keys | edge_to_rank.get_all_keys(params, self) | dW.get_all_keys(params, self) | general_msa.get_all_keys(params, self) | dW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -1079,10 +1079,10 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
 
         effective_length = None
 
+        import wrapper
+        msa = self.get_var_or_file(wrapper.my_msa_obj_wrapper, params, False, False, False)
 
-        msa = self.get_var_or_file(my_msa_obj_wrapper, params, False, False, False)
-
-        assert length == len(msa)
+        assert length == msa.get_alignment_length()
         if self.get_param(params, 'which_dist') == 3:
             effective_length = 0
             r = self.get_param(params, 'psicov_gap')

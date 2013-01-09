@@ -101,20 +101,15 @@ def get(obj, p, gotten_stuff, used_ps, check = True):
     to_get = True
 
     gotten_stuff.append([obj, p.get_copy()])
-    if check:
 
-        if wc.get_wrapper_instance(obj).has(p, False, True):
-            to_get = False
-    if to_get:
-        global whether_to_get_anything
-        if whether_to_get_anything:
-            if not wc.get_wrapper_instance(obj).has(p, False, check):
-                ans = wc.get_stuff(obj, p, False, False, False)
+    global whether_to_get_anything
+    if whether_to_get_anything and not wc.get_wrapper_instance(obj).has(p, False, whether_to_check_remote):
+        ans = wc.get_stuff(obj, p, False, False, False)
 
-                print >> sys.stderr, 'took: ', datetime.datetime.now() - past
-                past = datetime.datetime.now()
+        print >> sys.stderr, 'took: ', datetime.datetime.now() - past
+        past = datetime.datetime.now()
             
-                return ans
+        return ans
 
 
     print >> sys.stderr, 'already have: ', p.get_param('uniprot_id'), obj
@@ -130,7 +125,12 @@ used_ps = set()
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_msa, objects.general_distance, objects.general_seq_weights, objects.edge_to_rank, objects.neighbors_w_weight_w])
 import wrapper
+<<<<<<< HEAD
 to_gets = set([wrapper.my_msa_obj_wrapper, objects.neighbors_w_weight_w])
+=======
+to_gets = set([ wrapper.my_msa_obj_wrapper, objects.neighbors_w_weight_w])
+
+>>>>>>> origin/master
 to_blind_sends = set([objects.general_msa, objects.general_distance, objects.neighbors_w_weight_w])
 
 
@@ -268,9 +268,10 @@ for line in f:
                         file_name = instance.get_file_name(p_used)
                         there_file = there_folder + file_name
                         import pdb
-                        
+
                         sender.send(here_file, there_file, hostname, there_folder, username, password, port, instance, p_used, whether_to_delete)
                     except Exception, err:
+                        print err
                         pass
 
 
