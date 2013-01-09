@@ -259,7 +259,8 @@ class psicov_output_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         r = self.get_param(params, 'psicov_r')
         input_file = self.get_var_or_file(psicov_input_file, params, False, False, False)
         cmd = global_stuff.PSICOV_PATH + ' -p ' + ' -r ' + str(r) + ' -j ' + str(separating_dist) + ' -g ' + str(gap_ignore) + ' ' + '\''+input_file.name+'\'' + ' > ' + self.get_holding_location()
-
+        print cmd
+        pdb.set_trace()
         subprocess.call(cmd, shell=True, executable='/bin/bash')
         return open(self.get_holding_location(), 'r')
 
@@ -595,7 +596,7 @@ class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
             return keys | psicov_distance.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -1074,7 +1075,23 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
 
         print >> sys.stderr, 'start neighbor'
 
-        rank_cutoff = ((length * 1.0) * avg_deg)
+        effective_length = None
+
+
+        msa = self.get_var_or_file(my_msa_obj_wrapper, params, False, False, False)
+
+        assert length == len(msa)
+        if self.get_param(params, 'which_dist') == 3:
+            effective_length = 0
+            r = self.get_param(params, 'psicov_gap')
+            for i in range(length):
+                if float(msa.get_column(i).count('-')) / len(msa) < r:
+                    effective_length += 1
+        else:
+            effective_length = length
+
+
+        rank_cutoff = ((effective_length * 1.0) * avg_deg)
 
         def frac_non_skip(msa):
             ans = []
@@ -1090,7 +1107,7 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
 
         # figure out how many edges to throw out
 
-        msa = self.get_var_or_file(general_msa, params, False, False, False)
+        
         pct = frac_non_skip(msa)
         num_bad = 0
         for i in range(length):
@@ -1269,8 +1286,16 @@ def get_protein_info(protein_list, info_file, params):
                 seq = wc.get_stuff(dW, params, False, False, False)
                 return [str(len(seq))]
             
-            def get_msa_length():
+            def get_blastp_msa_length():
+                params.set_param('which_blast', 1)
                 msa = wc.get_stuff(general_msa, params, False, False, False)
+                return [str(len(msa))]
+
+            def get_delta_blast_msa_length():
+                params.set_param('which_blast', 2)
+                assert params.get_param('which_msa') == 2
+                import wrapper
+                msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params, False, False, False)
                 return [str(len(msa))]
 
             def get_num_mutations():
@@ -1278,18 +1303,19 @@ def get_protein_info(protein_list, info_file, params):
                 return [str(len(mutations))]
 
             info = []
-            #which_info = [get_name, get_seq_length, get_msa_length, get_num_mutations]
-            which_info = [get_name, get_seq_length, get_msa_length]
+            which_info = [get_name, get_seq_length, get_delta_blast_msa_length, get_num_mutations]
+            #which_info = [get_name, get_seq_length, get_msa_length]
             for which in which_info:
                 info = info + which()
             
             g.write(string.join(info,sep=',') + '\n')
-            
+            print global_stuff.time_total
         except:
 
             print >> sys.stderr, 'fail'
     f.close()
     g.close()
+    print global_stuff.time_total
 
 
 def get_every_site_info(params, protein_list, dist_file):
@@ -1542,6 +1568,5 @@ def get_roc_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighb
             print >> sys.stderr, 'failed to get score', err, bad_count
 
     helper.write_mat(ans, out_file)
-
 
 

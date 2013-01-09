@@ -134,6 +134,7 @@ class object_cache_for_wrapper(object):
         to_pickle = self.the_wrapper.get_to_pickle()
 
         if len(self.dump) > self.the_wrapper.get_max_cache_size():
+            print 'CLEARING!!'
             self.dump.clear()
 
         
