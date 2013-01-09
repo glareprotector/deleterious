@@ -221,6 +221,12 @@ class by_pdb_folder_wrapper(wrapper):
     def specificity(self):
         return 'chain'
 
+class by_uniprot_id_wrapper(wrapper):
+    def get_folder(self, object_key):
+        folder = str(self.get_param(object_key, 'uniprot_id', False))
+        return global_stuff.base_folder + folder + '/'
+
+
 class experiment_results_wrapper(wrapper):
 
     def get_folder(self, object_key):
@@ -309,19 +315,25 @@ class msa_obj_wrapper(obj_wrapper):
     def get_file_dumper(self, maker, params):
         return dadW(maker, params)
 
-class my_msa_obj_wrapper(obj_wrapper):
+class my_msa_obj_wrapper(obj_wrapper, by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return general_msa.get_all_keys(params, self)
+        import objects
+        return objects.general_msa.get_all_keys(params, self)
+
+    def whether_to_override(self, object_key):
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
         import objects
+
         msa = self.get_var_or_file(objects.general_msa, params)
         mat = [None for i in range(msa.get_alignment_length())]
         for i in range(msa.get_alignment_length()):
             mat[i] = msa.get_column(i)
+
         return helper.my_msa(mat)
 
     def get_pickle_dumper(self, maker, params):
@@ -554,7 +566,3 @@ class experiment_type_wrapper(wrapper):
         folder = str(self.get_param(object_key, 'wif', False)) + '_' + str(self.get_param(object_key, 'wob', False)) + '/'
         return global_stuff.RESULTS_FOLDER + folder + self.__repr__() + '/'
 
-class by_uniprot_id_wrapper(wrapper):
-    def get_folder(self, object_key):
-        folder = str(self.get_param(object_key, 'uniprot_id', False))
-        return global_stuff.base_folder + folder + '/'

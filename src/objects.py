@@ -1075,7 +1075,23 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
 
         print >> sys.stderr, 'start neighbor'
 
-        rank_cutoff = ((length * 1.0) * avg_deg)
+        effective_length = None
+
+
+        msa = self.get_var_or_file(my_msa_obj_wrapper, params, False, False, False)
+
+        assert length == len(msa)
+        if self.get_param(params, 'which_dist') == 3:
+            effective_length = 0
+            r = self.get_param(params, 'psicov_gap')
+            for i in range(length):
+                if float(msa.get_column(i).count('-')) / len(msa) < r:
+                    effective_length += 1
+        else:
+            effective_length = length
+
+
+        rank_cutoff = ((effective_length * 1.0) * avg_deg)
 
         def frac_non_skip(msa):
             ans = []
@@ -1091,7 +1107,7 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
 
         # figure out how many edges to throw out
 
-        msa = self.get_var_or_file(general_msa, params, False, False, False)
+        
         pct = frac_non_skip(msa)
         num_bad = 0
         for i in range(length):
@@ -1278,7 +1294,8 @@ def get_protein_info(protein_list, info_file, params):
             def get_delta_blast_msa_length():
                 params.set_param('which_blast', 2)
                 assert params.get_param('which_msa') == 2
-                msa = wc.get_stuff(general_msa, params, False, False, False)
+                import wrapper
+                msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params, False, False, False)
                 return [str(len(msa))]
 
             def get_num_mutations():

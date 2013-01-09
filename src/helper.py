@@ -1108,23 +1108,24 @@ class my_msa:
 
     @classmethod
     def msa_from_file(cls, file):
-        f = open(f, 'r')
+
+        f = open(file.name, 'r')
         first = f.readline()
         s = first.split(' ')
         length = int(s[0])
         alignment_length = int(s[1])
-        self.mat = [None for j in range(alignment_length)]
+        mat = [None for j in range(alignment_length)]
         i = 0
         for line in f:
-            self.mat[i] = line.strip()
-            assert len(self.mat[i]) = length
+            mat[i] = line.strip()
+            assert len(mat[i]) == length
             i += 1
         
         return cls(mat)
 
     def __len__(self):
         try:
-            len(self.mat[0])
+            return len(self.mat[0])
         except:
             return 0
 
@@ -1132,7 +1133,7 @@ class my_msa:
         return len(self.mat)
 
     def write_to_file(self, file):
-        f = open(f, 'w')
+        f = open(file, 'w')
         f.write(str(self.__len__()) + ' ' + str(self.get_alignment_length()) + '\n')
         for column in self.mat:
             f.write(column + '\n')
