@@ -313,7 +313,8 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
     params.set_param('uniprot_id', protein_name)
     seq = wc.get_stuff(objects.dW, params)
 
-    msa = wc.get_stuff(objects.general_msa, params)
+    import wrapper
+    msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params)
 
 
     score = 0
@@ -333,8 +334,8 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
 
     if not ignore_pos:
-        #mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == mut_res])
-        #wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == wild_res])
+        #mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[pos,i] == mut_res])
+        #wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[pos,i] == wild_res])
         mut_similarity = compute_similarity_score_to_residue(column, seq_weights, mut_res, sim_f)
         wild_similarity = compute_similarity_score_to_residue(column, seq_weights, wild_res, sim_f)
         score += math.log((mut_similarity + 1) / wild_similarity)
@@ -391,11 +392,11 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
                     
 
 
-        actual_weight_a = [seq_weights[i] if msa[i][pos] == wild_res else 0.0 for i in range(len(msa))]
-        actual_weight_b = [seq_weights[i] if msa[i][pos] == mut_res else 0.0 for i in range(len(msa))]
+        actual_weight_a = [seq_weights[i] if msa[i,pos] == wild_res else 0.0 for i in range(len(msa))]
+        actual_weight_b = [seq_weights[i] if msa[i,pos] == mut_res else 0.0 for i in range(len(msa))]
 
 
-        neighbor_cols = [ [msa[j][i] for j in range(len(msa))] for i in neighbors]
+        neighbor_cols = [ [msa[j,i] for j in range(len(msa))] for i in neighbors]
 
 
         actual_neighbor_score = get_neighbor_score(neighbor_cols, actual_weight_a, actual_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
@@ -422,8 +423,8 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
 
         #return actual_score
-        mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == mut_res])
-        wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == wild_res])
+        mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i,pos] == mut_res])
+        wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i,pos] == wild_res])
         random_scores = []
         for i in range(num_trials):
             random_weight_a = get_random_weight(seq_weights, wild_weight)
@@ -1128,6 +1129,10 @@ class my_msa:
             return len(self.mat[0])
         except:
             return 0
+
+    def __getitem__(self, ij):
+        return self.mat[j][i]
+
 
     def get_alignment_length(self):
         return len(self.mat)

@@ -14,7 +14,7 @@ import pdb
 time_total = datetime.timedelta(0)
 
 cosmic_or_humvar = 'humvar'
-orchestra_or_no = 'no'
+orchestra_or_no = 'orchestra'
 
 if orchestra_or_no  == 'orchestra':
 
