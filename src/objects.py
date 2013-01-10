@@ -1058,7 +1058,7 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
         return keys | edge_to_rank.get_all_keys(params, self) | dW.get_all_keys(params, self) | general_msa.get_all_keys(params, self) | dW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -1525,8 +1525,9 @@ def get_output_obj(params, l, use_neighbor, ignore_pos, max_neighbors, num_trial
 
 
         i += 1
-
+        score = helper.predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f)
         try:
+            print i
 
             score = helper.predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f)
             scores.append(score)

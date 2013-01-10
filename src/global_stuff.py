@@ -14,7 +14,7 @@ import pdb
 time_total = datetime.timedelta(0)
 
 cosmic_or_humvar = 'humvar'
-orchestra_or_no = 'orchestra'
+orchestra_or_no = 'no'
 
 if orchestra_or_no  == 'orchestra':
 
@@ -122,9 +122,9 @@ recalculate_nodewise_loss_f = True
 metric_cutoffs = [1,2,3,4,5,6,7,8,9]
 aa_to_aa = {'A':0,'R':1,'N':2,'D':3,'C':4,'Q':5,'E':6,'G':7,'H':8,'I':9,'L':10,'K':11,'M':12,'F':13,'P':14,'S':15,'T':16,'W':17,'Y':18,'V':19}
 aa_to_class = {'A':0, 'G':0, 'V':0, 'I':1, 'L':1, 'P':1, 'F':1, 'Y':2, 'T':2, 'M':2, 'S':2, 'C':2, 'H':3, 'N':3, 'E':3, 'W':3, 'R':4, 'K':4, 'D':5, 'Q':5}
-ignore_aas = ['-','X', 'B', 'Z']
+ignore_aas = ['-','X', 'B', 'Z', 'J']
 aa_to_num = aa_to_class
-q = max(aa_to_num.values())+1
+q = max(aa_to_num.values())+1
 MIP_wild_char = 'Z'
 
 #aa_to_num = {'A':2,'M':1,'C':0}

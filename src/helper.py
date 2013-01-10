@@ -364,18 +364,22 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
             pseudo_count_dict[key] = pseudo_total / global_stuff.q
 
         # none of weights have to be normalized
-        def get_neighbor_score(neighbor_cols, weight_a, weight_b, neighbors, neighbor_weights, pseudo_count_dict):
+        def get_neighbor_score(msa, weight_a, weight_b, neighbors, neighbor_weights, pseudo_count_dict):
 
             num_neighbors = len(neighbors)
             assert(len(neighbors) == len(neighbor_weights))
             score = 0
             neighbor_weights = normalize(neighbor_weights)
 
-            neighbors = range(num_neighbors)
+            #neighbors = range(num_neighbors)
+            
 
             for i in range(num_neighbors):
-
-                score += neighbor_weights[i] * get_KL_weighted(neighbor_cols[i], weight_a, weight_b, pseudo_count_dict)
+                choose_neighbor_probs = {}
+                for j in range(global_stuff.q):
+                    choose_neighbor_probs[j] = 0
+                choose_neighbor_probs[global_stuff.aa_to_num[seq[neighbors[i]]]] = 1.0
+                score += neighbor_weights[i] * get_KL_weighted(msa.get_column(neighbors[i]), weight_a, weight_b, pseudo_count_dict, choose_neighbor_probs)
             return score
 
         def get_random_weight(weights, target):
@@ -401,13 +405,13 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
         neighbor_cols = [ [msa[j,i] for j in range(len(msa))] for i in neighbors]
 
 
-        actual_neighbor_score = get_neighbor_score(neighbor_cols, actual_weight_a, actual_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
+        actual_neighbor_score = get_neighbor_score(msa, actual_weight_a, actual_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
 
 
 
 
         
-
+        normalize_neighbor = True
 
 
         if normalize_neighbor:
@@ -425,41 +429,32 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
 
 
-                mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == mut_res])
+                
 
-                wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i][pos] == wild_res])
+                a_random_score = get_neighbor_score(msa, random_weight_a, random_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
+
+                random_scores.append(a_random_score)
+
+
+            normalize_neighbor_by_z = False
         
-                random_scores = []
-                for i in range(num_trials):
-
-                    random_weight_a = get_random_weight(seq_weights, wild_weight)
-                    random_weight_b = get_random_weight(seq_weights, mut_weight)
-
-                    a_random_score = get_neighbor_score(neighbor_cols, random_weight_a, random_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
-
-                    random_scores.append(a_random_score)
-
-
-                normalize_neighbor_by_z = False
+            if normalize_neighbor_by_z:
+                random_mean = mean(random_scores)
+                random_sd = sd(random_scores)
         
-                if normalize_neighbor_by_z:
-                    random_mean = mean(random_scores)
-                    random_sd = sd(random_scores)
-        
-                    try:
-                        neighbor_score = normalize_to_unit(actual_neighbor_score, random_mean, random_sd)
-                    except:
+                try:
+                    neighbor_score = normalize_to_unit(actual_neighbor_score, random_mean, random_sd)
+                except:
 
-                        asdf=2
-                        neighbor_score = 0
+                    asdf=2
+                    neighbor_score = 0
 
-
-                else:
-
-                    neighbor_score = rank(random_scores, actual_neighbor_score)
 
             else:
-                neighbor_score = actual_neighbor_score
+
+                neighbor_score = rank(random_scores, actual_neighbor_score)
+
+
 
         else:
             neighbor_score = actual_neighbor_score
@@ -467,7 +462,7 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
         print >> sys.stderr, neighbor_score, len(msa)
 
 
-    return (score - neighbor_score) * -1.0
+    return (score - neighbor_score) * -1.0 / len(msa)
 
 
 def get_KL_real(d1, d2, weights):
@@ -688,7 +683,7 @@ def get_KL_fast_alt(msa, a, b, char_to_num, weights):
                 
     return ans
 
-def get_KL_weighted(col, weight_1, weight_2, pseudo_count_dict):
+def get_KL_weighted(col, weight_1, weight_2, pseudo_count_dict, choose_neighbor_probs):
     import pdb
 
     # keep dictionary of counts for each distribution
@@ -746,8 +741,16 @@ def get_KL_weighted(col, weight_1, weight_2, pseudo_count_dict):
 
 
     ans = 0
+
+
+    #choose_neighbor_probs = d1_dict
+    
     try:
         for k in d1_dict.keys():
+            if choose_neighbor_probs[k] > 0:
+                ans += choose_neighbor_probs[k] * math.log(d1_dict[k] / d2_dict[k])
+                
+            
             if d1_dict[k] > 0:
                 ans += d1_dict[k] * math.log(d1_dict[k] / d2_dict[k])
     except Exception, err:
@@ -1137,7 +1140,8 @@ class my_msa:
             return 0
 
     def __getitem__(self, ij):
-        return self.mat[j][i]
+
+        return self.mat[ij[1]][ij[0]]
 
 
     def get_alignment_length(self):
