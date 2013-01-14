@@ -262,7 +262,7 @@ class psicov_output_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         input_file = self.get_var_or_file(psicov_input_file, params, False, False, False)
         cmd = global_stuff.PSICOV_PATH + ' -p ' + ' -r ' + str(r) + ' -j ' + str(separating_dist) + ' -g ' + str(gap_ignore) + ' ' + '\''+input_file.name+'\'' + ' > ' + self.get_holding_location()
         print cmd
-        pdb.set_trace()
+
         subprocess.call(cmd, shell=True, executable='/bin/bash')
         return open(self.get_holding_location(), 'r')
 
@@ -903,6 +903,7 @@ class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
         cmd = global_stuff.HHBLITS_PATH + ' -i ' + '\''+f.name+'\'' + ' -d ' + global_stuff.HHBLITS_DB_PATH + ' -oa3m ' + self.get_holding_location() + ' -cpu ' + str(1) + ' -n ' + str(self.get_param(params, 'hhblits_iter')) + ' -e ' + str(self.get_param(params, 'ev'))
         subprocess.call(cmd, shell=True, stderr = sys.stderr, stdout = sys.stderr, executable='/bin/bash')
+
         return open(self.get_holding_location(), 'r')
 
 
@@ -1486,7 +1487,7 @@ def get_mutation_info(protein_list_file, out_file, params):
             print >> sys.stderr, get_name(), i
         i += 1
         if global_stuff.cosmic_or_humvar == 'cosmic':
-            which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_deg, get_cosmic_info, get_msa_length]
+            which_info = [get_name, get_pos, get_cosmic_info]
         elif global_stuff.cosmic_or_humvar == 'humvar':
             which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_deg, get_whether_bad, get_msa_length]
         try:

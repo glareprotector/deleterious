@@ -58,7 +58,7 @@ else:
 skip_file = None
 
 username = 'fultonw'
-password = 'lc7140$$$$'
+password = None
 hostname = 'ent.csail.mit.edu'
 port = 22
 
@@ -125,19 +125,17 @@ used_ps = set()
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_msa, objects.general_distance, objects.general_seq_weights, objects.edge_to_rank, objects.neighbors_w_weight_w])
 import wrapper
-<<<<<<< HEAD
-to_gets = set([wrapper.my_msa_obj_wrapper, objects.neighbors_w_weight_w])
-=======
-to_gets = set([ wrapper.my_msa_obj_wrapper, objects.neighbors_w_weight_w])
 
->>>>>>> origin/master
+#to_gets = set([wrapper.my_msa_obj_wrapper, objects.general_distance, objects.general_msa, objects.neighbors_w_weight_w])
+to_gets = set([wrapper.my_msa_obj_wrapper, objects.general_msa])
+
 to_blind_sends = set([objects.general_msa, objects.general_distance, objects.neighbors_w_weight_w])
 
 
 #to_gets = set()
 
 #this is the stuff to delete right after one protein is processed
-to_deletes = set([objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.aeW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.div_weights, objects.general_seq_weights, objects.MIP_input_msa, objects.MIP_input_msa_file, objects.MIP_distance_file, objects.MIP_distance, objects.bW])# - to_gets
+to_deletes = set([objects.hhblits_msa_file, objects.psicov_input_file, objects.psicov_distance, objects.psicov_output_file, objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.aeW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.div_weights, objects.general_seq_weights, objects.MIP_input_msa, objects.MIP_input_msa_file, objects.MIP_distance_file, objects.MIP_distance, objects.bW])# - to_gets
 
 
 sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 0)
@@ -221,8 +219,11 @@ for line in f:
 
             #print >> sys.stderr, 'seq length: ', len(seq)
 
+
+            # write calls to get over here
+            """
             for which_filter_co in [0.2]:
-                for avg_deg in [1,2,3,4,5,6,7,8]:
+                for avg_deg in [1,2,3,4,5,6,7,8,9,10,11,12,13,14]:
 
                     p.set_param('avg_deg', avg_deg)
                     p.set_param('filter_co',which_filter_co)
@@ -236,7 +237,19 @@ for line in f:
 
                     except Exception, err:
                         print >> sys.stderr, 'fail', protein_name, err
+            """
 
+
+            p.set_param('which_blast',1)
+            p.set_param('which_msa',0)
+            get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
+            get(objects.general_msa, p, gotten_stuff, used_ps)
+            
+            p.set_param('which_msa',2)
+            get(objects.general_distance, p, gotten_stuff, used_ps)
+            for avg_deg in [1,2,3,4,5,6,7,8,9,10,11,12]:
+                get(objects.neighbors_w_weight_w, p, gotten_stuff, used_ps)
+            
 
             g.write('finished: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
             past2 = datetime.datetime.now()

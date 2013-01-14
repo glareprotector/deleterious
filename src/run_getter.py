@@ -20,6 +20,12 @@ import os
 import global_stuff
 import pdb
 
+
+print 'remember to source profile'
+pdb.set_trace()
+
+#a=subprocess.call('source ~/.profile', shell=False, executable='/bin/bash')
+
 getter_script = 'getter.py'
 
 # make the folder, or delete its contents.  same with process folder

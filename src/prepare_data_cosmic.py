@@ -139,12 +139,16 @@ for gene in gene_list:
 
 import subprocess, os
 
+k = 0
 for gene in gene_muts:
+    if k % 50 == 0:
+        print k,'gg'
+    k += 1
     folder = global_stuff.base_folder + gene + '/'
-    try:
-        os.makedirs(folder)
-    except Exception, err:
-        print err
+    #try:
+    #    os.makedirs(folder)
+    #except Exception, err:
+    #    print err
     seq_folder = global_stuff.cosmic_raw_data_folder + gene[0].upper() + '/'
     seq_file = seq_folder + gene + '_protein.txt'
     new_seq_file = folder + 'seq'
