@@ -125,12 +125,10 @@ used_ps = set()
 #this is the stuff to send over.  delete these when u send them over
 #to_gets = set([objects.general_msa, objects.general_distance, objects.general_seq_weights, objects.edge_to_rank, objects.neighbors_w_weight_w])
 import wrapper
-<<<<<<< HEAD
-to_gets = set([wrapper.my_msa_obj_wrapper, objects.neighbors_w_weight_w])
-=======
-to_gets = set([ wrapper.my_msa_obj_wrapper, objects.neighbors_w_weight_w])
 
->>>>>>> origin/master
+to_gets = set([objects.dW, objects.neighbors_w_weight_w])
+
+
 to_blind_sends = set([objects.general_msa, objects.general_distance, objects.neighbors_w_weight_w])
 
 
@@ -222,7 +220,7 @@ for line in f:
             #print >> sys.stderr, 'seq length: ', len(seq)
 
             for which_filter_co in [0.2]:
-                for avg_deg in [1,2,3,4,5,6,7,8]:
+                for avg_deg in [1,2,3,4,5,6,7,8,9,10,11,12]:
 
                     p.set_param('avg_deg', avg_deg)
                     p.set_param('filter_co',which_filter_co)

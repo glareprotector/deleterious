@@ -20,6 +20,8 @@ from Bio.Blast import NCBIXML
 from Bio.Align.Applications import MuscleCommandline
 from Bio.Align import MultipleSeqAlignment
 from Bio import AlignIO
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
 
 import math
 import subprocess
@@ -1254,6 +1256,66 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
                 
         return filtered_mutations
 
+
+class their_mutation_list(wrapper.obj_wrapper):
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        f = open(global_stuff.their_mutation_file, 'r')
+        mutations = []
+        total = 0
+        bad = 0
+        for line in f:
+            try:
+                s = line.strip().split('\t')
+                name = s[1]
+                pos_raw = s[6]
+                wild_char = pos_raw[0]
+                mut_char = pos_raw[-1]
+                pos = int(pos_raw[1:-1]) - 1
+                mut_count = int(s[7])
+                site_count = int(s[8])
+                gene_count = int(s[10])
+                func = int(s[15] == '1')
+                protein_binding = int(s[16] == '1')
+                dna_binding = int(s[17] == '1')
+                mol_binding = int(s[18] == '1')
+                params.set_param('uniprot_id', name)
+                import wc
+                seq = wc.get_stuff(dW, params)
+                assert seq[pos] == wild_char
+                mutation = [name, pos, wild_char, mut_char, mut_count, site_count, gene_count, func, protein_binding, dna_binding, mol_binding]
+                mutations.append(mutation)
+            except Exception, err:
+                bad += 1
+                print name
+                print err
+            total += 1
+        print 'bad: ', bad, ' total: ', total
+        pdb.set_trace()
+        return mutations
+
+class their_mutation_list_given_protein_list(wrapper.obj_wrapper):
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        protein_list_file = self.get_param(params, 'protein_list_file')
+        f = open(protein_list_file, 'r')
+        protein_set = set()
+        for line in f:
+
+            protein_set.add(line.strip())
+
+        mutation_list = self.get_var_or_file(their_mutation_list, params)
+        to_return = []
+        for mutation in mutation_list:
+
+            name = mutation[0]
+            if name in protein_set:
+                to_return.append(mutation)
+        return to_return
+    
+
 def get_protein_info(protein_list, info_file, params):
     import wc
     f = open(protein_list, 'r')
@@ -1440,6 +1502,25 @@ def get_mutation_info(protein_list_file, out_file, params):
             col = msa.get_column(mutation[1])
             return [str(col.count(mutation[2]))]
 
+        def get_wild_aa():
+            seq = wc.get_stuff(dW, params)
+            pos = mutation[1]
+            wild = mutation[2]
+            try:
+                assert seq[pos] == wild
+            except Exception, err:
+                pdb.set_trace()
+                print err
+            return [wild]
+
+        def get_mut_aa():
+            seq = wc.get_stuff(dW, params)
+            pos = mutation[1]
+            mut = mutation[3]
+
+            return [mut]
+
+
         def get_wild_category_num():
             msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params, False, False, False)
             col = msa.get_column(mutation[1])
@@ -1486,7 +1567,7 @@ def get_mutation_info(protein_list_file, out_file, params):
             print >> sys.stderr, get_name(), i
         i += 1
         if global_stuff.cosmic_or_humvar == 'cosmic':
-            which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_deg, get_cosmic_info, get_msa_length]
+            which_info = [get_name, get_pos, get_wild_aa, get_mut_aa, get_cosmic_info]
         elif global_stuff.cosmic_or_humvar == 'humvar':
             which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_deg, get_whether_bad, get_msa_length]
         try:
@@ -1502,7 +1583,7 @@ def get_mutation_info(protein_list_file, out_file, params):
     f.close()
 
 # outputs file.  could be roc file input, or other input.  one argument is function that assigns a number to each mutation.  the function determines the output
-def get_output_obj(params, l, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f, norm_f, mut_to_num_f):
+def get_output_obj(params, l, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f, norm_f, mut_to_num_f, to_neighbor_p_value):
     import wc
     #params.set_param('protein_list_file', protein_list_file)
     #l = wc.get_stuff(filtered_mutation_list_given_protein_list, params)
@@ -1521,17 +1602,20 @@ def get_output_obj(params, l, use_neighbor, ignore_pos, max_neighbors, num_trial
                 rank = comm.Get_rank()
             except:
                 rank = 0
-            print i, 'calculating, rank: ', rank
+            if i % 50 == 0:
+                print i, 'calculating, rank: ', rank
 
 
         i += 1
-        score = helper.predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f)
-        try:
-            print i
 
-            score = helper.predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f)
+        try:
+
+
+
+            score = helper.predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos, max_neighbors, num_trials, pseudo_total, sim_f, to_neighbor_p_value)
             scores.append(score)
-            labels.append(mut_to_num_f(mutation))
+            labels.append([mut_to_num_f(mutation)] + mutation)
+            
         except Exception, err:
             bad_count += 1
 
@@ -1544,10 +1628,10 @@ def get_output_obj(params, l, use_neighbor, ignore_pos, max_neighbors, num_trial
     assert len(scores) == len(labels)
 
     normed_scores = norm_f(scores)
-    ans = [ [0, 0] for i in range(len(scores))]
+    ans = [ None for i in range(len(scores))]
     for i in range(len(scores)):
-        ans[i][0] = normed_scores[i]
-        ans[i][1] = labels[i]
+        ans[i] = [normed_scores[i]] + labels[i]
+
 
     return ans
 
@@ -1585,3 +1669,108 @@ def get_roc_file(params, in_file, out_file, use_neighbor, ignore_pos, max_neighb
     helper.write_mat(ans, out_file)
 
 
+
+from Bio import SeqIO
+from Bio.Blast import NCBIXML
+from Bio.Blast.Applications import NcbipsiblastCommandline
+from Bio.PDB import Polypeptide
+from Bio.Blast import NCBIXML
+from Bio.Align.Applications import MuscleCommandline
+from Bio import AlignIO
+
+
+
+class fW(wrapper.file_wrapper):
+
+    def whether_to_override(self, object_key):
+        return False
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set(['pdb'])
+
+    def get_folder(self, object_key):
+        return global_stuff.BIN_FOLDER + 'fWs' + '/'
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        pdb.set_trace()
+        pdb_file_name = self.get_param(params, 'pdb')
+        pdbl = Bio.PDB.PDBList()
+        pdbl.retrieve_pdb_file(pdb_file_name, pdir=self.get_holding_folder())
+        subprocess.call(['mv', self.get_holding_folder() + string.lower('pdb'+pdb_file_name+'.ent'), self.get_holding_location()])
+
+        return open(self.get_holding_location(), 'r')
+
+
+class cW(wrapper.obj_wrapper, wrapper.by_pdb_folder_wrapper):
+    """
+    returns chain of pdb chain, which is a list of residue objects
+    this is the object i find neighbors with
+    """
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set(['chain']) | fW.get_all_keys(params, self)
+
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+
+        f = self.get_var_or_file(fW, params, recalculate, to_pickle)
+        structure = Bio.PDB.PDBParser().get_structure(self.get_param(params, 'pdb'), f)
+        chain = Bio.PDB.PPBuilder().build_peptides(structure[0][self.get_param(params, 'chain')])
+        pdb.set_trace()
+        to_return = []
+        for chain_frag in chain:
+            to_return = to_return + chain_frag
+
+
+        real_to_return = []
+        pdb.set_trace()
+        for i in range(len(to_return)):
+            try:
+                Polypeptide.three_to_one(to_return[i].resname)
+            except Exception, err:
+                print err
+                print real_to_return[i], i
+                #pdb.set_trace()
+                print 'weird AA', to_return[i].resname
+            else:
+                real_to_return.append(to_return[i])
+        return real_to_return
+
+class pdb_chain_seq(wrapper.obj_wrapper, wrapper.by_pdb_folder_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return cW.get_all_keys(params, self)
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        chain = self.get_var_or_file(cW, params)
+        pdb_name = self.get_param(params, 'pdb')
+        chain_name = self.get_param(params, 'chain')
+        raw_string = [Polypeptide.three_to_one(res.resname) for res in chain]
+        
+        raw_string = string.join(raw_string, sep = '')
+        ans = SeqRecord(Seq(raw_string), id = pdb_name + '_' + chain_name)
+        pdb.set_trace()
+        return ans
+
+class uniprot_to_pdb(wrapper.obj_wrapper):
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        pass
+
+class query_to_pdb_chain_map(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        uniprot_id = self.get_params(params, 'uniprot_id')
+        pdb_name, chain_letter = self.get_var_or_file(uniprot_to_pdb, params)[uniprot_id]
+        pdb_chain = self.get_var_or_file(pdb_chain_seq, params)
+        
+
+class cosmic_ref_seq_to_uniprot_map(wrapper.obj_wrapper):

@@ -3,61 +3,14 @@
 import global_stuff
 import pdb
 
-cosmic_file = global_stuff.data_folder + 'CosmicMutantExport_v62_291112.tsv'
-mutation_file = global_stuff.data_folder + 'cosmic_mutations_real'
-gene_file = global_stuff.data_folder + 'cosmic_genes_real'
+#cosmic_file = global_stuff.data_folder + 'CosmicMutantExport_v62_291112.tsv'
+#mutation_file = global_stuff.data_folder + 'cosmic_mutations_real'
+#gene_file = global_stuff.data_folder + 'cosmic_genes_real'
 
-class mutation(object):
+cosmic_file = 'nras_raw'
+mutation_file = 'NRAS_mutations'
+gene_file = 'NRAS_genes'
 
-    def __init__(self, site, wild, mut):
-        self.site = site
-        self.wild = wild
-        self.mut = mut
-        self.count = None
-        self.gene_mult = None
-        self.site_count = None
-
-    def __hash__(self):
-        return self.site.__hash__() + self.wild.__hash__() + self.mut.__hash__()
-
-    def set_count(self, count):
-        self.count = count
-
-    def set_site_count(self, count):
-        self.site_count = count
-
-    def set_gene_mult(self, mult):
-        self.gene_mult = mult
-
-    def __lt__(self, other):
-        return self.site < other.site
-
-    def __eq__(self, other):
-        return self.__str__() == other.__str__()
-
-    def __str__(self):
-        return str(self.site) + ','  + self.wild + ',' + self.mut + ',' + str(self.count) + ',' + str(self.site_count) + ',' + str(self.gene_mult)
-
-
-class site(object):
-    def __init__(self, gene, pos):
-        self.gene = gene
-        self.pos = pos
-
-    def __hash__(self):
-        return self.gene.__hash__() + self.pos.__hash__()
-
-    def __lt__(self, other):
-        return self.gene < other.gene
-
-    def __str__(self):
-        return self.gene + ',' + str(self.pos)
-
-    def __eq__(self, other):
-        return self.__str__() == other.__str__()
-
-    def __repr__(self):
-        return self.__str__()
 
 f = open(cosmic_file, 'r')
 
@@ -84,8 +37,8 @@ for line in f:
             wild = raw[0]
             mut = raw[length-1]
             pos = raw[1:(length-1)]
-            a_site = site(gene, pos)
-            to_add = mutation(a_site, wild, mut)
+            a_site = helper.site(gene, pos)
+            to_add = helper.mutation(a_site, wild, mut)
 
             if mut != wild and mut != '*':
                 try:

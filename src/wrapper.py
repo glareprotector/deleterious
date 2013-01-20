@@ -58,6 +58,10 @@ class wrapper(object):
     def get_folder(self, object_key):
         return global_stuff.BIN_FOLDER
 
+
+    def get_remote_folder(self, object_key):
+        return global_stuff.REMOTE_BIN_FOLDER
+
     # if the wrapper index stuff, its objects can obtain indicies thru maker->object_key_to_index
     # in general, the methods i make should have a maker pointer so that params can be accessed thru the maker
     def get_name(self, object_key, to_reindex = global_stuff.to_reindex):
@@ -215,13 +219,19 @@ class always_recalculate_wrapper(wrapper):
 
 class by_pdb_folder_wrapper(wrapper):
 
-    def get_folder(self, object_key):
-        return global_stuff.BIN_FOLDER  + object_key.get_param('p') + '_' + object_key.get_param('c') + '_' + str(object_key.get_param('st')) + '_' + str(object_key.get_param('en')) + '/'
+    def get_remote_folder(self, object_key):
+        return global_stuff.REMOTE_PDB_FOLDER + object_key.get_param('pdb') + '/'
 
-    def specificity(self):
-        return 'chain'
+    def get_folder(self, object_key):
+        return global_stuff.PDB_FOLDER  + object_key.get_param('pdb') + '/'
+
 
 class by_uniprot_id_wrapper(wrapper):
+
+    def get_remote_folder(self, object_key):
+        folder = str(self.get_param(object_key, 'uniprot_id', False))
+        return global_stuff.remote_base_folder + folder + '/'
+    
     def get_folder(self, object_key):
         folder = str(self.get_param(object_key, 'uniprot_id', False))
         return global_stuff.base_folder + folder + '/'
