@@ -1038,17 +1038,25 @@ class file_sender(object):
         object_key = it[8]
         to_remove = it[9]
 
-
-
+        import pdb
+        
+        
+        """
         client = ssh.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(ssh.AutoAddPolicy())
-        client.connect(hostname, port, username, password)
+        client.connect(hostname, port, username)
         client.exec_command('mkdir ' + there_folder)
+        
+        cmd = 'scp ' + '\''+here_file+'\'' + ' ' + username + '@' + hostname + ':' + '\''+there_file+'\''
+        import subprocess
+        subprocess.call(cmd,shell=True,executable='/bin/bash')
 
-
+        """
+        key = ssh.RSAKey(filename='/home/fw27/.ssh/id_rsa')
         t = ssh.Transport((hostname, port))
-        t.connect(username=username, password=password)
+        t.connect(username=username)
+        t.auth_publickey('fultonw',key)
 
         sftp = ssh.SFTPClient.from_transport(t)
         try:
@@ -1067,11 +1075,8 @@ class file_sender(object):
 
             except Exception, err:
                 print >> sys.stderr, err
+        
 
-        try:
-            client.close()
-        except Exception, err:
-            print err
         try:
             sftp.close()
         except Exception, err:
@@ -1081,7 +1086,7 @@ class file_sender(object):
         except Exception, err:
             print err
         
-
+        
         
         
     def send(self, here_file, there_file, hostname, there_folder, username, password, port, wrapper, object_key, whether_to_delete):

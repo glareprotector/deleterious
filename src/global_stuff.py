@@ -14,7 +14,9 @@ import pdb
 time_total = datetime.timedelta(0)
 
 cosmic_or_humvar = 'cosmic'
+
 orchestra_or_no = 'no'
+
 
 if orchestra_or_no  == 'orchestra':
 
@@ -48,6 +50,7 @@ if orchestra_or_no  == 'orchestra':
     HHBLITS_PATH = 'hhblits'
     HHBLITS_DB_PATH = '/home/fw27/d/deleterious/hh/hhdb/nr20_12Aug11'
     HHBLITS_CONVERT_A3M_TO_FASTA = '/home/fw27/d/deleterious/hh/hhsuite-2.0.15-linux-x86_64/lib/hh/scripts/reformat.pl'
+    PRIVATE_KEY = '/home/fw27/.ssh/id_rsa'
 
 elif orchestra_or_no == 'no':
 
@@ -89,7 +92,11 @@ def get_param():
 
 
 
+<<<<<<< HEAD
     p = param.param({'ev':.05, 'uniprot_id':'KRAS', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2})
+=======
+    p = param.param({'ev':.05, 'uniprot_id':'P16455', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2})
+>>>>>>> origin/master
 
 
 
