@@ -22,6 +22,8 @@ from Bio.Align import MultipleSeqAlignment
 from Bio import AlignIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+from Bio import pairwise2
+from Bio.SubsMat import MatrixInfo as matlist
 
 import math
 import subprocess
@@ -1762,18 +1764,98 @@ class pdb_chain_seq(wrapper.obj_wrapper, wrapper.by_pdb_folder_wrapper):
         return ans
 
 class uniprot_to_pdb(wrapper.obj_wrapper):
-
+    """
+    maps uniprot id to pdb, chain tuple
+    """
     @dec
     def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
         pass
 
 class query_to_pdb_chain_map(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+    """
+    tuple of uniprot to pdb and pdb to uniprot position map
+    """
 
     @dec
     def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
         uniprot_id = self.get_params(params, 'uniprot_id')
         pdb_name, chain_letter = self.get_var_or_file(uniprot_to_pdb, params)[uniprot_id]
         pdb_chain = self.get_var_or_file(pdb_chain_seq, params)
+        uniprot_chain = self.get_var_or_file(dW, params)
+        uniprot_seq = uniprot_chain.seq.to_string()
+        pdb_seq = pdb_chain.seq.tostring()
+        matrix = matlist.blosum62
+        gap_open = -10
+        gap_extend = -0.5
+
+        alns = pairwise2.align.globalds(uniprot_seq, pdb_seq, matrix, gap_open, gap_extend)
+        top_aln = alns[0]
+        aln_uniprot, aln_pdb, score, begin, end = top_aln
+        uniprot_i = 0
+        pdb_i = 0
+        aln_length = len(aln_uniprot)
+
+        uniprot_to_pdb_map = {}
+        pdb_to_uniprot_map = {}
+
+        for i in range(aln_length):
+            if aln_pdb != '-' and aln_uniprot != '-':
+                uniprot_to_pdb_map[uniprot_i] = pdb_i
+                pdb_to_uniprot_map[pdb_i] = uniprot_i
+                
+            if aln_pdb != '-':
+                pdb_i += 1
+            if aln_uniprot != '-':
+                uniprot_i += 1
+
+        return uniprot_to_pdb_map, pdb_to_uniprot_map
+
+class chain_distances(wrapper.mat_obj_wrapper, wrapper.by_pdb_folder_wrapper):
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        residues = self.get_var_or_file(cW, params, recalculate, True)
+        rep_atoms = [helper.get_representative_atom(res) for res in residues]
+        num_res = len(residues)
+        dists = [[-1 for i in range(num_res)] for j in range(num_res)]
+        for i in range(num_res):
+            for j in range(num_res):
+                try:
+                    dists[i][j] = rep_atoms[i] - rep_atoms[j]
+                except Exception as e:
+                    print 'ERROR: distance fail', self.params, i, j, residues[i].child_dict.keys(), residues[j].child_dict.keys()
+                    dists[i][j] = -1
+
+        return dists
+                
+class uniprot_neighbors_from_pdb(wrapper.mat_obj_wrapper, wrapper.by_uniprot_folder_wrapper):
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        u_to_p, p_to_u = self.get_var_or_file(query_to_pdb_chain_maps, params)
+        pdb_name, chain_letter = self.get_var_or_file(uniprot_to_pdb, params)
+        self.set_param(params, 'pdb_name', pdb_name)
+        self.set_param(params, 'chain_letter', chain_letter)
+        dists = self.get_var_or_file(chain_distances, params)
+        uniprot_seq = self.get_var_or_file(dW, params)
+        pdb_seq = self.get_var_or_file(pdb_chain_seq, params)
+        cutoff = self.get_param(params, 'co')
+        assert len(dists) == len(pdb_seq)
+        neighbors = [ [] for i in range(len(uniprot_seq)) ]
+        for i in range(len(uniprot_seq)):
+            try:
+                pdb_pos = u_to_p[i]
+            except:
+                pass
+            else:
+                for j in range(len(pdb_seq)):
+                    if dists[pdb_pos][j] != -1 and dists[pdb_pos][j] < cutoff:
+                        try:
+                            neighbors[i].append((p_to_u[j], math.exp(-1.0 * dists[pdb_pos][j]))))
+                        except:
+                            pass
+        return neighbors
+        
         
 
 class cosmic_ref_seq_to_uniprot_map(wrapper.obj_wrapper):
