@@ -77,6 +77,13 @@ def dec(f):
                 obj = f(self, params, recalculate, to_pickle, to_filelize, always_recalculate, old_obj)
         except Exception, err:
             print 'ERROR DOWNSTREAM OF CALLING ', self, err
+            import sys
+            pdb.set_trace()
+            import traceback
+            for frame in traceback.extract_tb(sys.exc_info()[2]):
+                fname,lineno,fn,text = frame
+                print "Error in %s on line %d" % (fname, lineno)
+            print sys.exc_traceback.tb_lineno
             print params
             self.temp_used_keys.pop()
             self.temp_dependents_keys.pop()

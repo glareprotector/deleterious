@@ -872,6 +872,7 @@ def list_union(a, b):
 def write_mat(mat, f_name, the_sep = ',', option = 'w'):
     f = open(f_name, option)
     #print >> sys.stderr, mat
+
     for row in mat:
         
         line = string.join([('%.5f' % x)  for x in row], sep=the_sep)
@@ -924,7 +925,11 @@ def write_int_float_tuple_mat(mat, f_name):
         f.write(line)
     f.close()
         
-        
+def write_iterable_vert(obj, f):
+    f = open(f,'w')
+    for x in obj:
+        f.write(str(x) + '\n')
+    f.close()
 
 def write_vect(vect, f_name, the_sep = ',', option = 'w'):
     f = open(f_name, option)

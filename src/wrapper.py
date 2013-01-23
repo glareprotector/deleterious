@@ -220,10 +220,12 @@ class always_recalculate_wrapper(wrapper):
 class by_pdb_folder_wrapper(wrapper):
 
     def get_remote_folder(self, object_key):
-        return global_stuff.REMOTE_PDB_FOLDER + object_key.get_param('pdb') + '/'
+        return global_stuff.REMOTE_PDB_FOLDER + object_key.get_param('pdb') + '_' + object_key.get_param('chain') + '/'
 
     def get_folder(self, object_key):
-        return global_stuff.PDB_FOLDER  + object_key.get_param('pdb') + '/'
+
+        return global_stuff.PDB_FOLDER + object_key.get_param('pdb') + '_' + object_key.get_param('chain') + '/'
+
 
 
 class by_uniprot_id_wrapper(wrapper):
@@ -265,6 +267,9 @@ class obj_wrapper(wrapper):
 
     def get_file_dumper(self, maker, params):
         return dfdW(maker, params)
+
+    def get_remote_file_location(self, object_key):
+        return self.cache.pickle_dumper_wrapper.get_remote_file_location(object_key)
 
     def get_file_location(self, object_key):
         return self.cache.pickle_dumper_wrapper.get_file_location(object_key)
@@ -359,6 +364,9 @@ class file_wrapper(wrapper):
 
     def get_holding_location(self):
         return global_stuff.get_holding_folder() + str(id(self))
+
+    def get_remote_file_location(self, object_key):
+        return self.get_remote_folder(object_key) + self.__repr__() + '=' + self.get_name(object_key)
 
     def get_file_location(self, object_key):
 

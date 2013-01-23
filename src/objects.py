@@ -75,7 +75,7 @@ class dW(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return asdf
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
 # blast results file wrapper(xml format)
 class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
@@ -554,7 +554,7 @@ class pairwise_dist(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return dists
 
 # right now, only know how to read/write float mats, so make this a regular wrapper
-class protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+class humvar_protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -571,20 +571,42 @@ class protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         f = open(neutral_file)
 
         for line in f:
-            if global_stuff.cosmic_or_humvar == 'humvar':
-                s = line.strip().split('\t')
-            elif global_stuff.cosmic_or_humvar == 'cosmic':
-                s = line.strip().split(',')
+            s = line.strip().split('\t')
             try:
-                if global_stuff.cosmic_or_humvar == 'humvar':
-                    mutations.append([protein_name, int(s[0])-1, s[1], s[2], int(s[3])])
-                elif global_stuff.cosmic_or_humvar == 'cosmic':
-                    mutations.append([protein_name, int(s[1])-1, s[2], s[3], int(s[4]), int(s[5]), int(s[6])])
+                mutations.append([protein_name, int(s[0])-1, s[1], s[2], int(s[3])])
             except Exception, err:
                 print >> sys.stderr, err
 
 
         return mutations
+
+
+class cosmic_protein_mutation_list(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set(['uniprot_id'])
+
+    def whether_to_override(self, object_key):
+        return False
+    
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        protein_name = params.get_param('uniprot_id')
+        neutral_file = global_stuff.base_folder + protein_name + '/' + 'all_mutations'
+        mutations = []
+        f = open(neutral_file)
+
+        for line in f:
+            s = line.strip().split(',')
+            try:
+                mutations.append([protein_name, int(s[1])-1, s[2], s[3], int(s[4]), int(s[5]), int(s[6])])
+            except Exception, err:
+                print >> sys.stderr, err
+
+
+        return mutations
+
 
 class general_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -859,25 +881,34 @@ class mf_distance(wrapper.mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         return dist
                     
             
-                
-    
-
-class mutation_list_given_protein_list(wrapper.obj_wrapper):
-
-    @classmethod
-    def get_all_keys(cls, params, self=None):
-        return set(['protein_list_file'])
+class humvar_mutation_list_all(wrapper.obj_wrapper):
 
     def whether_to_override(self, object_key):
         return True
     
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        f = open(global_stuff.humvar_genes_file, 'r')
+        mutation_list = []
+        for line in f:
+            protein_name = line.strip()
+            self.set_param(params, 'uniprot_id', protein_name)
+            mutation_list = mutation_list + self.get_var_or_file(humvar_protein_mutation_list, params)
+        return mutation_list
 
+class current_cosmic_mutation_list_all(wrapper.obj_wrapper):
 
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set()
 
-        protein_list_file = self.get_param(params, 'protein_list_file')
-        f = open(protein_list_file, 'r')
+    def whether_to_override(self, object_key):
+        return True
+    
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        # read in a list of cosmic gene names 
+        f = open(global_stuff.cosmic_genes_file, 'r')
         mutation_list = []
         i = 0
         for line in f:
@@ -888,7 +919,7 @@ class mutation_list_given_protein_list(wrapper.obj_wrapper):
             protein_name = line.strip()
             self.set_param(params, 'uniprot_id', protein_name)
 
-            mutation_list = mutation_list + self.get_var_or_file(protein_mutation_list, params, False, False, False)
+            mutation_list = mutation_list + self.get_var_or_file(cosmic_protein_mutation_list, params, False, False, False)
         return mutation_list
 
 class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
@@ -1055,6 +1086,32 @@ class neighbors_w(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
         
         return edges
 
+class general_neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    def whether_to_override(self, object_key):
+        return False
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        which_neighbor = params.get_param('which_neighbors')
+        if which_neighbor == 0:
+            return set(['which_neighbors']) | neighbors_w_weight_w.get_all_keys(params, self)
+        elif which_neighbor == 1:
+            return set(['which_neighbors']) | start_neighbors_from_pdb.get_all_keys(params, self)
+                     
+
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        which_neighbors = self.get_param(params, 'which_neighbors')
+
+        if which_neighbors == 0:
+            return self.get_var_or_file(neighbors_w_weight_w, params)
+        elif which_neighbors == 1:
+            return self.get_var_or_file(start_neighbors_from_pdb, params)
+        else:
+            raise Exception
+
 class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
@@ -1158,11 +1215,20 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
 
 
 
-class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
+class filtered_mutation_list(wrapper.obj_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return mutation_list_given_protein_list.get_all_keys(params, self)
+        which_dataset = params.get_param('which_dataset')
+        if which_dataset == 'cosmic':
+            return set(['which_dataset']) | current_cosmic_mutation_list_all.get_all_keys(params, self)
+        elif which_dataset == 'their_cosmic':
+            return set(['which_dataset']) | their_cosmic_mutation_list_all.get_all_keys(params, self)
+        elif which_dataset == 'humvar':
+            return set(['which_dataset']) | humvar_mutation_list_all.get_all_keys(params, self)
+        else:
+            raise Exception
+        
 
     def whether_to_override(self, object_key):
         return False
@@ -1170,29 +1236,52 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
 
-        all_mutations = self.get_var_or_file(mutation_list_given_protein_list, params, recalculate, False, False)
+        which_dataset = self.get_param(params, 'which_dataset')
+        pdb.set_trace()
+        if which_dataset == 'cosmic':
+            mutation_list = self.get_var_or_file(current_cosmic_mutation_list_all, params)
+        elif which_dataset == 'humvar':
+            mutation_list = self.get_var_or_file(humvar_mutation_list_all, params)
+        elif which_dataset == 'their_cosmic':
+            mutation_list = self.get_var_or_file(their_cosmic_mutation_list_all, params)
+            
 
         num = 0
         num_add = 0
 
-        n_dict = {}
-        q_dict = {}
-        m_dict = {}
-
-        neighbor_cutoff = self.get_param(params, 'n_cutoff')
-        filter_cutoff = self.get_param(params, 'f_cutoff')
-
         filtered_mutations = []
 
-        for mutation in all_mutations:
+        their_and_cosmic = helper.get_file_string_set(global_stuff.their_cosmic_intersect_cosmic_file)
+
+        m = self.get_var_or_file(general_start_to_pdb_definitive, params)
+
+        pdb.set_trace()
+
+        for mutation in mutation_list:
 
             protein_name = mutation[0]
 
+            if num % 50 == 0:
+                print num_add, num
+            num += 1
 
+            if protein_name in their_and_cosmic:
+                self.set_param(params, 'uniprot_id', protein_name)
 
-            self.set_param(params, 'uniprot_id', protein_name)
+                start_seq = self.get_var_or_file(dW, params, recalculate, False, False)
+                try:
+                    pdb_name, chain_letter = m[protein_name]
+                    self.set_param(params, 'pdb', pdb_name)
+                    self.set_param(params, 'chain', chain_letter)
+                    pdb_seq = self.get_var_or_file(pdb_chain_seq, params)
+                except KeyError:
+                    pass
+                else:
+                    if float(len(pdb_seq)) / len(start_seq) > 0.75:
+                        filtered_mutations.append(mutation)
+                        num_add += 1
+                
 
-            seq = self.get_var_or_file(dW, params, recalculate, False, False)
 
             """
                 try:
@@ -1221,7 +1310,7 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
                     m_dict[protein_name ] = msa
 
 
-                    """
+                    
             if len(seq) < 500000:
 
                 neighbors = self.get_var_or_file(neighbors_w_weight_w, params, recalculate, True, False)
@@ -1245,7 +1334,7 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
                 if num % 50 == 0:
                     print >> sys.stderr, '                               ', num_add, num
 
-                """
+                
                 filtered_column = helper.filter_msa_based_on_pos_neighbors_and_query(query, pos, msa, neighbors[pos])
 
                 print >> sys.stderr, '       ', len(neighbors[pos]), len(filtered_column), neighbor_cutoff, filter_cutoff
@@ -1255,12 +1344,16 @@ class filtered_mutation_list_given_protein_list(wrapper.obj_wrapper):
                     print >> sys.stderr, '                                   YES'
                 """
 
-
+        print 'num_add: ', num_add
                 
         return filtered_mutations
 
 
-class their_mutation_list(wrapper.obj_wrapper):
+# one wrapper for each raw dataset.  no parameters needed
+class their_cosmic_mutation_list_all(wrapper.obj_wrapper):
+
+    def whether_to_override(self, object_key):
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -1284,9 +1377,9 @@ class their_mutation_list(wrapper.obj_wrapper):
                 dna_binding = int(s[17] == '1')
                 mol_binding = int(s[18] == '1')
                 params.set_param('uniprot_id', name)
-                import wc
-                seq = wc.get_stuff(dW, params)
-                assert seq[pos] == wild_char
+                #import wc
+                #seq = wc.get_stuff(dW, params)
+                #assert seq[pos] == wild_char
                 mutation = [name, pos, wild_char, mut_char, mut_count, site_count, gene_count, func, protein_binding, dna_binding, mol_binding]
                 mutations.append(mutation)
             except Exception, err:
@@ -1298,25 +1391,7 @@ class their_mutation_list(wrapper.obj_wrapper):
         pdb.set_trace()
         return mutations
 
-class their_mutation_list_given_protein_list(wrapper.obj_wrapper):
 
-    @dec
-    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-        protein_list_file = self.get_param(params, 'protein_list_file')
-        f = open(protein_list_file, 'r')
-        protein_set = set()
-        for line in f:
-
-            protein_set.add(line.strip())
-
-        mutation_list = self.get_var_or_file(their_mutation_list, params)
-        to_return = []
-        for mutation in mutation_list:
-
-            name = mutation[0]
-            if name in protein_set:
-                to_return.append(mutation)
-        return to_return
     
 
 def get_protein_info(protein_list, info_file, params):
@@ -1469,18 +1544,18 @@ def get_overlap(params, protein_list, out_file):
     
 
 
-def get_mutation_info(protein_list_file, out_file, params):
+def get_mutation_info(out_file, params):
     import wc
 
-    params.set_param('protein_list_file', protein_list_file)
-    pdb.set_trace()
-    l = wc.get_stuff(mutation_list_given_protein_list, params, False, False, False, False)
+    
+    l = wc.get_stuff(filtered_mutation_list, params, False, False, False, False)
 
     f = open(out_file, 'w')
 
     avg_degs = [1,2,3,4]
     
     i = 0
+    pdb.set_trace()
     for mutation in l:
 
         name = mutation[0]
@@ -1565,16 +1640,26 @@ def get_mutation_info(protein_list_file, out_file, params):
         def get_whether_bad():
             return [str(mutation[4])]
 
+        def get_deg_pdb():
+            pos = mutation[1]
+            neighbors = wc.get_stuff(general_neighbors_w_weight_w, params)
+            deg = len(neighbors[pos])
+            return [str(deg)]
+
         info = []
         if i % 50 == 0:
             print >> sys.stderr, get_name(), i
         i += 1
-        if global_stuff.cosmic_or_humvar == 'cosmic':
+        which_dataset = params.get_param('which_dataset')
+        if which_dataset == 'cosmic':
 
             which_info = [get_name, get_pos, get_wild_aa, get_mut_aa, get_cosmic_info]
 
-        elif global_stuff.cosmic_or_humvar == 'humvar':
+        elif which_dataset == 'humvar':
             which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_deg, get_whether_bad, get_msa_length]
+
+        elif which_dataset == 'their_cosmic':
+            which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_msa_length, get_deg_pdb]
         try:
             for which in which_info:
                 info = info + which()
@@ -1699,7 +1784,7 @@ class fW(wrapper.file_wrapper):
 
     @dec
     def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
-        pdb.set_trace()
+
         pdb_file_name = self.get_param(params, 'pdb')
         pdbl = Bio.PDB.PDBList()
         pdbl.retrieve_pdb_file(pdb_file_name, pdir=self.get_holding_folder())
@@ -1725,27 +1810,32 @@ class cW(wrapper.obj_wrapper, wrapper.by_pdb_folder_wrapper):
         f = self.get_var_or_file(fW, params, recalculate, to_pickle)
         structure = Bio.PDB.PDBParser().get_structure(self.get_param(params, 'pdb'), f)
         chain = Bio.PDB.PPBuilder().build_peptides(structure[0][self.get_param(params, 'chain')])
-        pdb.set_trace()
+
         to_return = []
         for chain_frag in chain:
             to_return = to_return + chain_frag
 
 
         real_to_return = []
-        pdb.set_trace()
+
         for i in range(len(to_return)):
+
             try:
                 Polypeptide.three_to_one(to_return[i].resname)
             except Exception, err:
                 print err
-                print real_to_return[i], i
+                print to_return[i], i
                 #pdb.set_trace()
                 print 'weird AA', to_return[i].resname
             else:
                 real_to_return.append(to_return[i])
+
         return real_to_return
 
 class pdb_chain_seq(wrapper.obj_wrapper, wrapper.by_pdb_folder_wrapper):
+
+    def whether_to_override(self, object_key):
+        return False
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -1760,29 +1850,172 @@ class pdb_chain_seq(wrapper.obj_wrapper, wrapper.by_pdb_folder_wrapper):
         
         raw_string = string.join(raw_string, sep = '')
         ans = SeqRecord(Seq(raw_string), id = pdb_name + '_' + chain_name)
-        pdb.set_trace()
+
         return ans
 
-class uniprot_to_pdb(wrapper.obj_wrapper):
+class gene_name_to_refseq(wrapper.obj_wrapper):
+
+
+    def whether_to_override(self, object_key):
+        return False
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        f = open(global_stuff.their_mutation_file, 'r')
+        m = {}
+        for line in f:
+            s = line.strip().split('\t')
+            gene_name = s[1].strip()
+            refseq = s[4].strip()
+            m[gene_name] = refseq
+
+        return m
+    
+
+class refseq_to_pdb(wrapper.obj_wrapper):
     """
     maps uniprot id to pdb, chain tuple
     """
+
+    def whether_to_override(self, object_key):
+        return False
+    
     @dec
     def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
-        pass
+        r_to_u = self.get_var_or_file(refseq_to_uniprot, params)
+        u_to_p = self.get_var_or_file(uniprot_to_pdb, params)
+        m = {}
+        i = 0
+        for refseq in r_to_u:
+            print i
+            i += 1
+            for uniprot in r_to_u[refseq]:
+                try:
+                    for pc in u_to_p[uniprot]:
+                        try:
+                            m[refseq].append(pc)
+                        except:
+                            m[refseq] = [pc]
+                except:
+                    pass
+        return m
+            
 
-class query_to_pdb_chain_map(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
+class refseq_to_uniprot(wrapper.obj_wrapper):
+    """
+    assuming that there is only one refseq file ever, so that i don't have to store the specific refseq file as a key
+    """
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        f = open(global_stuff.refseq_to_uniprot_file, 'r')
+        m = {}
+        for line in f:
+            s = line.strip().split(',')
+            refseq = s[0]
+            uniprot = s[1]
+            try:
+                m[refseq].append(uniprot)
+            except:
+                m[refseq] = [uniprot]
+        return m
+
+class uniprot_to_pdb(wrapper.obj_wrapper):
+    """
+    one to many map from uniprot to pdb.  
+    """
+    def whether_to_override(self, object_key):
+        return False
+    
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        f = open(global_stuff.pdb_to_uniprot_file, 'r')
+        m = {}
+        for line in f:
+            s = line.strip().split(',')
+            pdb_name = s[0].upper()
+            chain_letter = s[1].upper()
+            uniprot_id = s[2]
+            to_add = (pdb_name, chain_letter)
+            try:
+                m[uniprot_id].append(to_add)
+            except:
+                m[uniprot_id] = [to_add]
+        return m
+
+class refseq_to_pdb_definitive(wrapper.obj_wrapper):
+    """
+    contains all the refseqs which were in the cosmic file from sander.  but when looking at his file, some of corresponding gene names i may not have the file for
+    """
+
+    def whether_to_override(self, object_key):
+        return False
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        m = self.get_var_or_file(refseq_to_pdb, params)
+        definitive = {}
+        i = 1
+        for refseq in m:
+            print i
+            i += 1
+            longest = -1
+            for pc in m[refseq]:
+                pdb_name = pc[0]
+                chain_letter = pc[1]
+                self.set_param(params, 'pdb', pdb_name)
+                self.set_param(params, 'chain', chain_letter)
+                chain = self.get_var_or_file(pdb_chain_seq, params)
+                if len(chain) > longest:
+                    definitive[refseq] = pc
+                    longest = len(chain)
+        return definitive
+
+
+class general_start_to_pdb_definitive(wrapper.obj_wrapper):
+    """
+    only contains mapping of gene names for which i have the sequence
+    """
+
+    def whether_to_override(self, object_key):
+        return False
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        which_dataset = self.get_param(params, 'which_dataset')
+        if which_dataset == 'their_cosmic':
+            # only add gene name for which i have the sequence
+            theirs_i_have = helper.get_file_string_set(global_stuff.cosmic_genes_file)
+
+
+            
+            gn_to_r = self.get_var_or_file(gene_name_to_refseq, params)
+            r_to_p = self.get_var_or_file(refseq_to_pdb_definitive, params)
+            m = {}
+            for gn in gn_to_r:
+                if gn_to_r[gn] in r_to_p and gn in theirs_i_have:
+                  m[gn] = r_to_p[gn_to_r[gn]]
+            return m
+    
+class query_to_pdb_chain_maps(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
     """
     tuple of uniprot to pdb and pdb to uniprot position map
     """
 
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return ( gene_name_to_refseq.get_all_keys(params, self) | uniprot_to_pdb.get_all_keys(params, self) | pdb_chain_seq.get_all_keys(params, self) | dW.get_all_keys(params, self) ) \
+               - set(['pdb', 'chain'])
+
     @dec
     def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
-        uniprot_id = self.get_params(params, 'uniprot_id')
-        pdb_name, chain_letter = self.get_var_or_file(uniprot_to_pdb, params)[uniprot_id]
+        uniprot_id = self.get_param(params, 'uniprot_id')
+        pdb_name, chain_letter = self.get_var_or_file(general_start_to_pdb_definitive, params)[uniprot_id]
+        self.set_param(params, 'pdb', pdb_name)
+        self.set_param(params, 'chain', chain_letter)
         pdb_chain = self.get_var_or_file(pdb_chain_seq, params)
         uniprot_chain = self.get_var_or_file(dW, params)
-        uniprot_seq = uniprot_chain.seq.to_string()
+        uniprot_seq = uniprot_chain.seq.tostring()
         pdb_seq = pdb_chain.seq.tostring()
         matrix = matlist.blosum62
         gap_open = -10
@@ -1799,18 +2032,23 @@ class query_to_pdb_chain_map(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper)
         pdb_to_uniprot_map = {}
 
         for i in range(aln_length):
-            if aln_pdb != '-' and aln_uniprot != '-':
+            if aln_pdb[i] != '-' and aln_uniprot[i] != '-':
                 uniprot_to_pdb_map[uniprot_i] = pdb_i
                 pdb_to_uniprot_map[pdb_i] = uniprot_i
                 
-            if aln_pdb != '-':
+            if aln_pdb[i] != '-':
                 pdb_i += 1
-            if aln_uniprot != '-':
+            if aln_uniprot[i] != '-':
                 uniprot_i += 1
 
         return uniprot_to_pdb_map, pdb_to_uniprot_map
 
+
 class chain_distances(wrapper.mat_obj_wrapper, wrapper.by_pdb_folder_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return cW.get_all_keys(params, self)
 
     @dec
     def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -1825,15 +2063,22 @@ class chain_distances(wrapper.mat_obj_wrapper, wrapper.by_pdb_folder_wrapper):
                 except Exception as e:
                     print 'ERROR: distance fail', self.params, i, j, residues[i].child_dict.keys(), residues[j].child_dict.keys()
                     dists[i][j] = -1
-
         return dists
-                
-class uniprot_neighbors_from_pdb(wrapper.mat_obj_wrapper, wrapper.by_uniprot_folder_wrapper):
+
+# if is a by_uniprot_id_wrapper, that means gene_name/uniprot_id are specified in params
+class start_neighbors_from_pdb(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set(['co']) | (query_to_pdb_chain_maps.get_all_keys(params, self) | query_to_pdb_chain_maps.get_all_keys(params, self) | general_start_to_pdb_definitive.get_all_keys(params, self)) - set(['which_dataset'])
 
     @dec
     def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        # assume uniprot_id (actually gene name) is specified
+
+        uniprot_id = self.get_param(params, 'uniprot_id')
         u_to_p, p_to_u = self.get_var_or_file(query_to_pdb_chain_maps, params)
-        pdb_name, chain_letter = self.get_var_or_file(uniprot_to_pdb, params)
+        pdb_name, chain_letter = self.get_var_or_file(general_start_to_pdb_definitive, params)[uniprot_id]
         self.set_param(params, 'pdb_name', pdb_name)
         self.set_param(params, 'chain_letter', chain_letter)
         dists = self.get_var_or_file(chain_distances, params)
@@ -1843,19 +2088,29 @@ class uniprot_neighbors_from_pdb(wrapper.mat_obj_wrapper, wrapper.by_uniprot_fol
         assert len(dists) == len(pdb_seq)
         neighbors = [ [] for i in range(len(uniprot_seq)) ]
         for i in range(len(uniprot_seq)):
+
             try:
                 pdb_pos = u_to_p[i]
             except:
                 pass
             else:
                 for j in range(len(pdb_seq)):
-                    if dists[pdb_pos][j] != -1 and dists[pdb_pos][j] < cutoff:
+                    if dists[pdb_pos][j] != -1 and dists[pdb_pos][j] < cutoff and pdb_pos != j:
                         try:
-                            neighbors[i].append((p_to_u[j], math.exp(-1.0 * dists[pdb_pos][j]))))
+                            neighbors[i].append((p_to_u[j], dists[pdb_pos][j]))
                         except:
                             pass
+
         return neighbors
         
-        
+    def whether_to_override(self, object_key):
+        return True
 
-class cosmic_ref_seq_to_uniprot_map(wrapper.obj_wrapper):
+
+def write_genes_mutation_list(p, outfile):
+    import wc
+    mutation_list = wc.get_stuff(filtered_mutation_list, p)
+    gene_list = set([mutation[0] for mutation in mutation_list])
+    helper.write_iterable_vert(gene_list, outfile)
+
+    
