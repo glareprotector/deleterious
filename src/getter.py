@@ -247,7 +247,8 @@ for line in f:
             
             p.set_param('which_msa',2)
             get(objects.general_distance, p, gotten_stuff, used_ps)
-            for avg_deg in [1,2,3,4,5,6,7,8,9,10,11,12]:
+            for avg_deg in [1]:
+                p.set_param('avg_deg', avg_deg)
                 get(objects.neighbors_w_weight_w, p, gotten_stuff, used_ps)
             
 
