@@ -7,6 +7,7 @@ whether_to_delete T or F
 whether_to_get_anything T or F
 whether_to_temp T or F
 whether_to_check_remote T or F
+uniprot_or_pdb_chain U or P
 optional: params followed by their values and type(i,f,s)
 """
 
@@ -55,6 +56,8 @@ if sys.argv[8] == 'T':
 else:
     whether_to_check_remote = False
 
+uniprot_or_pdb_chain = sys.argv[9]
+
 skip_file = None
 
 username = 'fultonw'
@@ -86,8 +89,8 @@ to_skip = []
 
 # get param values.
 print >> sys.stderr, sys.argv
-assert (len(sys.argv)-9)%3 == 0
-helper.parse_p_input(p, sys.argv[9:])
+assert (len(sys.argv)-10)%3 == 0
+helper.parse_p_input(p, sys.argv[10:])
 
 
 
@@ -126,8 +129,9 @@ used_ps = set()
 #to_gets = set([objects.general_msa, objects.general_distance, objects.general_seq_weights, objects.edge_to_rank, objects.neighbors_w_weight_w])
 import wrapper
 
-#to_gets = set([wrapper.my_msa_obj_wrapper, objects.general_distance, objects.general_msa, objects.neighbors_w_weight_w])
+
 to_gets = set([wrapper.my_msa_obj_wrapper, objects.general_msa])
+
 
 to_blind_sends = set([objects.general_msa, objects.general_distance, objects.neighbors_w_weight_w])
 
@@ -174,11 +178,14 @@ for line in f:
         import wc
         import pdb
 
-        seq = wc.get_stuff(objects.dW,p)
+        if uniprot_or_pdb_chain == 'U':
+            seq = wc.get_stuff(objects.dW,p)
+        elif uniprot_or_pdb_chain == 'P':
+            seq = wc.get_stuff(objects.pdb_chain_seq,p)
 
         print >> sys.stderr, "currently getting: ", protein_name, len(seq)
         
-        if len(seq) < 1000:
+        if len(seq) < 1000000:
 
 
 
@@ -195,8 +202,11 @@ for line in f:
                     os.makedirs(global_stuff.get_holding_folder())
                 except:
                     pass
+
                 real_uniprot_folder = wc.get_wrapper_instance(objects.dW).get_folder(p)
+                real_pdb_folder = wc.get_wrapper_instance(objects.pdb_chain_seq).get_folder(p)
                 global_stuff.base_folder = global_stuff.temp_base_folder
+
                 temp_uniprot_folder = wc.get_wrapper_instance(objects.dW).get_folder(p)
                 if os.path.isdir(temp_uniprot_folder):
                     shutil.rmtree(temp_uniprot_folder)
@@ -223,7 +233,11 @@ for line in f:
             # write calls to get over here
             """
             for which_filter_co in [0.2]:
+<<<<<<< HEAD
+                for avg_deg in [1,2,3,4,5,6,7,8,9,10,11,12]:
+=======
                 for avg_deg in [1,2,3,4,5,6,7,8,9,10,11,12,13,14]:
+>>>>>>> origin/master
 
                     p.set_param('avg_deg', avg_deg)
                     p.set_param('filter_co',which_filter_co)
@@ -240,16 +254,19 @@ for line in f:
             """
 
 
-            p.set_param('which_blast',1)
-            p.set_param('which_msa',0)
-            get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
-            get(objects.general_msa, p, gotten_stuff, used_ps)
+            #p.set_param('which_blast',1)
+            #p.set_param('which_msa',0)
+            #get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
+            #get(objects.general_msa, p, gotten_stuff, used_ps)
             
-            p.set_param('which_msa',2)
-            get(objects.general_distance, p, gotten_stuff, used_ps)
-            for avg_deg in [1]:
-                p.set_param('avg_deg', avg_deg)
-                get(objects.neighbors_w_weight_w, p, gotten_stuff, used_ps)
+
+            #p.set_param('which_msa',2)
+            #get(objects.general_distance, p, gotten_stuff, used_ps)
+            #for avg_deg in [1,2,3,4,5,6,7,8,9,10,11,12]:
+            #    get(objects.neighbors_w_weight_w, p, gotten_stuff, used_ps)
+            import wrapper
+            get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
+
             
 
             g.write('finished: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
@@ -278,9 +295,10 @@ for line in f:
                         p_used = gotten[1]
                         instance = wc.get_wrapper_instance(obj)
                         here_file = instance.get_file_location(p_used)
-                        there_folder = global_stuff.remote_base_folder + p_used.get_param('uniprot_id') + '/'
-                        file_name = instance.get_file_name(p_used)
-                        there_file = there_folder + file_name
+                        #there_folder = global_stuff.remote_base_folder + p_used.get_param('uniprot_id') + '/'
+                        #file_name = instance.get_file_name(p_used)
+                        #there_file = there_folder + file_name
+                        there_file = instance.get_remote_file_location(p_used)
                         import pdb
 
                         sender.send(here_file, there_file, hostname, there_folder, username, password, port, instance, p_used, whether_to_delete)

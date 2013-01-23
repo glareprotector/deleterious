@@ -12,6 +12,60 @@ import random
 import sys
 from Bio.Align import MultipleSeqAlignment
 
+
+class mutation(object):
+
+    def __init__(self, site, wild, mut):
+        self.site = site
+        self.wild = wild
+        self.mut = mut
+        self.count = None
+        self.gene_mult = None
+        self.site_count = None
+
+    def __hash__(self):
+        return self.site.__hash__() + self.wild.__hash__() + self.mut.__hash__()
+
+    def set_count(self, count):
+        self.count = count
+
+    def set_site_count(self, count):
+        self.site_count = count
+
+    def set_gene_mult(self, mult):
+        self.gene_mult = mult
+
+    def __lt__(self, other):
+        return self.site < other.site
+
+    def __eq__(self, other):
+        return self.__str__() == other.__str__()
+
+    def __str__(self):
+        return str(self.site) + ','  + self.wild + ',' + self.mut + ',' + str(self.count) + ',' + str(self.site_count) + ',' + str(self.gene_mult)
+
+
+class site(object):
+    def __init__(self, gene, pos):
+        self.gene = gene
+        self.pos = pos
+
+    def __hash__(self):
+        return self.gene.__hash__() + self.pos.__hash__()
+
+    def __lt__(self, other):
+        return self.gene < other.gene
+
+    def __str__(self):
+        return self.gene + ',' + str(self.pos)
+
+    def __eq__(self, other):
+        return self.__str__() == other.__str__()
+
+    def __repr__(self):
+        return self.__str__()
+
+
 # also sets global_stuff.RESULTS_FOLDER to proper value
 def read_param(file_location):
     
@@ -301,7 +355,7 @@ def rank(nums, x):
     return float(count) / len(nums)
 
 
-def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos, max_neighbor, num_trials, pseudo_total, sim_f):
+def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos, max_neighbor, num_trials, pseudo_total, sim_f, to_neighbor_p_value):
 
     import wc
     import objects
@@ -315,6 +369,7 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
 
     import wrapper
+
     msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params)
 
 
@@ -323,9 +378,9 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
     
     seq_weights = wc.get_stuff(objects.general_seq_weights, params)
 
+    #seq_weights = [1.0 for i in range(len(msa))]
 
-
-    #seq_weights = [1.0/len(msa) for i in range(len(msa))]
+    #seq_weights = 
 
     column = msa.get_column(pos)
 
@@ -338,9 +393,17 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
     if not ignore_pos:
         #mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[pos,i] == mut_res])
         #wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[pos,i] == wild_res])
+
         mut_similarity = compute_similarity_score_to_residue(column, seq_weights, mut_res, sim_f)
         wild_similarity = compute_similarity_score_to_residue(column, seq_weights, wild_res, sim_f)
+        mut_count = column.count(mut_res)
+        wild_count= column.count(wild_res)
+        #if wild_similarity < 1:
+        #    print wild_res, mut_res, column
+        #    pdb.set_trace()
         score += math.log((mut_similarity + 1) / wild_similarity)
+        second_score = math.log((mut_count + 1.0) / wild_count)
+        #assert abs(score - second_score) < .001
         #score += math.log((mut_weight + 1) / (wild_weight))
     
 
@@ -411,10 +474,10 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
 
         
-        normalize_neighbor = True
 
 
-        if normalize_neighbor:
+
+        if to_neighbor_p_value:
 
 
 
@@ -429,7 +492,7 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
 
 
-                
+
 
                 a_random_score = get_neighbor_score(msa, random_weight_a, random_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
 
@@ -462,7 +525,7 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
         print >> sys.stderr, neighbor_score, len(msa)
 
 
-    return (score - neighbor_score) * -1.0 / len(msa)
+    return (score - neighbor_score) * -1.0
 
 
 def get_KL_real(d1, d2, weights):
@@ -809,6 +872,7 @@ def list_union(a, b):
 def write_mat(mat, f_name, the_sep = ',', option = 'w'):
     f = open(f_name, option)
     #print >> sys.stderr, mat
+
     for row in mat:
         
         line = string.join([('%.5f' % x)  for x in row], sep=the_sep)
@@ -861,7 +925,11 @@ def write_int_float_tuple_mat(mat, f_name):
         f.write(line)
     f.close()
         
-        
+def write_iterable_vert(obj, f):
+    f = open(f,'w')
+    for x in obj:
+        f.write(str(x) + '\n')
+    f.close()
 
 def write_vect(vect, f_name, the_sep = ',', option = 'w'):
     f = open(f_name, option)

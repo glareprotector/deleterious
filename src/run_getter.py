@@ -10,11 +10,12 @@ whether_to_delete T or F
 whether_to_get_anything T or F
 whether to operate in temp folder T or F
 whether_to_check_remote T or F
+uniprot_or_pdb_chain U or P
 fqueue(only for bsub)
 mem_limit(only for bsub)
 hours:minutes(only for bsub)
 tmp space
-then possibly param arguments to pass to getter
+then possibly param arguments to pass to getter.  param name, value, param type
 """
 import os
 import global_stuff
@@ -55,19 +56,20 @@ whether_to_delete = sys.argv[5]
 whether_to_get_anything = sys.argv[6]
 whether_to_temp = sys.argv[7]
 whether_to_check_remote = sys.argv[8]
+uniprot_or_pdb_chain = sys.argv[9]
 
 if mode == 'b':
 
-    queue = sys.argv[9]
-    mem_limit = sys.argv[10]
-    time_limit = sys.argv[11]
-    temp_mem_limit = sys.argv[12]
+    queue = sys.argv[10]
+    mem_limit = sys.argv[11]
+    time_limit = sys.argv[12]
+    temp_mem_limit = sys.argv[13]
 import pdb
 
 if mode == 'b':
-    arg_start = 13
+    arg_start = 14
 elif mode == 'r':
-    arg_start = 9
+    arg_start = 10
 
 args = sys.argv[arg_start:]
 import string
@@ -82,7 +84,7 @@ import pdb
 for i in range(total_jobs):
     print >> sys.stderr, i
 
-    cmd = 'python ' + getter_script + ' ' + str(i) + ' ' + str(total_jobs) + ' ' + protein_list + ' ' + whether_to_send + ' ' + whether_to_delete + ' ' + whether_to_get_anything + ' ' + whether_to_temp + ' ' + whether_to_check_remote + ' ' + arg_string
+    cmd = 'python ' + getter_script + ' ' + str(i) + ' ' + str(total_jobs) + ' ' + protein_list + ' ' + whether_to_send + ' ' + whether_to_delete + ' ' + whether_to_get_anything + ' ' + whether_to_temp + ' ' + whether_to_check_remote + ' ' + uniprot_or_pdb_chain + ' ' + arg_string
     print >> sys.stderr, cmd
     if mode == 'b':
         log_file = global_stuff.log_folder + 'b'+ '_' + str(i) + '_' + str(total_jobs) + '_' + protein_list_file + '_' + 'log'

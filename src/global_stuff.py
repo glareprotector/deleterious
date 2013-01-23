@@ -13,22 +13,37 @@ import pdb
 
 time_total = datetime.timedelta(0)
 
-cosmic_or_humvar = 'cosmic'
-orchestra_or_no = 'orchestra'
+cosmic_or_humvar = 'saapdb'
+
+orchestra_or_no = 'no'
+
 
 if orchestra_or_no  == 'orchestra':
 
     real_home = '/home/fw27/d/deleterious/'
     temp_home = '/tmp/fw27/'
+
+
+    REMOTE_BIN_FOLDER = '/mnt/work/fultonw/deleterious/data/bin/'
     
     if cosmic_or_humvar == 'humvar':
         real_base_folder = '/home/fw27/d/deleterious/data/proteins/humvar/'
         temp_base_folder = temp_home + 'humvar/'
         remote_base_folder = '/mnt/work/fultonw/scratch/'
+        PDB_FOLDER = '/home/fw27/d/deleterious/data/proteins/humvar_pdb/'
+        REMOTE_PDB_FOLDER = '/mnt/work/fultonw/deleterious/data/proteins/humvar_pdb/'
     elif cosmic_or_humvar == 'cosmic':
         real_base_folder = '/home/fw27/d/deleterious/data/proteins/cosmic/'
         temp_base_folder = temp_home + 'cosmic/'
         remote_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
+        PDB_FOLDER = '/home/fw27/d/deleterious/data/proteins/cosmic_pdb/'
+        REMOTE_PDB_FOLDER = '/mnt/work/fultonw/deleterious/data/proteins/cosmic_pdb/'
+    elif cosmic_or_humvar == 'saapdb':
+        real_base_folder = 'home/fw27/ddeleterious/data/proteins/saapdb/'
+        temp_base_folder = temp_home + 'saapdb/'
+        remote_base_folder = '/mnt/work/fultonw/scratch_saapdb/'
+        PDB_FOLDER = '/home/fw27/d/deleterious/data/proteins/cosmic_pdb/'
+        REMOTE_PDB_FOLDER = '/mnt/work/fultonw/deleterious/data/proteins/cosmic_pdb/'
 
     MUSCLE_PATH = '/home/fw27/d/deleterious/muscle3.8.31_i86linux64'
     BLAST_PATH = '/home/fw27/d/deleterious/bin/psiblast'
@@ -47,13 +62,24 @@ elif orchestra_or_no == 'no':
 
     real_home = '/mnt/work/fultonw/deleterious/'
     temp_home = None
+    REMOTE_BIN_FOLDER = None
 
     if cosmic_or_humvar == 'humvar':
         real_base_folder = '/mnt/work/fultonw/scratch/'
         temp_base_folder = None
+        PDB_FOLDER = '/mnt/work/fultonw/deleterious/data/proteins/humvar_pdb/'
+        REMOTE_PDB_FOLDER = None
     elif cosmic_or_humvar == 'cosmic':
         real_base_folder = '/mnt/work/fultonw/scratch_cosmic/'
+        PDB_FOLDER = '/mnt/work/fultonw/deleterious/data/proteins/cosmic_pdb/'
         temp_base_folder = None
+        REMOTE_PDB_FOLDER = None
+    elif cosmic_or_humvar == 'saapdb':
+        real_base_folder = '/mnt/work/fultonw/scratch_saapdb/'
+        temp_base_folder = None
+        PDB_FOLDER = '/mnt/work/fultonw/deleterious/data/proteins/cosmic_pdb/'
+        temp_base_folder = None
+        REMOTE_PDB_FOLDER = None
         
     MUSCLE_PATH = '/mnt/work/fultonw/deleterious/muscle/muscle3.8.31_i86linux64'
     BLAST_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/psiblast'
@@ -73,14 +99,15 @@ elif orchestra_or_no == 'no':
 base_folder = real_base_folder
 home = real_home
 
+
+
 def get_param():
     import param
 
 
 
-    p = param.param({'ev':.05, 'uniprot_id':'P16455', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2})
 
-
+    p = param.param({'ev':.05, 'uniprot_id':'KRAS', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2, 'co':8.0, 'which_dataset':'their_cosmic', 'which_neighbors':1})
 
 
     return p
@@ -108,9 +135,13 @@ all_seqs_file = '../data/human-2011_12.seq'
 neutral_mutations_file = '../data/humvar-2011_12.neutral.pph.input'
 deleterious_mutations_file = '../data/humvar-2011_12.deleterious.pph.input'
 cosmic_raw_data_folder = data_folder + 'fasta/'
-
-
-
+their_mutation_file = '../data/their_mutations_linux.txt'
+refseq_to_uniprot_file = '../data/refseq_to_uniprot.csv'
+pdb_to_uniprot_file = '../data/pdb_chain_uniprot.csv'
+cosmic_genes_file = '../data/cosmic_genes'
+humvar_genes_file = '../data/humvar_list'
+their_cosmic_intersect_cosmic_file = '../data/their_intersect_cosmic_genes'
+saapdb_mutations_file = '../data/SAAdb/all_data.csv'
 
 
 # random constants
