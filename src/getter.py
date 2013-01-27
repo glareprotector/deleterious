@@ -272,6 +272,7 @@ for line in f:
             p.set_param('which_msa', 0)
             get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
 
+
             g.write('finished: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
             past2 = datetime.datetime.now()
             g.flush()

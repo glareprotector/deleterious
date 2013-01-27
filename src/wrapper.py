@@ -259,6 +259,10 @@ class indexed_wrapper(wrapper):
 
 class obj_wrapper(wrapper):
 
+
+    def get_holding_location(self):
+        return global_stuff.get_holding_folder() + str(id(self))
+
     def get_pickle_dumper(self, maker, params):
         return pkdW(maker, params)
 
@@ -334,17 +338,27 @@ class my_msa_obj_wrapper(obj_wrapper, by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
+        #print params
+        #pdb.set_trace()
+        to_leon = params.get_param('to_leon')
         import objects
-        return objects.general_msa.get_all_keys(params, self)
+        if to_leon == 0:
+            return objects.general_msa.get_all_keys(params, self)
+        elif to_leon == 1:
+            return set(['to_leon']) | objects.general_msa.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
         import objects
 
-        msa = self.get_var_or_file(objects.general_msa, params)
+        to_leon = params.get_param('to_leon')
+        if to_leon == 0:
+            msa = self.get_var_or_file(objects.general_msa, params)
+        elif to_leon == 1:
+            msa = self.get_var_or_file(objects.leoned_general_msa, params)
         mat = [None for i in range(msa.get_alignment_length())]
         for i in range(msa.get_alignment_length()):
             mat[i] = msa.get_column(i)
@@ -521,6 +535,7 @@ class dadW(generic_dumper_wrapper):
         return ans
 
     def dump_object(self, object):
+
         AlignIO.write(object, open(self.get_holding_location(),'w'), 'fasta')
 
 class wrapper_catalog(obj_wrapper):

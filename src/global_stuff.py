@@ -13,7 +13,7 @@ import pdb
 
 time_total = datetime.timedelta(0)
 
-cosmic_or_humvar = 'saapdb'
+cosmic_or_humvar = 'cosmic'
 
 orchestra_or_no = 'orchestra'
 
@@ -93,8 +93,9 @@ elif orchestra_or_no == 'no':
     HHBLITS_PATH = 'hhblits'
     HHBLITS_DB_PATH = '/mnt/work/fultonw/deleterious/hh/hhdb/nr20_12Aug11'
     HHBLITS_CONVERT_A3M_TO_FASTA = '/mnt/work/fultonw/deleterious/hh/hhsuite-2.0.15-linux-x86_64/lib/hh/scripts/reformat.pl'
-
-
+    LEON_PATH = '/mnt/work/fultonw/leon/leon.sh'
+    RASCAL_PATH = '/mnt/work/fultonw/rascal1.34/rascal'
+    P53_MUTATIONS = '/mnt/work/fultonw/data/p53_mutations'
 
 base_folder = real_base_folder
 home = real_home
@@ -107,7 +108,9 @@ def get_param():
 
 
 
-    p = param.param({'ev':.05, 'uniprot_id':'KRAS', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':1, 'co':8.0, 'which_dataset':'their_cosmic', 'which_neighbors':1})
+
+    p = param.param({'ev':.05, 'uniprot_id':'KRAS', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':0, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':1, 'co':8.0, 'which_dataset':'their_cosmic', 'which_neighbors':1, 'protein_list_file':'their_cosmic_with_enough_pdb_coverage', 'to_leon':1, 'to_cluster':1})
+
 
 
     return p
@@ -142,7 +145,7 @@ cosmic_genes_file = '../data/cosmic_genes'
 humvar_genes_file = '../data/humvar_list'
 their_cosmic_intersect_cosmic_file = '../data/their_intersect_cosmic_genes'
 saapdb_mutations_file = '../data/SAAdb/all_data.csv'
-
+saapdb_genes_file = '../data/saapdb_genes'
 
 # random constants
 query_gi_number = '123456789123456789'
