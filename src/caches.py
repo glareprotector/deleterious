@@ -22,7 +22,7 @@ class file_cache_for_wrapper(object):
     # if we are not trusting the files previously in file system, then we only say a file is there if it was created this round
     def has(self, object_key, recalculate, check_remote=False):
 #        pdb.set_trace()
-        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
+        #object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
 
         if object_key in self.files_created:
             return True
@@ -31,7 +31,7 @@ class file_cache_for_wrapper(object):
             location = self.the_wrapper.get_file_location(object_key)
             # check if we want to override
 
-            print 'checking: ', location, os.path.isfile(location)
+            #print 'checking: ', location, os.path.isfile(location)
                 
 
             if os.path.isfile(location) or (check_remote and self.the_wrapper.was_transferred(object_key)):
@@ -43,27 +43,28 @@ class file_cache_for_wrapper(object):
         return False
 
     # get is only called if has was just called and returned true
-    def get(self, object_key, recalculate, mode = 'r'):
-        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
-        self.allocate(object_key)
-        return open(self.the_wrapper.get_file_location(object_key), mode)
+    def get(self, params, recalculate, mode = 'r'):
+        #object_key = self.the_wrapper.get_object_key(params, self.the_wrapper)
+        self.allocate(params)
+        return open(self.the_wrapper.get_file_location(params), mode)
 
     # moves object from temporary to permanent location.  makes destination folder if needed. keep track of which files were get'ed in this execution.  set is only called right after get is called
     # if this is not chain specific, only do this
-    def set(self, object_key, object, to_pickle, params, to_filelize = None, always_recalculate = False):
-        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
-        self.allocate(object_key)
-        subprocess.call(['mv', object.name, self.the_wrapper.get_file_location(object_key)])
+    def set(self, params, object, to_pickle, params1, to_filelize = None, always_recalculate = False):
+        object_key = self.the_wrapper.get_object_key(params, self.the_wrapper)
+        self.allocate(params)
+        subprocess.call(['mv', object.name, self.the_wrapper.get_file_location(params)])
         self.files_created.add(object_key)
         #pdb.set_trace()
-        return open(self.the_wrapper.get_file_location(object_key), 'r')
+        return open(self.the_wrapper.get_file_location(params), 'r')
 
     # creates folder for object whose type is specified by the wrapper. this step does the prep work allowing the object to be put in the cache, which in this case is the folder in the file system
-    def allocate(self, object_key):
-        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
+    def allocate(self, params):
+        #pdb.set_trace()
+        object_key = self.the_wrapper.get_object_key(params, self.the_wrapper)
         #if not os.path.exists(self.the_wrapper.get_folder(object_key)):
         try:
-            os.makedirs(self.the_wrapper.get_folder(object_key))
+            os.makedirs(self.the_wrapper.get_folder(params))
         except:
             pass
 
@@ -91,9 +92,11 @@ class object_cache_for_wrapper(object):
         self.file_dumper_wrapper = self.the_wrapper.get_file_dumper(maker, params)
 
 
-    def has(self, object_key, recalculate, check_remote=False):
+    def has(self, params, recalculate, check_remote=False):
         #print self, self.the_wrapper
-        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
+
+        object_key = self.the_wrapper.get_object_key(params, self.the_wrapper)
+        #print self.the_wrapper, object_key, self.dump
         if object_key in self.dump:
             
             return True
@@ -107,16 +110,16 @@ class object_cache_for_wrapper(object):
 
 
             
-            return self.pickle_dumper_wrapper.has(object_key, recalculate, check_remote)
+            return self.pickle_dumper_wrapper.has(params, recalculate, check_remote)
     
     # if we don't trust pickles, only trust it if it was created this round.  stuff created this round is in self.dump
-    def get(self, object_key, recalculate):
-        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
+    def get(self, params, recalculate):
+        object_key = self.the_wrapper.get_object_key(params, self.the_wrapper)
         if object_key in self.dump:
             return self.dump[object_key]
-        elif self.pickle_dumper_wrapper.has(object_key, recalculate):
+        elif self.pickle_dumper_wrapper.has(params, recalculate):
             assert recalculate == False
-            f = self.pickle_dumper_wrapper.get(object_key, recalculate)
+            f = self.pickle_dumper_wrapper.get(params, recalculate)
             # replace with dumper wrapper(file)'s read_object function
             # obj = pickle.load(open(f.name, 'rb'))
             obj = self.pickle_dumper_wrapper.read_object_from_file(f)
@@ -134,17 +137,17 @@ class object_cache_for_wrapper(object):
     # is it possible that set is called when the pickled object is accurate.  yes, only if you created the object, pickled, then deleted the used_keys and all_keys_cache pickles
     # self.pickle_wrapper where constructor makes the pickle.  params would include object_key and object
     #@print_stuff_dec
-    def set(self, object_key, object, to_pickle, params, to_filelize, always_recalculate = False):
+    def set(self, params, object, to_pickle, params1, to_filelize, always_recalculate = False):
         #print self.the_wrapper
-
-        object_key = self.the_wrapper.get_object_key(object_key, self.the_wrapper)
+        #pdb.set_trace()
+        object_key = self.the_wrapper.get_object_key(params, self.the_wrapper)
 
         to_pickle = self.the_wrapper.get_to_pickle()
         if len(self.dump) > self.the_wrapper.get_max_cache_size():
             #print 'CLEARING!!', self.the_wrapper
             self.dump.clear()
 
-        
+        #pdb.set_trace()
         self.dump[object_key] = object
         if to_pickle: 
             #pdb.set_trace()

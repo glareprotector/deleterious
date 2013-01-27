@@ -22,6 +22,15 @@ for line in f:
 
 i = 0
 bad = 0
+
+h = open('saapdb_genes', 'w')
+for u in p_to_mut_list:
+    h.write(u + '\n')
+h.close()
+
+
+
+
 for uniprot_id in p_to_mut_list:
     directory = global_stuff.base_folder + uniprot_id + '/'
     try:
@@ -50,3 +59,4 @@ for uniprot_id in p_to_mut_list:
     except:
         bad += 1
     
+"""

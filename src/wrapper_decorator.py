@@ -78,7 +78,7 @@ def dec(f):
         except Exception, err:
             print 'ERROR DOWNSTREAM OF CALLING ', self, err
             import sys
-            pdb.set_trace()
+
             import traceback
             for frame in traceback.extract_tb(sys.exc_info()[2]):
                 fname,lineno,fn,text = frame
@@ -140,7 +140,7 @@ def dec(f):
         self.all_keys_cache.set(all_keys_key, all_keys, True, recalculate)
         # set always recalculate to false here? if call dumper wrapper directly can set it to true
 
-        obj = self.cache.set(object_key, obj, to_pickle, params, to_filelize, always_recalculate)
+        obj = self.cache.set(params, obj, to_pickle, params, to_filelize, always_recalculate)
 
         self.temp_used_keys.pop()
         self.temp_dependents_keys.pop()
@@ -173,9 +173,9 @@ def dec(f):
                         return cache_everything_f_poster(self, params, recalculate, to_pickle, to_filelize, always_recalculate, obj)
                     return used_keys, all_keys, obj, all_keys_key_key_set
                         
-        if self.cache.has(object_key, recalculate):
+        if self.cache.has(params, recalculate):
             #print '           getting cached value in wrapper ', self
-            obj = self.cache.get(object_key, recalculate)
+            obj = self.cache.get(params, recalculate)
             try:
                 #if len(self.cache.dump) > global_stuff.CACHE_MAX_SIZE:
                 #    self.cache.dump.clear()

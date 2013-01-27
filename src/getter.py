@@ -265,7 +265,9 @@ for line in f:
             #    get(objects.neighbors_w_weight_w, p, gotten_stuff, used_ps)
             import wrapper
             get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
-            
+            #for co in [5.0,6.0,7.0,8.0]:
+            #    p.set_param('co', co)
+            #    get(objects.general_neighbors_w_weight_w, p, gotten_stuff, used_ps)
 
             g.write('finished: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
             past2 = datetime.datetime.now()

@@ -308,6 +308,7 @@ def compute_similarity_score_to_residue(column, weights, residue, similarity_f):
 
     similarity = 0
     for i in range(len(column)):
+        
         similarity += weights[i] * similarity_f(residue, column[i])
     return similarity
 
@@ -367,6 +368,8 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
     params.set_param('uniprot_id', protein_name)
     seq = wc.get_stuff(objects.dW, params)
 
+    assert seq[pos] == wild_res
+
 
     import wrapper
 
@@ -376,17 +379,23 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
     score = 0
     
-    seq_weights = wc.get_stuff(objects.general_seq_weights, params)
+
 
     #seq_weights = [1.0 for i in range(len(msa))]
 
     #seq_weights = 
 
-    column = msa.get_column(pos)
+    params.set_param('which_msa', 0)
+    
+    node_msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params)
 
+    column = node_msa.get_column(pos)
+    node_seq_weights = wc.get_stuff(objects.general_seq_weights, params)
 
+    params.set_param('which_msa', 2)
+    msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params)
 
-
+    neighbor_seq_weights = wc.get_stuff(objects.general_seq_weights, params)
 
 
 
@@ -394,8 +403,8 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
         #mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[pos,i] == mut_res])
         #wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[pos,i] == wild_res])
 
-        mut_similarity = compute_similarity_score_to_residue(column, seq_weights, mut_res, sim_f)
-        wild_similarity = compute_similarity_score_to_residue(column, seq_weights, wild_res, sim_f)
+        mut_similarity = compute_similarity_score_to_residue(column, node_seq_weights, mut_res, sim_f)
+        wild_similarity = compute_similarity_score_to_residue(column, node_seq_weights, wild_res, sim_f)
         mut_count = column.count(mut_res)
         wild_count= column.count(wild_res)
         #if wild_similarity < 1:
@@ -406,14 +415,15 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
         #assert abs(score - second_score) < .001
         #score += math.log((mut_weight + 1) / (wild_weight))
     
-
-
+        score = -1.0 * mutation[-3]
+    
     neighbor_score = 0
     
     if use_neighbor:
 
         # get neighbors/weights
-        all_neighbors = wc.get_stuff(objects.neighbors_w_weight_w, params)
+
+        all_neighbors = wc.get_stuff(objects.general_neighbors_w_weight_w, params)
         pos_neighbors = all_neighbors[pos]
         sorted_pos_neighbors = sorted(pos_neighbors, key = lambda elt: elt[1], reverse = True)
 
@@ -461,8 +471,8 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
                     
 
 
-        actual_weight_a = [seq_weights[i] if msa[i,pos] == wild_res else 0.0 for i in range(len(msa))]
-        actual_weight_b = [seq_weights[i] if msa[i,pos] == mut_res else 0.0 for i in range(len(msa))]
+        actual_weight_a = [neighbor_seq_weights[i] if msa[i,pos] == wild_res else 0.0 for i in range(len(msa))]
+        actual_weight_b = [neighbor_seq_weights[i] if msa[i,pos] == mut_res else 0.0 for i in range(len(msa))]
 
 
         neighbor_cols = [ [msa[j,i] for j in range(len(msa))] for i in neighbors]
@@ -470,8 +480,9 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
         actual_neighbor_score = get_neighbor_score(msa, actual_weight_a, actual_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
 
-
-
+        if actual_neighbor_score < 0:
+            pdb.set_trace()
+            print actual_neighbor_score
 
         
 
@@ -483,12 +494,12 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
 
 
-            mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i,pos] == mut_res])
-            wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[i,pos] == wild_res])
+            mut_weight = sum([neighbor_seq_weights[i] for i in range(len(msa)) if msa[i,pos] == mut_res])
+            wild_weight = sum([neighbor_seq_weights[i] for i in range(len(msa)) if msa[i,pos] == wild_res])
             random_scores = []
             for i in range(num_trials):
-                random_weight_a = get_random_weight(seq_weights, wild_weight)
-                random_weight_b = get_random_weight(seq_weights, mut_weight)
+                random_weight_a = get_random_weight(neighbor_seq_weights, wild_weight)
+                random_weight_b = get_random_weight(neighbor_seq_weights, mut_weight)
 
 
 
@@ -810,8 +821,8 @@ def get_KL_weighted(col, weight_1, weight_2, pseudo_count_dict, choose_neighbor_
     
     try:
         for k in d1_dict.keys():
-            if choose_neighbor_probs[k] > 0:
-                ans += choose_neighbor_probs[k] * math.log(d1_dict[k] / d2_dict[k])
+            #if choose_neighbor_probs[k] > 0:
+            #    ans += choose_neighbor_probs[k] * math.log(d1_dict[k] / d2_dict[k])
                 
             
             if d1_dict[k] > 0:
@@ -821,6 +832,11 @@ def get_KL_weighted(col, weight_1, weight_2, pseudo_count_dict, choose_neighbor_
         print >> sys.stderr, d1_dict[k], d2_dict[k], k
 
         x=2
+
+    if ans < 0:
+        print ans
+        pdb.set_trace()
+        
     return ans
 
 
@@ -1173,13 +1189,22 @@ def filter_msa(msa, cut_off):
 # for cosmic, mutation is of form name, pos, wild, mut, # of that mutation, # of that site, # of that gene
 
 def mutation_to_class(mutation):
-    return mutation[4]
+    asdf = int( mutation[8] == 1 or mutation[9] == 1 or mutation[10] == 1)
+
+    return [asdf,int(mutation[4]>1), mutation[8], mutation[9], mutation[10]]
 
 def temp_cosmic(mutation):
+    asdf = int( mutation[8] == 1 or mutation[9] == 1 or mutation[10] == 1)
+
+    return [asdf,int(mutation[4]>1), mutation[8], mutation[9], mutation[10]]
+    return [mutation[4], mutation[8], mutation[9], mutation[10]]
     if mutation[4] > 1:
-        return 0
-    else:
         return 1
+    else:
+        return 0
+
+def saapdb_to_class(mutation):
+    return mutation[4]
 
 import numpy
 
