@@ -204,7 +204,7 @@ for line in f:
                     pass
 
                 real_uniprot_folder = wc.get_wrapper_instance(objects.dW).get_folder(p)
-                real_pdb_folder = wc.get_wrapper_instance(objects.pdb_chain_seq).get_folder(p)
+                #real_pdb_folder = wc.get_wrapper_instance(objects.pdb_chain_seq).get_folder(p)
                 global_stuff.base_folder = global_stuff.temp_base_folder
 
                 temp_uniprot_folder = wc.get_wrapper_instance(objects.dW).get_folder(p)
@@ -265,14 +265,21 @@ for line in f:
             #for avg_deg in [1,2,3,4,5,6,7,8,9,10,11,12]:
             #    get(objects.neighbors_w_weight_w, p, gotten_stuff, used_ps)
             import wrapper
+            p.set_param('which_msa', 2)
+            p.set_param('hhblits_iter', 1)
             get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
-
-            
+            p.set_param('hhblits_iter', 2)
+            p.set_param('which_msa', 0)
+            get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
 
             g.write('finished: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
             past2 = datetime.datetime.now()
             g.flush()
 
+
+            # remove hhr file
+            real_uniprot_folder = wc.get_wrapper_instance(objects.dW).get_folder(p)
+            subprocess.call(['rm', real_uniprot_folder + '*hhr*'])
             if whether_to_send:
 
                 # move stuff to ent
@@ -298,6 +305,7 @@ for line in f:
                         #there_folder = global_stuff.remote_base_folder + p_used.get_param('uniprot_id') + '/'
                         #file_name = instance.get_file_name(p_used)
                         #there_file = there_folder + file_name
+
                         there_file = instance.get_remote_file_location(p_used)
                         import pdb
 

@@ -413,6 +413,9 @@ class generic_dumper_wrapper(file_wrapper):
     def dump_object(self, obj):
         pass
 
+    def get_remote_folder(self, object_key):
+        return self.source_wrapper.get_remote_folder(object_key)
+
     def get_folder(self, object_key):
         return self.source_wrapper.get_folder(object_key)
 
