@@ -430,7 +430,7 @@ class agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return afW.get_all_keys(params, self)
+        return general_afW.get_all_keys(params, self)
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
