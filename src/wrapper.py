@@ -343,9 +343,12 @@ class my_msa_obj_wrapper(obj_wrapper, by_uniprot_id_wrapper):
         to_leon = params.get_param('to_leon')
         import objects
         if to_leon == 0:
-            return objects.general_msa.get_all_keys(params, self)
+            ans = objects.general_msa.get_all_keys(params, self)
         elif to_leon == 1:
-            return set(['to_leon']) | objects.general_msa.get_all_keys(params, self)
+            ans = set(['to_leon']) | objects.general_msa.get_all_keys(params, self)
+
+
+        return ans
 
     def whether_to_override(self, object_key):
         return True
