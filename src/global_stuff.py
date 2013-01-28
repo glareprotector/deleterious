@@ -15,7 +15,7 @@ time_total = datetime.timedelta(0)
 
 cosmic_or_humvar = 'cosmic'
 
-orchestra_or_no = 'orchestra'
+orchestra_or_no = 'no'
 
 
 if orchestra_or_no  == 'orchestra':

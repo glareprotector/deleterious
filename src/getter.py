@@ -267,7 +267,7 @@ for line in f:
             import wrapper
             for hhblits_iter in [1,2]:
                 p.set_param('hhblits_iter', hhblits_iter)
-                for to_normd in [0,1]:
+                for to_normd in [0]:
                     p.set_param('to_normd', to_normd)                    
                     get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
 

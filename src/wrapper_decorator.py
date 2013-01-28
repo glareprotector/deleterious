@@ -154,9 +154,14 @@ def dec(f):
     def h(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
 
 
-        #print 'START TO GET: ', self, params.get_param('which_wrapper_class')
+
 
         object_key = self.get_object_key(params, self)
+
+        import sys
+        print >> sys.stderr, 'OBTAINING!!!', self, object_key
+#        print >> sys.stderr, params
+
 
         used_keys = set()
         all_keys = set()

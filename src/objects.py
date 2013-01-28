@@ -112,7 +112,7 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         #psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', out = self.get_holding_location())
         #pdb.set_trace()
         print >> sys.stderr, psi_blast_cline
-        subprocess.call(str(psi_blast_cline), shell=True, executable='/bin/bash')
+        subprocess.call(str(psi_blast_cline), shell=True, stdout = sys.stderr, stderr = sys.stderr, executable='/bin/bash')
 
         return open(self.get_holding_location())
 
@@ -183,7 +183,7 @@ class afW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         if self.get_param(params, 'which_msa') == 0:
             msa_input_handle = self.get_var_or_file(aeW, params, recalculate, to_pickle, to_filelize, always_recalculate)
             cline = MuscleCommandline(cmd = global_stuff.MUSCLE_PATH, input = '\''+msa_input_handle.name+'\'', out = self.get_holding_location(), clw = False, maxiters = 2)
-            subprocess.call(str(cline), shell=True, executable='/bin/bash')
+            subprocess.call(str(cline), shell=True, stdout = sys.stderr, stderr = sys.stderr, executable='/bin/bash')
             return open(self.get_holding_location())
         elif self.get_param(params, 'which_msa') == 2:
 
@@ -267,7 +267,7 @@ class psicov_output_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         cmd = global_stuff.PSICOV_PATH + ' -p ' + ' -r ' + str(r) + ' -j ' + str(separating_dist) + ' -g ' + str(gap_ignore) + ' ' + '\''+input_file.name+'\'' + ' > ' + self.get_holding_location()
         print cmd
 
-        subprocess.call(cmd, shell=True, executable='/bin/bash')
+        subprocess.call(cmd, stdout = sys.stderr, stderr = sys.stderr, shell=True, executable='/bin/bash')
         return open(self.get_holding_location(), 'r')
 
     def whether_to_override(self, object_key):
@@ -391,10 +391,10 @@ class MIP_distance_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         modified_alignment_file = self.get_var_or_file(MIP_input_msa_file, params, False, False, False)
         cmd = global_stuff.MIP_PATH + ' -i ' + '\'' + modified_alignment_file.name + '\'' + ' -o ' + self.get_holding_location() + ' -n ' + str(1) + ' -g ' + global_stuff.query_gi_number
         print >> sys.stderr, cmd
-        subprocess.call(cmd, shell=True, executable='/bin/bash')
-        subprocess.call('mv ' + self.get_holding_location() + '_MIp.txt ' + self.get_holding_location(), shell=True, executable='/bin/bash')
-        subprocess.call('rm ' + self.get_holding_location() + '_count.txt', shell=True, executable='/bin/bash')
-        subprocess.call('rm ' + self.get_holding_location() + '_MIp.dot', shell=True, executable='/bin/bash')
+        subprocess.call(cmd, stdout = sys.stderr, stderr = sys.stderr, shell=True, executable='/bin/bash')
+        subprocess.call('mv ' + self.get_holding_location() + '_MIp.txt ' + self.get_holding_location(), stdout = sys.stderr, stderr = sys.stderr, shell=True, executable='/bin/bash')
+        subprocess.call('rm ' + self.get_holding_location() + '_count.txt', shell=True, stdout = sys.stderr, stderr = sys.stderr, executable='/bin/bash')
+        subprocess.call('rm ' + self.get_holding_location() + '_MIp.dot', shell=True, stdout = sys.stderr, stderr = sys.stderr, executable='/bin/bash')
         return open(self.get_holding_location(), 'r')
 
     def whether_to_override(self, object_key):
@@ -435,6 +435,7 @@ class agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
         print 'AGW!!!!!'
+
         msa = self.get_var_or_file(general_afW, params, recalculate, False, False, False)
         # msa = AlignIO.read(f.name, 'fasta')
         # search for the query sequence
@@ -1147,15 +1148,15 @@ class leoned_general_msa(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper)
         log_file = '/dev/null'
         to_cluster = self.get_param(params, 'to_cluster')
 
-        subprocess.call('cp' +  ' ' + '\''+msa_file_name+'\'' + ' ' + working_file, shell=True, executable='/bin/bash')
+        subprocess.call('cp' +  ' ' + '\''+msa_file_name+'\'' + ' ' + working_file, stdout = sys.stderr, stderr = sys.stderr, shell=True, executable='/bin/bash')
         if to_cluster == 1:
-            subprocess.call(string.join([global_stuff.LEON_PATH, working_file, query_name, self.get_holding_location(), working_file, log_file, str(1)],sep=' '), shell=True, executable = '/bin/bash')
+            subprocess.call(string.join([global_stuff.LEON_PATH, working_file, query_name, self.get_holding_location(), working_file, log_file, str(1)],sep=' '), stdout = sys.stderr, stderr = sys.stderr, shell=True, executable = '/bin/bash')
         elif to_cluster == 0:
 
             cluster_file_name = wc.get_wrapper_instance(fake_cluster_file).get_file_location(params)
             temp_cluster_location = working_file + '.clu'
             subprocess.call('cp' + ' ' + '\''+cluster_file_name+'\'' + ' ' + temp_cluster_location, shell=True, executable='/bin/bash')
-            subprocess.call(string.join([global_stuff.LEON_PATH, working_file, query_name, self.get_holding_location(), working_file, log_file, str(0)],sep=' '), shell=True, executable = '/bin/bash')
+            subprocess.call(string.join([global_stuff.LEON_PATH, working_file, query_name, self.get_holding_location(), working_file, log_file, str(0)],sep=' '), stdout = sys.stderr, stderr = sys.stderr, shell=True, executable = '/bin/bash')
         return AlignIO.read(self.get_holding_location(), 'fasta')
 
 
@@ -1176,15 +1177,15 @@ class rascalled_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         print 'RASCAL!!!'
         msa_file_name = wc.get_wrapper_instance(renamed_afW).get_file_location(params)
         working_file = self.get_holding_location() + '_msa'
-        subprocess.call('cp' +  ' ' + '\''+msa_file_name+'\'' + ' ' + working_file, shell=True, executable='/bin/bash')
-        subprocess.call(global_stuff.RASCAL_PATH + ' ' + working_file + ' ' + self.get_holding_location(), shell=True, executable='/bin/bash')
+        subprocess.call('cp' +  ' ' + '\''+msa_file_name+'\'' + ' ' + working_file, stdout = sys.stderr, stderr = sys.stderr, shell=True, executable='/bin/bash')
+        subprocess.call(global_stuff.RASCAL_PATH + ' ' + working_file + ' ' + self.get_holding_location(), stdout = sys.stderr, stderr = sys.stderr, shell=True, executable='/bin/bash')
         return AlignIO.read(self.get_holding_location(), 'fasta')
 
 
 class norMD_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -1212,12 +1213,12 @@ class norMD_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         helper.conv_seq(in_msa_file, in_msa_gcg_file, 'gcg')
         out_msa_gcg_file = self.get_holding_location() + '_out_gcg'
         norm_co = self.get_param(params, 'norm_co')
-        subprocess.call(global_stuff.NORMD_PATH + ' ' + in_msa_gcg_file + ' ' + global_stuff.NORMD_SIMMAT + ' ' + str(12) + ' ' + str(1) + ' ' + str(norm_co) + ' ' + out_msa_gcg_file + ' QUERY', shell=True, executable='/bin/bash')
-        #subprocess.call(global_stuff.NORMD_PATH + ' ' + in_msa_gcg_file + ' ' + global_stuff.NORMD_SIMMAT + ' ' + str(12) + ' ' + str(1) + ' ' + str(9.0) + ' ' + 'QUERY' + ' ' + out_msa_gcg_file, shell=True, executable='/bin/bash')
+        subprocess.call(global_stuff.NORMD_PATH + ' ' + in_msa_gcg_file + ' ' + global_stuff.NORMD_SIMMAT + ' ' + str(12) + ' ' + str(1) + ' ' + str(norm_co) + ' ' + out_msa_gcg_file + ' QUERY', stdout = sys.stderr, stderr = sys.stderr, shell=True, executable='/bin/bash')
+        #subprocess.call(global_stuff.NORMD_PATH + ' ' + in_msa_gcg_file + ' ' + global_stuff.NORMD_SIMMAT + ' ' + str(12) + ' ' + str(1) + ' ' + str(9.0) + ' ' + 'QUERY' + ' ' + out_msa_gcg_file, shell=True, stdout = sys.stderr, stderr = sys.stderr, executable='/bin/bash')
 
         helper.conv_seq(out_msa_gcg_file, self.get_holding_location(), 'fasta')
         ans = AlignIO.read(self.get_holding_location(), 'fasta')
-        subprocess.call('rm ' + self.get_holding_location() + '*', shell=True, executable='/bin/bash')
+        subprocess.call('rm ' + self.get_holding_location() + '*', stdout = sys.stderr, stderr = sys.stderr, shell=True, executable='/bin/bash')
         #helper.rm_files([in_msa_file, in_msa_gcg_file, out_msa_gcg_file, self.get_holding_location()])
         return ans
         
