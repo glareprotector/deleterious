@@ -168,7 +168,7 @@ class aeW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 class afW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -435,14 +435,34 @@ class agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
 
-        f = self.get_var_or_file(afW, params, recalculate, False, False, False)
-        msa = AlignIO.read(f.name, 'fasta')
+        msa = self.get_var_or_file(general_afW, params, recalculate, False, False, False)
+        # msa = AlignIO.read(f.name, 'fasta')
         # search for the query sequence
         idx = -1
         for i in range(len(msa)):
             if msa[i].id == 'QUERY':
                 idx = i
                 break
+
+
+        seq = self.get_var_or_file(dW, params)
+
+        seqs = [ [None for i in range(len(seq))] for j in range(len(msa)) ]
+
+        pdb.set_trace()
+        pos = 0
+        for i in range(msa.get_alignment_length()):
+            if msa[idx,i] != '-':
+               for j in range(len(msa)):
+
+                   seqs[j][pos] = msa[j,i]
+               pos += 1
+        pdb.set_trace()
+
+        to_add = [ SeqRecord(Seq(string.join(seqs[i],sep='')), id = msa[i].id) for i in range(len(msa))]
+        return MultipleSeqAlignment(to_add)
+
+            
         # find the first non-insertion column
         i = 0
 
@@ -455,6 +475,7 @@ class agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         # add in all the other columns
 
         for k in range(i+1, msa.get_alignment_length()):
+            print k
             if msa[idx,k] != '-':
                 #print >> sys.stderr, k
                 to_return = to_return + msa[:,k:(k+1)]
@@ -1014,7 +1035,7 @@ class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-
+        pdb.set_trace()
         f = self.get_var_or_file(bW, params, False, False, False)
 
         cmd = global_stuff.HHBLITS_PATH + ' -i ' + '\''+f.name+'\'' + ' -d ' + global_stuff.HHBLITS_DB_PATH + ' -oa3m ' + self.get_holding_location() + ' -cpu ' + str(1) + ' -n ' + str(self.get_param(params, 'hhblits_iter')) + ' -e ' + str(self.get_param(params, 'ev'))
@@ -1053,7 +1074,7 @@ class fake_cluster_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return renamed_general_msa.get_all_keys(params, self)
+        return renamed_afW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
         return True
@@ -1071,18 +1092,19 @@ class fake_cluster_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         f.close()
         return open(self.get_holding_location())
 
-class renamed_general_msa(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+class renamed_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
     """
     renames the sequence id's with numbers
     """
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return general_msa.get_all_keys(params, self)
+        return afW.get_all_keys(params, self)
     
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-        msa = self.get_var_or_file(general_msa, params)
+        f = self.get_var_or_file(afW, params)
+        msa = AlignIO.read(f.name, 'fasta')
         count = 0
         for seq in msa:
             if seq.id != 'QUERY':
@@ -1136,25 +1158,92 @@ class leoned_general_msa(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper)
         return AlignIO.read(self.get_holding_location(), 'fasta')
 
 
-class rascalled_general_msa(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+class rascalled_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
+
+    def whether_to_override(self, object_key):
+        return False
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return renamed_afW.get_all_keys(params, self)
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        msa = self.get_var_or_file(renamed_afW, params)
+        import wc
+        print 'RASCAL!!!'
+        msa_file_name = wc.get_wrapper_instance(renamed_afW).get_file_location(params)
+        working_file = self.get_holding_location() + '_msa'
+        subprocess.call('cp' +  ' ' + '\''+msa_file_name+'\'' + ' ' + working_file, shell=True, executable='/bin/bash')
+        subprocess.call(global_stuff.RASCAL_PATH + ' ' + working_file + ' ' + self.get_holding_location(), shell=True, executable='/bin/bash')
+        return AlignIO.read(self.get_holding_location(), 'fasta')
+
+
+class norMD_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
         return True
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return renamed_general_msa.get_all_keys(params, self)
+        to_rascal = params.get_param('to_rascal')
+        if to_rascal == 0:
+            return set(['to_rascal']) | rascalled_afW.get_all_keys(params, self)
+        elif to_rascal == 1:
+            return set(['to_rascal']) | renamed_afW.get_all_keys(params, self)
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-        msa = self.get_var_or_file(renamed_general_msa, params)
+        to_rascal = self.get_param(params, 'to_rascal')
+        print 'NORMD!!!!!'
         import wc
-        msa_file_name = wc.get_wrapper_instance(renamed_general_msa).get_file_location(params)
-        working_file = self.get_holding_location() + '_msa'
-        subprocess.call('cp' +  ' ' + '\''+msa_file_name+'\'' + ' ' + working_file, shell=True, executable='/bin/bash')
-        subprocess.call(global_stuff.RASCAL_PATH + ' ' + working_file + ' ' + self.get_holding_location(), shell=True, executable='/bin/bash')
-        return open(self.get_holding_location())
+        if to_rascal == 1:
+            msa = self.get_var_or_file(rascalled_afW, params)
+            msa_file_name = wc.get_wrapper_instance(rascalled_afW).get_file_location(params)
+        elif to_rascal == 0:
+            msa = self.get_var_or_file(renamed_afW, params)
+            msa_file_name = wc.get_wrapper_instance(renamed_afW).get_file_location(params)
+        in_msa_file = self.get_holding_location() + '_msa'
+        helper.cp_file(msa_file_name, in_msa_file)
+        in_msa_gcg_file =  in_msa_file + '_gcg'
+        helper.conv_seq(in_msa_file, in_msa_gcg_file, 'gcg')
+        out_msa_gcg_file = self.get_holding_location() + '_out_gcg'
+        subprocess.call(global_stuff.NORMD_PATH + ' ' + in_msa_gcg_file + ' ' + global_stuff.NORMD_SIMMAT + ' ' + str(12) + ' ' + str(1) + ' ' + str(9.0) + ' ' + out_msa_gcg_file + 'QUERY', shell=True, executable='/bin/bash')
+        #subprocess.call(global_stuff.NORMD_PATH + ' ' + in_msa_gcg_file + ' ' + global_stuff.NORMD_SIMMAT + ' ' + str(12) + ' ' + str(1) + ' ' + str(9.0) + ' ' + 'QUERY' + ' ' + out_msa_gcg_file, shell=True, executable='/bin/bash')
+        helper.conv_seq(out_msa_gcg_file, self.get_holding_location(), 'fasta')
+        ans = AlignIO.read(self.get_holding_location(), 'fasta')
+        helper.rm_files([in_msa_file, in_msa_gcg_file, out_msa_gcg_file, self.get_holding_location()])
+        return ans
+        
+class general_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        to_rascal = params.get_param('to_rascal')
+        to_normd = params.get_param('to_normd')
+        if to_rascal == 0 and to_normd == 0:
+            return renamed_afW.get_all_keys(params, self)
+        elif to_normd == 0 and to_rascal == 1:
+            return rascalled_afW.get_all_keys(params, self)
+        elif to_normd == 1:
+            return normd_afW.get_all_keys(params, self)
+        else:
+            raise Exception
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        to_rascal = self.get_param(params, 'to_rascal')
+        to_normd = self.get_param(params, 'to_normd')
+        if to_rascal == 0 and to_normd == 0:
+            return self.get_var_or_file(renamed_afW, params)
+        elif to_normd == 0 and to_rascal == 1:
+            return self.get_var_or_file(rascalled_afW, params)
+        elif to_normd == 1:
+            return self.get_var_or_file(normd_afW, params)
+        else:
+            raise Exception
+    
 
 class div_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 

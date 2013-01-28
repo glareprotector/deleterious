@@ -11,7 +11,7 @@ import param
 import random
 import sys
 from Bio.Align import MultipleSeqAlignment
-
+import subprocess
 
 class mutation(object):
 
@@ -1268,3 +1268,14 @@ def parse_p_input(p, arg_string):
         elif param_type == 's':
             val = val
         p.set_param(param_name, val)
+
+def conv_seq(in_file, out_file, format):
+    subprocess.call(global_stuff.CONVSEQ_PATH + ' ' + in_file + ' ' + out_file + ' ' + format, shell=True, executable='/bin/bash')
+
+def cp_file(from_file, to_file):
+    subprocess.call('cp ' + '\''+from_file+'\' ' + to_file, shell=True, executable='/bin/bash')
+
+def rm_files(the_files):
+    for the_file in the_files:
+        subprocess.call('rm ' + '\''+the_file+'\'', shell=True, executable='/bin/bash')
+    

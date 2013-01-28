@@ -44,6 +44,7 @@ if orchestra_or_no  == 'orchestra':
         remote_base_folder = '/mnt/work/fultonw/scratch_saapdb/'
         PDB_FOLDER = '/home/fw27/d/deleterious/data/proteins/cosmic_pdb/'
         REMOTE_PDB_FOLDER = '/mnt/work/fultonw/deleterious/data/proteins/cosmic_pdb/'
+        
 
     MUSCLE_PATH = '/home/fw27/d/deleterious/muscle3.8.31_i86linux64'
     BLAST_PATH = '/home/fw27/d/deleterious/bin/psiblast'
@@ -57,6 +58,12 @@ if orchestra_or_no  == 'orchestra':
     HHBLITS_DB_PATH = '/home/fw27/d/deleterious/hh/hhdb/nr20_12Aug11'
     HHBLITS_CONVERT_A3M_TO_FASTA = '/home/fw27/d/deleterious/hh/hhsuite-2.0.15-linux-x86_64/lib/hh/scripts/reformat.pl'
     PRIVATE_KEY = '/home/fw27/.ssh/id_rsa'
+    LEON_PATH = None
+    RASCAL_PATH = '/home/fw27/d/rascal1.34/rascal'
+    P53_MUTATIONS = '/home/fw27/d/deleterious/data/p53_mutations'
+    NORMD_PATH = '/home/fw27/d/normd/normd_rs'
+    NORMD_SIMMAT = '/home/fw27/d/normd/gon250.bla'
+    CONVSEQ_PATH = '/home/fw27/d/leon/convseq'
 
 elif orchestra_or_no == 'no':
 
