@@ -15,7 +15,7 @@ time_total = datetime.timedelta(0)
 
 cosmic_or_humvar = 'cosmic'
 
-orchestra_or_no = 'orchestra'
+orchestra_or_no = 'no'
 
 
 if orchestra_or_no  == 'orchestra':
@@ -103,6 +103,11 @@ elif orchestra_or_no == 'no':
     LEON_PATH = '/mnt/work/fultonw/leon/leon.sh'
     RASCAL_PATH = '/mnt/work/fultonw/rascal1.34/rascal'
     P53_MUTATIONS = '/mnt/work/fultonw/data/p53_mutations'
+    NORMD_PATH = '/mnt/work/fultonw/normd/normd_rs'
+    NORMD_SIMMAT = '/mnt/work/fultonw/normd/gon250.bla'
+    CONVSEQ_PATH = '/mnt/work/fultonw/leon/convseq'
+
+
 
 base_folder = real_base_folder
 home = real_home

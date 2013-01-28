@@ -430,11 +430,11 @@ class agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return afW.get_all_keys(params, self)
+        return general_afW.get_all_keys(params, self)
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-
+        print 'AGW!!!!!'
         msa = self.get_var_or_file(general_afW, params, recalculate, False, False, False)
         # msa = AlignIO.read(f.name, 'fasta')
         # search for the query sequence
@@ -449,7 +449,7 @@ class agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
         seqs = [ [None for i in range(len(seq))] for j in range(len(msa)) ]
 
-        pdb.set_trace()
+
         pos = 0
         for i in range(msa.get_alignment_length()):
             if msa[idx,i] != '-':
@@ -457,7 +457,7 @@ class agW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
                    seqs[j][pos] = msa[j,i]
                pos += 1
-        pdb.set_trace()
+
 
         to_add = [ SeqRecord(Seq(string.join(seqs[i],sep='')), id = msa[i].id) for i in range(len(msa))]
         return MultipleSeqAlignment(to_add)
@@ -1188,10 +1188,11 @@ class norMD_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
     @classmethod
     def get_all_keys(cls, params, self=None):
         to_rascal = params.get_param('to_rascal')
+
         if to_rascal == 0:
-            return set(['to_rascal']) | rascalled_afW.get_all_keys(params, self)
+            return set(['to_rascal', 'norm_co']) | rascalled_afW.get_all_keys(params, self)
         elif to_rascal == 1:
-            return set(['to_rascal']) | renamed_afW.get_all_keys(params, self)
+            return set(['to_rascal', 'norm_co']) | renamed_afW.get_all_keys(params, self)
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -1209,8 +1210,10 @@ class norMD_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         in_msa_gcg_file =  in_msa_file + '_gcg'
         helper.conv_seq(in_msa_file, in_msa_gcg_file, 'gcg')
         out_msa_gcg_file = self.get_holding_location() + '_out_gcg'
-        subprocess.call(global_stuff.NORMD_PATH + ' ' + in_msa_gcg_file + ' ' + global_stuff.NORMD_SIMMAT + ' ' + str(12) + ' ' + str(1) + ' ' + str(9.0) + ' ' + out_msa_gcg_file + 'QUERY', shell=True, executable='/bin/bash')
+        norm_co = self.get_param(params, 'norm_co')
+        subprocess.call(global_stuff.NORMD_PATH + ' ' + in_msa_gcg_file + ' ' + global_stuff.NORMD_SIMMAT + ' ' + str(12) + ' ' + str(1) + ' ' + str(norm_co) + ' ' + out_msa_gcg_file + ' QUERY', shell=True, executable='/bin/bash')
         #subprocess.call(global_stuff.NORMD_PATH + ' ' + in_msa_gcg_file + ' ' + global_stuff.NORMD_SIMMAT + ' ' + str(12) + ' ' + str(1) + ' ' + str(9.0) + ' ' + 'QUERY' + ' ' + out_msa_gcg_file, shell=True, executable='/bin/bash')
+
         helper.conv_seq(out_msa_gcg_file, self.get_holding_location(), 'fasta')
         ans = AlignIO.read(self.get_holding_location(), 'fasta')
         helper.rm_files([in_msa_file, in_msa_gcg_file, out_msa_gcg_file, self.get_holding_location()])
@@ -1223,11 +1226,11 @@ class general_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         to_rascal = params.get_param('to_rascal')
         to_normd = params.get_param('to_normd')
         if to_rascal == 0 and to_normd == 0:
-            return renamed_afW.get_all_keys(params, self)
+            return set(['to_rascal','to_normd']) | renamed_afW.get_all_keys(params, self)
         elif to_normd == 0 and to_rascal == 1:
-            return rascalled_afW.get_all_keys(params, self)
+            return set(['to_rascal','to_normd']) | rascalled_afW.get_all_keys(params, self)
         elif to_normd == 1:
-            return normd_afW.get_all_keys(params, self)
+            return set(['to_rascal','to_normd']) | norMD_afW.get_all_keys(params, self)
         else:
             raise Exception
 
@@ -1240,7 +1243,7 @@ class general_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
         elif to_normd == 0 and to_rascal == 1:
             return self.get_var_or_file(rascalled_afW, params)
         elif to_normd == 1:
-            return self.get_var_or_file(normd_afW, params)
+            return self.get_var_or_file(norMD_afW, params)
         else:
             raise Exception
     
