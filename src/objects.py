@@ -1035,7 +1035,7 @@ class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-        pdb.set_trace()
+
         f = self.get_var_or_file(bW, params, False, False, False)
 
         cmd = global_stuff.HHBLITS_PATH + ' -i ' + '\''+f.name+'\'' + ' -d ' + global_stuff.HHBLITS_DB_PATH + ' -oa3m ' + self.get_holding_location() + ' -cpu ' + str(1) + ' -n ' + str(self.get_param(params, 'hhblits_iter')) + ' -e ' + str(self.get_param(params, 'ev'))
@@ -1216,13 +1216,16 @@ class norMD_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
         helper.conv_seq(out_msa_gcg_file, self.get_holding_location(), 'fasta')
         ans = AlignIO.read(self.get_holding_location(), 'fasta')
-        helper.rm_files([in_msa_file, in_msa_gcg_file, out_msa_gcg_file, self.get_holding_location()])
+        subprocess.call('rm ' + self.get_holding_location() + '*', shell=True, executable='/bin/bash')
+        #helper.rm_files([in_msa_file, in_msa_gcg_file, out_msa_gcg_file, self.get_holding_location()])
         return ans
         
 class general_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
+
+
         to_rascal = params.get_param('to_rascal')
         to_normd = params.get_param('to_normd')
         if to_rascal == 0 and to_normd == 0:
