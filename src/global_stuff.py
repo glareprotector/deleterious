@@ -102,7 +102,7 @@ elif orchestra_or_no == 'no':
     HHBLITS_CONVERT_A3M_TO_FASTA = '/mnt/work/fultonw/deleterious/hh/hhsuite-2.0.15-linux-x86_64/lib/hh/scripts/reformat.pl'
     LEON_PATH = '/mnt/work/fultonw/leon/leon.sh'
     RASCAL_PATH = '/mnt/work/fultonw/rascal1.34/rascal'
-    P53_MUTATIONS = '/mnt/work/fultonw/data/p53_mutations'
+    P53_MUTATIONS = '/mnt/work/fultonw/deleterious/data/p53_mutations'
     NORMD_PATH = '/mnt/work/fultonw/normd/normd_rs'
     NORMD_SIMMAT = '/mnt/work/fultonw/normd/gon250.bla'
     CONVSEQ_PATH = '/mnt/work/fultonw/leon/convseq'
@@ -121,7 +121,7 @@ def get_param():
 
 
 
-    p = param.param({'ev':.05, 'uniprot_id':'KRAS', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':0, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':1, 'co':8.0, 'which_dataset':'their_cosmic', 'which_neighbors':1, 'protein_list_file':'their_cosmic_with_enough_pdb_coverage', 'to_leon':1, 'to_cluster':1})
+    p = param.param({'ev':.05, 'uniprot_id':'KRAS', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':0, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':1, 'co':8.0, 'which_dataset':'their_cosmic', 'which_neighbors':1, 'protein_list_file':'their_cosmic_with_enough_pdb_coverage', 'to_leon':0, 'to_cluster':1, 'to_rascal':1, 'to_normd':1, 'norm_co':9.0})
 
 
 

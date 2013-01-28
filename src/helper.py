@@ -1206,6 +1206,14 @@ def temp_cosmic(mutation):
 def saapdb_to_class(mutation):
     return mutation[4]
 
+def p53_to_class(mutation):
+    change = sum(mutation[4:]) / 8.0
+    print 'CHANGE: ', change
+    if change <= 20.0:
+        return [1]
+    else:
+        return [0]
+
 import numpy
 
 class my_msa:

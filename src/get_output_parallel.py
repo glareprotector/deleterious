@@ -49,6 +49,8 @@ elif which_dataset == 'humvar':
     mutation_to_class = helper.mutation_to_class
 elif which_dataset == 'saapdb':
     mutation_to_class = helper.saapdb_to_class
+elif which_dataset == 'p53':
+    mutation_to_class = helper.p53_to_class
 my_output = objects.get_output_obj(params, my_l, use_neighbor, ignore_pos, max_neighbor, num_trials, pseudo_total, helper.vanilla_similarity, helper.normalize_nothing, mutation_to_class, to_neighbor_p_value)
 
 comm.Barrier()

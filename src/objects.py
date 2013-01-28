@@ -1003,7 +1003,7 @@ class saapdb_mutation_list_all(wrapper.obj_wrapper):
 class p53_mutation_list_all(wrapper.obj_wrapper):
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -1011,16 +1011,17 @@ class p53_mutation_list_all(wrapper.obj_wrapper):
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-        f = open(global_stuff.p53_mutations, 'r')
+        f = open(global_stuff.P53_MUTATIONS, 'r')
         f.next()
         mutation_list = []
+        pdb.set_trace()
         for line in f:
             s = line.strip().split('\t')
-            raw = s[0]
+            raw = s[1]
             wild = raw[0]
             mut = raw[-1]
             pos = int(raw[1:-1])
-            mutation = ['TP53', pos, wild, mut, float(s[2]), float(s[3]), float(s[4]), float(s[5]), float(s[6]), float(s[7]), float(s[8]), float(s[9])]
+            mutation = ['TP53', pos-1, wild, mut, float(s[3]), float(s[4]), float(s[5]), float(s[6]), float(s[7]), float(s[8]), float(s[9]), float(s[10])]
             mutation_list.append(mutation)
         return mutation_list
 
@@ -1509,10 +1510,11 @@ class filtered_mutation_list(wrapper.obj_wrapper):
             return set(['which_dataset', 'protein_list_file']) | humvar_mutation_list_all.get_all_keys(params, self)
         elif which_dataset == 'saapdb':
             return set(['which_dataset', 'protein_list_file']) | saapdb_mutation_list_all.get_all_keys(params, self)
-        
+        elif which_dataset == 'p53':
+            return set(['which_dataset', 'protein_list_file']) | p53_mutation_list_all.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -1527,6 +1529,10 @@ class filtered_mutation_list(wrapper.obj_wrapper):
             mutation_list = self.get_var_or_file(their_cosmic_mutation_list_all, params)
         elif which_dataset == 'saapdb':
             mutation_list = self.get_var_or_file(saapdb_mutation_list_all, params)
+        elif which_dataset == 'p53':
+            mutation_list = self.get_var_or_file(p53_mutation_list_all, params)
+
+        return mutation_list
 
         num = 0
         num_add = 0
@@ -1537,9 +1543,9 @@ class filtered_mutation_list(wrapper.obj_wrapper):
 
         m = self.get_var_or_file(general_start_to_pdb_definitive, params)
 
-        pdb.set_trace()
 
-        protein_list = helper.get_file_string_set(self.get_param(params, 'protein_list_file'))
+
+        #protein_list = helper.get_file_string_set(self.get_param(params, 'protein_list_file'))
 
         g = self.get_var_or_file(general_start_to_pdb_definitive, params)
 
@@ -1554,13 +1560,13 @@ class filtered_mutation_list(wrapper.obj_wrapper):
             pos = mutation[1]
             wild_res = mutation[2]
             mut_res = mutation[3]
-
+            change = sum(mutation[4:]) / 8.0
 
             try:
 
                 
-
-                if protein_name in protein_list:
+                if True:
+                #if protein_name in protein_list:
                     import wrapper
                     self.set_param(params, 'uniprot_id', protein_name)
                     seq = self.get_var_or_file(dW, params)
@@ -1569,7 +1575,7 @@ class filtered_mutation_list(wrapper.obj_wrapper):
                     #deg = len(n[pos])
 
                     assert seq[pos] == wild_res
-                    if protein_name in g and seq[pos] == wild_res and msa.get_column(pos).count(mut_res) > 4:
+                    if protein_name in g and seq[pos] == wild_res and msa.get_column(pos).count(mut_res) > 0 and (change < 20.0 or (change < 100.0 and change > 80.0)):
                         filtered_mutations.append(mutation)
                         num_add += 1
             except Exception, err:
@@ -1905,9 +1911,16 @@ def get_mutation_info(out_file, params):
             return ans
 
         def get_wild_num():
+            seq = wc.get_stuff(dW, params)
+            print seq[mutation[1]], mutation[2], mutation
+            assert seq[mutation[1]] == mutation[2]
+            
             msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params, False, False, False)
             col = msa.get_column(mutation[1])
             return [str(col.count(mutation[2]))]
+
+        def get_avg_change():
+            return [str(sum(mutation[4:]) / 8.0)]
 
         def get_wild_aa():
             seq = wc.get_stuff(dW, params)
@@ -1918,7 +1931,7 @@ def get_mutation_info(out_file, params):
             #except Exception, err:
             #    pdb.set_trace()
             #    print err
-            return [wild, seq[pos], seq[pos-1], seq[pos+1]]
+            return [wild]
 
         def get_mut_aa():
             seq = wc.get_stuff(dW, params)
@@ -1983,7 +1996,7 @@ def get_mutation_info(out_file, params):
         info = []
         if i % 50 == 0:
             print >> sys.stderr, get_name(), i
-        i += 1
+
         which_dataset = params.get_param('which_dataset')
         #if which_dataset == 'cosmic':
 
@@ -1993,15 +2006,19 @@ def get_mutation_info(out_file, params):
         #    which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_deg, get_whether_bad, get_msa_length]
 
         #elif which_dataset == 'their_cosmic':
-
-        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_msa_length, get_wild_num, get_mut_num, get_deg_pdb]
-        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_msa_length, get_deg_pdb, get_wild_aa]
+        print i
+        if i == 2303:
+            pdb.set_trace()
+        i += 1
+        #which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_msa_length, get_wild_num, get_mut_num, get_deg_pdb]
+        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_msa_length, get_deg_pdb, get_avg_change]
         try:
             for which in which_info:
                 info = info + which()
 
             f.write(string.join(info,sep=',') + '\n')
         except Exception, err:
+            pdb.set_trace()
             print >> sys.stderr, err
             pass
         

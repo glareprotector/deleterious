@@ -351,7 +351,7 @@ class my_msa_obj_wrapper(obj_wrapper, by_uniprot_id_wrapper):
         return ans
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
