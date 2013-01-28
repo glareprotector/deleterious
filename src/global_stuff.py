@@ -15,7 +15,7 @@ time_total = datetime.timedelta(0)
 
 cosmic_or_humvar = 'cosmic'
 
-orchestra_or_no = 'no'
+orchestra_or_no = 'orchestra'
 
 
 if orchestra_or_no  == 'orchestra':
@@ -121,7 +121,9 @@ def get_param():
 
 
 
+
     p = param.param({'ev':.05, 'uniprot_id':'KRAS', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':0, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':1, 'co':8.0, 'which_dataset':'their_cosmic', 'which_neighbors':1, 'protein_list_file':'their_cosmic_with_enough_pdb_coverage', 'to_leon':0, 'to_cluster':1, 'to_rascal':1, 'to_normd':1, 'norm_co':9.0})
+
 
 
 

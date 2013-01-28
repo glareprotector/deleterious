@@ -139,7 +139,7 @@ to_blind_sends = set([objects.general_msa, objects.general_distance, objects.nei
 #to_gets = set()
 
 #this is the stuff to delete right after one protein is processed
-to_deletes = set([objects.hhblits_msa_file, objects.psicov_input_file, objects.psicov_distance, objects.psicov_output_file, objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.aeW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.div_weights, objects.general_seq_weights, objects.MIP_input_msa, objects.MIP_input_msa_file, objects.MIP_distance_file, objects.MIP_distance, objects.bW])# - to_gets
+to_deletes = set([objects.hhblits_msa_file, objects.psicov_input_file, objects.psicov_distance, objects.psicov_output_file, objects.general_msa, objects.general_seq_weights, objects.neighbors_w_weight_w, objects.edge_to_rank, objects.dW, objects.adW, objects.aeW, objects.afW, objects.agW, objects.their_agW, objects.pairwise_dist, objects.general_distance, objects.mf_distance, objects.div_weights, objects.general_seq_weights, objects.MIP_input_msa, objects.MIP_input_msa_file, objects.MIP_distance_file, objects.MIP_distance, objects.bW, objects.rascalled_afW, objects.norMD_afW, objects.general_afW])# - to_gets
 
 
 sender = helper.file_sender(global_stuff.lock_folder + str(which_job % 5), 0)
@@ -265,12 +265,12 @@ for line in f:
             #for avg_deg in [1,2,3,4,5,6,7,8,9,10,11,12]:
             #    get(objects.neighbors_w_weight_w, p, gotten_stuff, used_ps)
             import wrapper
-            p.set_param('which_msa', 2)
-            p.set_param('hhblits_iter', 1)
-            get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
-            p.set_param('hhblits_iter', 2)
-            p.set_param('which_msa', 0)
-            get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
+            for hhblits_iter in [1,2]:
+                p.set_param('hhblits_iter', hhblits_iter)
+                for to_normd in [0,1]:
+                    p.set_param('to_normd', to_normd)                    
+                    get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
+
 
 
             g.write('finished: ' + protein_name + ' ' + str(i) + ' out of ' + str(num_proteins) + ' by ' + str(total_jobs) + ' ' +  str(datetime.datetime.now()) + ' ' + str(datetime.datetime.now()-past2) + '\n')
