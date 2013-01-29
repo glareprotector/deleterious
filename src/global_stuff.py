@@ -64,7 +64,7 @@ if orchestra_or_no  == 'orchestra':
     NORMD_PATH = '/home/fw27/d/normd/normd_rs'
     NORMD_SIMMAT = '/home/fw27/d/normd/gon250.bla'
     CONVSEQ_PATH = '/home/fw27/d/leon/convseq'
-
+    HUMSAVAR_FILE = '/home/fw27/d/deleterious/data/humsavar.txt'
 
 elif orchestra_or_no == 'no':
 
@@ -108,8 +108,7 @@ elif orchestra_or_no == 'no':
     NORMD_SIMMAT = '/mnt/work/fultonw/normd/gon250.bla'
     CONVSEQ_PATH = '/mnt/work/fultonw/leon/convseq'
     CBS_MUTATIONS = '/mnt/work/fultonw/deleterious/data/CBS_mutations.csv'
-    P53_MESSY_MUTATIONS = '/mnt/work/fultonw/deleterious/data/p53_messy.txt'
-
+    HUMSAVAR_FILE = '/mnt/work/fultonw/deleterious/data/humsavar.txt'
 
 base_folder = real_base_folder
 home = real_home
@@ -124,7 +123,7 @@ def get_param():
 
 
 
-    p = param.param({'ev':.05, 'uniprot_id':'KRAS', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':0, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':1, 'blmax':700, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2, 'co':8.0, 'which_dataset':'their_cosmic', 'which_neighbors':1, 'protein_list_file':'rascalled_completed', 'to_leon':0, 'to_cluster':1, 'to_rascal':1, 'to_normd':0, 'norm_co':9.0})
+    p = param.param({'ev':.05, 'uniprot_id':'KRAS', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':0, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':0, 'blmax':999999, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2, 'co':8.0, 'which_dataset':'their_cosmic', 'which_neighbors':1, 'protein_list_file':'rascalled_completed', 'to_leon':0, 'to_cluster':1, 'to_rascal':1, 'to_normd':0, 'norm_co':9.0})
 
 
 

@@ -1519,6 +1519,8 @@ class filtered_mutation_list(wrapper.obj_wrapper):
             return set(['which_dataset', 'protein_list_file']) | saapdb_mutation_list_all.get_all_keys(params, self)
         elif which_dataset == 'p53':
             return set(['which_dataset', 'protein_list_file']) | p53_mutation_list_all.get_all_keys(params, self)
+        elif which_dataset == 'humsavar':
+            return set(['which_dataset', 'protein_list_file']) | humsavar_mutation_list_all.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
         return True
@@ -1538,6 +1540,8 @@ class filtered_mutation_list(wrapper.obj_wrapper):
             mutation_list = self.get_var_or_file(saapdb_mutation_list_all, params)
         elif which_dataset == 'p53':
             mutation_list = self.get_var_or_file(p53_mutation_list_all, params)
+        elif which_dataset == 'humsavar':
+            mutation_list = self.get_var_or_file(humsavar_mutation_list_all, params)
 
         #return mutation_list
 
@@ -1548,13 +1552,13 @@ class filtered_mutation_list(wrapper.obj_wrapper):
 
 
 
-        m = self.get_var_or_file(general_start_to_pdb_definitive, params)
+        m = self.get_var_or_file(general_start_to_pdb, params)
 
 
 
         protein_list = helper.get_file_string_set(self.get_param(params, 'protein_list_file'))
 
-        g = self.get_var_or_file(general_start_to_pdb_definitive, params)
+        #g = self.get_var_or_file(general_start_to_pdb_definitive, params)
 
         for mutation in mutation_list:
 
@@ -1567,25 +1571,29 @@ class filtered_mutation_list(wrapper.obj_wrapper):
             pos = mutation[1]
             wild_res = mutation[2]
             mut_res = mutation[3]
-            change = sum(mutation[4:]) / 8.0
+            #change = sum(mutation[4:]) / 8.0
 
             try:
 
                 
                 #if True:
                 if protein_name in protein_list:
-                    import wrapper
-                    self.set_param(params, 'uniprot_id', protein_name)
-                    seq = self.get_var_or_file(dW, params)
-                    msa = self.get_var_or_file(wrapper.my_msa_obj_wrapper, params)
+                    if protein_name in m:
+                        filtered_mutations.append(mutation)
+                        num_add += 1
+                        
+                    #import wrapper
+                    #self.set_param(params, 'uniprot_id', protein_name)
+                    #seq = self.get_var_or_file(dW, params)
+                    #msa = self.get_var_or_file(wrapper.my_msa_obj_wrapper, params)
                     #n = self.get_var_or_file(general_neighbors_w_weight_w, params)
                     #deg = len(n[pos])
 
-                    assert seq[pos] == wild_res
-                    if protein_name in g and seq[pos] == wild_res and msa.get_column(pos).count(mut_res) > 4:
+                    #assert seq[pos] == wild_res
+                    #if protein_name in g and seq[pos] == wild_res and msa.get_column(pos).count(mut_res) > 4:
                     #if True:
-                        filtered_mutations.append(mutation)
-                        num_add += 1
+                    #    filtered_mutations.append(mutation)
+                    #    num_add += 1
             except Exception, err:
                 print err
                 """
@@ -2399,9 +2407,11 @@ class general_start_to_pdb(wrapper.obj_wrapper):
         which_dataset = params.get_param('which_dataset')
         if which_dataset == 'saapdb':
             return set(['which_dataset']) | saapdb_to_pdb.get_all_keys(params, self)
-        if which_dataset == 'their_cosmic':
+        elif which_dataset == 'their_cosmic':
             pass
             #return set(['which_dataset']) | saapdb_to_pdb.get_all_keys(params, self)
+        elif which_dataset == 'humsavar':
+            return humsavar_start_to_pdb.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
         return False
@@ -2411,6 +2421,64 @@ class general_start_to_pdb(wrapper.obj_wrapper):
         which_dataset = self.get_param(params, 'which_dataset')
         if which_dataset == 'saapdb':
             return self.get_var_or_file(saapdb_to_pdb, params)
+        elif which_dataset == 'humsavar':
+            return self.get_var_or_file(humsavar_start_to_pdb, params)
+
+class humsavar_mutation_list_all(wrapper.obj_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set()
+
+    def whether_to_override(self, object_key):
+        return True
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        f = open(global_stuff.HUMSAVAR_FILE, 'r')
+        mutation_list = []
+        for line in f:
+            s = line.strip().split()
+            start = s[0]
+            uniprot = s[2]
+            pos = int(s[4])
+            wild = s[5]
+            mut = s[7]
+            label = s[8]
+            mutation = [start, pos, wild, mut, label]
+            mutation_list.append(mutation)
+        return mutation_list
+
+
+class humsavar_start_to_pdb(wrapper.obj_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set()
+
+    def whether_to_override(self, object_key):
+        return True
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
+        f = open(global_stuff.HUMSAVAR_FILE, 'r')
+        m = {}
+        u_to_p = self.get_var_or_file(uniprot_to_pdb, params)
+        for line in f:
+            s = line.strip().split()
+            start = s[0]
+            uniprot = s[2]
+            pos = int(s[4])
+            wild = s[5]
+            mut = s[7]
+            label = s[8]
+
+            if uniprot in u_to_p:
+                m[start] = u_to_p[uniprot]
+            
+        return m
+
+
 
 class general_start_to_pdb_definitive(wrapper.obj_wrapper):
     """
@@ -2468,10 +2536,13 @@ class general_start_to_pdb_definitive(wrapper.obj_wrapper):
                     chain_letter = pc[1]
                     self.set_param(params, 'pdb', pdb_name)
                     self.set_param(params, 'chain', chain_letter)
-                    chain = self.get_var_or_file(pdb_chain_seq, params)
-                    if len(chain) > longest:
-                        definitive[s] = pc
-                        longest = len(chain)
+                    try:
+                        chain = self.get_var_or_file(pdb_chain_seq, params)
+                        if len(chain) > longest:
+                            definitive[s] = pc
+                            longest = len(chain)
+                    except:
+                        pass
             return definitive            
     
 class query_to_pdb_chain_maps(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
