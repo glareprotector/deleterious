@@ -159,7 +159,7 @@ def dec(f):
         object_key = self.get_object_key(params, self)
 
         import sys
-        print >> sys.stderr, 'OBTAINING!!!', self, object_key
+        #print >> sys.stderr, 'OBTAINING!!!', self, object_key
 #        print >> sys.stderr, params
 
 

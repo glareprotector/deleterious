@@ -82,13 +82,17 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     @classmethod
     def get_all_keys(cls, params, self=None):
-        return set(['ev', 'which_blast']) | bW.get_all_keys(params, self)
+        if params.get_param('which_blast') == 0:
+            return set(['ev', 'which_blast', 'psiblast_iter']) | bW.get_all_keys(params, self)
+        else:
+            return set(['ev', 'which_blast']) | bW.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
         #if the file size is too small, we know there was something wrong
         import os
         location = self.get_file_location(object_key)
+        pdb.set_trace()
         if os.path.getsize(location) < 1:
             return True
 
@@ -128,12 +132,11 @@ class aeW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
         # parse blast xml file, then do processing
-        
         blast_xml_handle = self.get_var_or_file(adW, params, recalculate, False, False, False)
         try:
-            record = NCBIXML.read(blast_xml_handle)
+            record = NCBIXML.read(open(blast_xml_handle.name, 'r'))
         except Exception, err:
-            records = NCBIXML.parse(blast_xml_handle)
+            records = NCBIXML.parse(open(blast_xml_handle.name, 'r'))
             iters = [x for x in records]
             record = iters[-1]
 
@@ -1375,7 +1378,7 @@ class neighbors_w(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
 class general_neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -1536,7 +1539,7 @@ class filtered_mutation_list(wrapper.obj_wrapper):
         elif which_dataset == 'p53':
             mutation_list = self.get_var_or_file(p53_mutation_list_all, params)
 
-        return mutation_list
+        #return mutation_list
 
         num = 0
         num_add = 0
@@ -1549,7 +1552,7 @@ class filtered_mutation_list(wrapper.obj_wrapper):
 
 
 
-        #protein_list = helper.get_file_string_set(self.get_param(params, 'protein_list_file'))
+        protein_list = helper.get_file_string_set(self.get_param(params, 'protein_list_file'))
 
         g = self.get_var_or_file(general_start_to_pdb_definitive, params)
 
@@ -1569,8 +1572,8 @@ class filtered_mutation_list(wrapper.obj_wrapper):
             try:
 
                 
-                if True:
-                #if protein_name in protein_list:
+                #if True:
+                if protein_name in protein_list:
                     import wrapper
                     self.set_param(params, 'uniprot_id', protein_name)
                     seq = self.get_var_or_file(dW, params)
@@ -1579,7 +1582,8 @@ class filtered_mutation_list(wrapper.obj_wrapper):
                     #deg = len(n[pos])
 
                     assert seq[pos] == wild_res
-                    if protein_name in g and seq[pos] == wild_res and msa.get_column(pos).count(mut_res) > 0 and (change < 20.0 or (change < 100.0 and change > 80.0)):
+                    if protein_name in g and seq[pos] == wild_res and msa.get_column(pos).count(mut_res) > 4:
+                    #if True:
                         filtered_mutations.append(mutation)
                         num_add += 1
             except Exception, err:
@@ -1680,6 +1684,36 @@ class filtered_mutation_list(wrapper.obj_wrapper):
         return filtered_mutations
 
 
+class cbs_mutation_list_all(wrapper.obj_wrapper):
+
+    def whether_to_override(self, object_key):
+        return True
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set()
+
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):    
+        f = open(global_stuff.CBS_MUTATIONS, 'r')
+        mutation_list = []
+        for line in f:
+            s = line.strip().split(',')
+            wild = s[0]
+            pos = int(s[1])
+            mut = s[2]
+            try:
+                one_level = float(s[3])
+            except:
+                one_level = 0.0
+            try:
+                two_level = float(s[4])
+            except:
+                two_level = 0.0
+            mutation = ['CBS', pos, wild, mut, one_level, two_level]
+            mutation_list.append(mutation)
+        return mutation_list
 
 
         
@@ -1692,7 +1726,7 @@ class their_cosmic_mutation_list_all(wrapper.obj_wrapper):
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
-        pdb.set_trace()
+
         f = open(global_stuff.their_mutation_file, 'r')
         mutations = []
         total = 0
@@ -1727,7 +1761,7 @@ class their_cosmic_mutation_list_all(wrapper.obj_wrapper):
                 print err
             total += 1
         print 'bad: ', bad, ' total: ', total
-        pdb.set_trace()
+
         return mutations
 
 
@@ -2015,7 +2049,7 @@ def get_mutation_info(out_file, params):
             pdb.set_trace()
         i += 1
         #which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_msa_length, get_wild_num, get_mut_num, get_deg_pdb]
-        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_msa_length, get_deg_pdb, get_avg_change]
+        which_info = [get_name, get_pos, get_wild_num, get_mut_num, get_msa_length, get_deg_pdb]
         try:
             for which in which_info:
                 info = info + which()
@@ -2072,7 +2106,7 @@ def get_output_obj(params, l, use_neighbor, ignore_pos, max_neighbors, num_trial
                 fname,lineno,fn,text = frame
                 print "Error in %s on line %d" % (fname, lineno)
             print >> sys.stderr, err, mutation, bad_count
-            pdb.set_trace()
+
 
 
 
@@ -2388,6 +2422,8 @@ class general_start_to_pdb_definitive(wrapper.obj_wrapper):
         which_data = params.get_param('which_dataset')
         if which_data == 'p53':
             return set(['which_dataset'])
+        elif which_data == 'CBS':
+            return set(['which_dataset'])
         elif which_data == 'their_cosmic':
             return set(['which_dataset']) | gene_name_to_refseq.get_all_keys(params, self) | refseq_to_pdb_definitive.get_all_keys(params, self)
         else:
@@ -2402,6 +2438,9 @@ class general_start_to_pdb_definitive(wrapper.obj_wrapper):
         # this is the special case.  otherweise, do all of the computing here
         if which_dataset == 'p53':
             m = {'TP53':('1TUP','A')}
+            return m
+        elif which_dataset == 'CBS':
+            m = {'CBS':('1JBQ','A')}
             return m
         elif which_dataset == 'their_cosmic':
             # only add gene name for which i have the sequence
@@ -2450,6 +2489,7 @@ class query_to_pdb_chain_maps(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper
         uniprot_id = self.get_param(params, 'uniprot_id')
 
         m = self.get_var_or_file(general_start_to_pdb_definitive, params)
+        pdb.set_trace()
         pdb_name, chain_letter = m[uniprot_id]
         self.set_param(params, 'pdb', pdb_name)
         self.set_param(params, 'chain', chain_letter)
@@ -2470,6 +2510,8 @@ class query_to_pdb_chain_maps(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper
 
         uniprot_to_pdb_map = {}
         pdb_to_uniprot_map = {}
+
+        pdb.set_trace()
 
         for i in range(aln_length):
             if aln_pdb[i] != '-' and aln_uniprot[i] != '-':
@@ -2548,7 +2590,7 @@ class start_neighbors_from_pdb(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.
         return neighbors
         
     def whether_to_override(self, object_key):
-        return False
+        return Truev
 
 
 def write_genes_mutation_list(p, outfile):

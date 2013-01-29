@@ -27,7 +27,7 @@ import objects
 #to_check_for = [objects.general_distance, objects.general_msa, objects.neighbors_w_weight_w]
 #to_check_for = [objects.neighbors_]
 import wrapper
-to_check_for = [wrapper.my_msa_obj_wrapper]
+to_check_for = [objects.dW]
 #to_check_for = [wrapper.my_msa_obj_wrapper, objects.general_neighbors_w_weight_w]
 
 global_stuff.whether_to_look_at_whether_to_override = False

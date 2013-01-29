@@ -386,12 +386,12 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
     #seq_weights = 
 
     params.set_param('which_msa', 0)
-    
+    """
     node_msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params)
 
     column = node_msa.get_column(pos)
     node_seq_weights = wc.get_stuff(objects.general_seq_weights, params)
-
+    """
     params.set_param('which_msa', 2)
     msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params)
 
@@ -403,15 +403,17 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
         #mut_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[pos,i] == mut_res])
         #wild_weight = sum([seq_weights[i] for i in range(len(msa)) if msa[pos,i] == wild_res])
 
-        mut_similarity = compute_similarity_score_to_residue(column, node_seq_weights, mut_res, sim_f)
-        wild_similarity = compute_similarity_score_to_residue(column, node_seq_weights, wild_res, sim_f)
-        mut_count = column.count(mut_res)
-        wild_count= column.count(wild_res)
+        
+        #mut_count = column.count(mut_res)
+        #wild_count= column.count(wild_res)
         #if wild_similarity < 1:
         #    print wild_res, mut_res, column
         #    pdb.set_trace()
+        """
+        mut_similarity = compute_similarity_score_to_residue(column, node_seq_weights, mut_res, sim_f)
+        wild_similarity = compute_similarity_score_to_residue(column, node_seq_weights, wild_res, sim_f)
         score += math.log((mut_similarity + 1) / wild_similarity)
-        second_score = math.log((mut_count + 1.0) / wild_count)
+        """
         #assert abs(score - second_score) < .001
         #score += math.log((mut_weight + 1) / (wild_weight))
     
