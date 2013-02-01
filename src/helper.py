@@ -327,6 +327,12 @@ def sd(s):
     return ans ** 0.5
 
 
+def p_value_z(randoms, actual):
+    the_sd = sd(randoms)
+    the_mean = mean(randoms)
+    return (actual - the_mean) / the_sd
+
+
 def normalize_z(scores):
     the_mean = mean(scores)
     the_sd = sd(scores)
@@ -355,6 +361,59 @@ def rank(nums, x):
             count += 1
     return float(count) / len(nums)
 
+def get_random_weight(weights, target):
+    import random
+    new_weights = [0.0 for i in range(len(weights))]
+    temp = range(len(weights))
+    random.shuffle(temp)
+    total = 0.0
+    done = False
+    for i in range(len(new_weights)):
+        new_weights[temp[i]] = weights[temp[i]]
+        total += weights[temp[i]]
+        if total > target:
+            break
+    return new_weights
+
+
+def get_alignment_mapping(seq_a, seq_b):
+    from Bio import pairwise2
+    from Bio.SubsMat import MatrixInfo as matlist
+    matrix = matlist.blosum62
+    gap_open = -10
+    gap_extend = -0.5
+    alns = pairwise2.align.globalds(seq_a, seq_b, matrix, gap_open, gap_extend)
+    top_aln = alns[0]
+    aln_a, aln_b, score, begin, end = top_aln
+    a_i = 0
+    b_i = 0
+    aln_length = len(aln_a)
+
+    a_to_b_map = {}
+    b_to_a_map = {}
+
+
+
+    for i in range(aln_length):
+        if aln_a[i] != '-' and aln_b[i] != '-':
+            a_to_b_map[a_i] = b_i
+            b_to_a_map[b_i] = a_i
+                
+        if aln_a[i] != '-':
+            a_i += 1
+        if aln_b[i] != '-':
+            b_i += 1
+    return a_to_b_map, b_to_a_map
+
+
+def get_random_KLs(col, seq_weights, weight_a, weight_b, pseudo_count_dict, num_trials):
+    ans = []
+    for i in range(num_trials):
+        a = get_random_weight(seq_weights, weight_a)
+        b = get_random_weight(seq_weights, weight_b)
+        ans.append(get_KL_weighted(col, a, b, pseudo_count_dict, None))
+
+    return ans
 
 def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos, max_neighbor, num_trials, pseudo_total, sim_f, to_neighbor_p_value):
 
@@ -385,14 +444,14 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
 
     #seq_weights = 
 
-    params.set_param('which_msa', 0)
-    """
+    #params.set_param('which_msa', 0)
+    
     node_msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params)
 
     column = node_msa.get_column(pos)
     node_seq_weights = wc.get_stuff(objects.general_seq_weights, params)
-    """
-    params.set_param('which_msa', 2)
+    
+    #params.set_param('which_msa', 2)
     msa = wc.get_stuff(wrapper.my_msa_obj_wrapper, params)
 
     neighbor_seq_weights = wc.get_stuff(objects.general_seq_weights, params)
@@ -409,15 +468,16 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
         #if wild_similarity < 1:
         #    print wild_res, mut_res, column
         #    pdb.set_trace()
-        """
+        
         mut_similarity = compute_similarity_score_to_residue(column, node_seq_weights, mut_res, sim_f)
         wild_similarity = compute_similarity_score_to_residue(column, node_seq_weights, wild_res, sim_f)
-        score += math.log((mut_similarity + 1) / wild_similarity)
-        """
+        #score += math.log((mut_similarity + 1) / wild_similarity)
+        score += (mut_similarity + 1) / wild_similarity
+
         #assert abs(score - second_score) < .001
         #score += math.log((mut_weight + 1) / (wild_weight))
     
-        score = -1.0 * mutation[-3]
+        #score = -1.0 * mutation[-3]
     
     neighbor_score = 0
     
@@ -438,6 +498,10 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
         for key in range(global_stuff.q):
             pseudo_count_dict[key] = pseudo_total / global_stuff.q
 
+
+
+
+
         # none of weights have to be normalized
         def get_neighbor_score(msa, weight_a, weight_b, neighbors, neighbor_weights, pseudo_count_dict):
 
@@ -454,22 +518,22 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
                 for j in range(global_stuff.q):
                     choose_neighbor_probs[j] = 0
                 choose_neighbor_probs[global_stuff.aa_to_num[seq[neighbors[i]]]] = 1.0
-                score += neighbor_weights[i] * get_KL_weighted(msa.get_column(neighbors[i]), weight_a, weight_b, pseudo_count_dict, choose_neighbor_probs)
+                #score += neighbor_weights[i] * get_KL_weighted(msa.get_column(neighbors[i]), weight_a, weight_b, pseudo_count_dict, choose_neighbor_probs)
+
+
+
+                #score += neighbor_weights[i] * get_KL_weighted(msa.get_column(neighbors[i]), weight_a, weight_b, pseudo_count_dict, choose_neighbor_probs) / get_entropy_weighted(msa.get_column(neighbors[i]), neighbor_seq_weights, pseudo_count_dict)
+                asdf = get_KL_weighted(msa.get_column(neighbors[i]), weight_a, weight_b, pseudo_count_dict, choose_neighbor_probs)
+
+                random_kls = get_random_KLs(msa.get_column(neighbors[i]), neighbor_seq_weights, sum(weight_a), sum(weight_b), pseudo_count_dict, num_trials)
+                #score += asdf * neighbor_weights[i]
+                score += p_value_z(random_kls, asdf) * neighbor_weights[i]
+                #score += neighbor_weights[i] * (asdf / mean(random_kls))
+                #score += rank(random_kls, asdf) * neighbor_weights[i]
+                
             return score
 
-        def get_random_weight(weights, target):
-            import random
-            new_weights = [0.0 for i in range(len(weights))]
-            temp = range(len(weights))
-            random.shuffle(temp)
-            total = 0.0
-            done = False
-            for i in range(len(new_weights)):
-                new_weights[temp[i]] = weights[temp[i]]
-                total += weights[temp[i]]
-                if total > target:
-                    break
-            return new_weights
+        
                     
 
 
@@ -483,7 +547,6 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
         actual_neighbor_score = get_neighbor_score(msa, actual_weight_a, actual_weight_b, neighbors, neighbor_weights, pseudo_count_dict)
 
         if actual_neighbor_score < 0:
-            pdb.set_trace()
             print actual_neighbor_score
 
         
@@ -512,7 +575,7 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
                 random_scores.append(a_random_score)
 
 
-            normalize_neighbor_by_z = False
+            normalize_neighbor_by_z = True
         
             if normalize_neighbor_by_z:
                 random_mean = mean(random_scores)
@@ -535,10 +598,13 @@ def predict_position_energy_weighted(params, mutation, use_neighbor, ignore_pos,
         else:
             neighbor_score = actual_neighbor_score
 
-        print >> sys.stderr, neighbor_score, len(msa)
+    print >> sys.stderr, score, neighbor_score, len(msa)
 
 
     return (score - neighbor_score) * -1.0
+
+
+
 
 
 def get_KL_real(d1, d2, weights):
@@ -759,6 +825,29 @@ def get_KL_fast_alt(msa, a, b, char_to_num, weights):
                 
     return ans
 
+def get_entropy_weighted(col, weight, pseudo_dict):
+
+    total = 0.0
+    d = {}
+    for key in pseudo_dict:
+        d[key] = pseudo_dict[key]
+        total += pseudo_dict[key]
+
+    for char, a_weight in zip(col, weight):
+        if char not in global_stuff.ignore_aas:
+            d[global_stuff.aa_to_num[char]] += a_weight
+            total += a_weight
+
+    for key in d:
+        d[key] /= total
+
+    import math
+    ans = 0.0
+    for key in d:
+        ans += d[key] * math.log(d[key])
+    return -1.0 * ans
+
+
 def get_KL_weighted(col, weight_1, weight_2, pseudo_count_dict, choose_neighbor_probs):
     import pdb
 
@@ -770,6 +859,20 @@ def get_KL_weighted(col, weight_1, weight_2, pseudo_count_dict, choose_neighbor_
     import pdb
 
 
+
+    def print_non_zero_weight_col(col, weight):
+        assert len(col) == len(weight)
+        ans = ''
+        for i in range(len(col)):
+            if weight[i] > 1e-10:
+                ans = ans + col[i]
+        print ans
+
+    #print 'one'
+    #print_non_zero_weight_col(col, weight_1)
+    #print 'two'
+    #print_non_zero_weight_col(col, weight_2)
+
     for key in pseudo_count_dict:
         d1_dict[key] = pseudo_count_dict[key]
         d1_weight += pseudo_count_dict[key]
@@ -779,28 +882,27 @@ def get_KL_weighted(col, weight_1, weight_2, pseudo_count_dict, choose_neighbor_
 
     
 
-        
-    for i in range(len(col)):
+    try:
+        for i in range(len(col)):
 
-        if col[i] not in global_stuff.ignore_aas:
-            d1_weight += weight_1[i]
-            if global_stuff.aa_to_num[col[i]] in d1_dict.keys():
-                d1_dict[global_stuff.aa_to_num[col[i]]] = d1_dict[global_stuff.aa_to_num[col[i]]] + weight_1[i]
-            else:
-                d1_dict[global_stuff.aa_to_num[col[i]]] = weight_1[i]
+            if col[i] not in global_stuff.ignore_aas:
+                d1_weight += weight_1[i]
+                if global_stuff.aa_to_num[col[i]] in d1_dict.keys():
+                    d1_dict[global_stuff.aa_to_num[col[i]]] = d1_dict[global_stuff.aa_to_num[col[i]]] + weight_1[i]
+                else:
+                    d1_dict[global_stuff.aa_to_num[col[i]]] = weight_1[i]
 
-            d2_weight += weight_2[i]
-            if global_stuff.aa_to_num[col[i]] in d2_dict.keys():
-                d2_dict[global_stuff.aa_to_num[col[i]]] = d2_dict[global_stuff.aa_to_num[col[i]]] + weight_2[i]
-            else:
-                d2_dict[global_stuff.aa_to_num[col[i]]] = weight_2[i]
+                d2_weight += weight_2[i]
+                if global_stuff.aa_to_num[col[i]] in d2_dict.keys():
+                    d2_dict[global_stuff.aa_to_num[col[i]]] = d2_dict[global_stuff.aa_to_num[col[i]]] + weight_2[i]
+                else:
+                    d2_dict[global_stuff.aa_to_num[col[i]]] = weight_2[i]
 
-#    pseudo_count = 1.0 / len(msa)
-    #pseudo_count = 1.0
-#    all_keys = set(d1_dict.keys()) | set(d2_dict.keys())
-#    for key in d1_dict.keys():
-#        d2_dict[key] += pseudo_count
-#        d2_weight += pseudo_count
+    except:
+        raise Exception
+        pdb.set_trace()
+
+
 
 
     try:
@@ -839,7 +941,7 @@ def get_KL_weighted(col, weight_1, weight_2, pseudo_count_dict, choose_neighbor_
         print ans
         pdb.set_trace()
         
-    return ans
+    return ans 
 
 
 
@@ -1195,6 +1297,12 @@ def mutation_to_class(mutation):
 
     return [asdf,int(mutation[4]>1), mutation[8], mutation[9], mutation[10]]
 
+def cbs_to_class(mutation):
+    if mutation[4] < 3.0:
+        return [1]
+    else:
+        return [0]
+
 def temp_cosmic(mutation):
     asdf = int( mutation[8] == 1 or mutation[9] == 1 or mutation[10] == 1)
 
@@ -1204,6 +1312,36 @@ def temp_cosmic(mutation):
         return 1
     else:
         return 0
+
+def p53_stone_to_class(mutation):
+    if mutation[4] >= 5:
+        return [1]
+    else:
+        return [0]
+
+def lys_stone_to_class(mutation):
+    if mutation[4] == 2:# or mutation[4] == 1:
+        return [0]
+    else:
+        return [1]
+
+def protease_stone_to_class(mutation):
+    if mutation[4] == 'Positive' or mutation[4] == 'Intermediate':
+        return [1]
+    else:
+        return [0]
+
+def reverse_stone_to_class(mutation):
+    if mutation[4] == 0 or mutation[4] == 1:
+        return [0]
+    else:
+        return [1]
+
+def hemo_stone_to_class(mutation):
+    if mutation[4] == 'Normal':
+        return [0]
+    else:
+        return [1]
 
 def saapdb_to_class(mutation):
     return mutation[4]

@@ -27,7 +27,10 @@ def get_stuff(wrapper_class, params, recalculate=False, to_pickle=False, to_file
     else:
         return stuff
 
+def get_file_location(wrapper, params):
 
+    inst = get_wrapper_instance(wrapper)
+    return inst.get_file_location(params)
 
 
 def get_wrapper_instance(wrapper):

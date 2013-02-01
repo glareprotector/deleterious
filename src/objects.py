@@ -92,7 +92,7 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         #if the file size is too small, we know there was something wrong
         import os
         location = self.get_file_location(object_key)
-        pdb.set_trace()
+
         if os.path.getsize(location) < 1:
             return True
 
@@ -116,6 +116,7 @@ class adW(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
         #psi_blast_cline = NcbipsiblastCommandline(cmd = global_stuff.BLAST_PATH, outfmt = 5, query = '\''+f.name+'\'', out = self.get_holding_location())
         #pdb.set_trace()
         print >> sys.stderr, psi_blast_cline
+        pdb.set_trace()
         subprocess.call(str(psi_blast_cline), shell=True, stdout = sys.stderr, stderr = sys.stderr, executable='/bin/bash')
 
         return open(self.get_holding_location())
@@ -1029,6 +1030,75 @@ class p53_mutation_list_all(wrapper.obj_wrapper):
             mutation_list.append(mutation)
         return mutation_list
 
+
+class reverse_stone_mutation_list_all(wrapper.obj_wrapper):
+
+    def whether_to_override(self, object_key):
+        return True
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set()
+
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+
+
+
+        params.set_param('uniprot_id', global_stuff.REVERSE_GENE_NAME_TO_USE)
+
+
+        
+        # to go from their file to position in their sequence, subtract 43
+        # 2 files: their file, their seq, and the seq i will use to get neighbors
+        short_seq = SeqIO.read(global_stuff.REVERSE_SHORT_FILE,'fasta')
+        long_seq = self.get_var_or_file(dW, params)
+        f = open(global_stuff.REVERSE_MUT_FILE, 'r')
+        f.next()
+
+        #align short and long sequence
+        short_to_long, long_to_short = helper.get_alignment_mapping(short_seq.seq.tostring(), long_seq.seq.tostring())
+        mutation_list = []
+        for line in f:
+            s = line.strip().split('\t')
+            wild = s[0]
+            short_pos = int(s[1]) - 44
+            mut = s[2]
+            cat = line.count('+')
+            try:
+                long_pos = short_to_long[short_pos]
+                assert long_seq[long_pos] == wild
+                mutation = [global_stuff.REVERSE_GENE_NAME_TO_USE, long_pos, wild, mut, cat]
+                mutation_list.append(mutation)
+            except:
+                pass
+        return mutation_list
+
+class lys_stone_mutation_list_all(wrapper.obj_wrapper):
+
+    def whether_to_override(self, object_key):
+        return True
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set()
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        f = open(global_stuff.LYSOZYME_FILE, 'r')
+        f.next()
+        mutation_list = []
+        for line in f:
+            s = line.strip().split()
+            pos = int(s[1]) - 1
+            wild = s[0]
+            mut = s[2]
+            cls = line.count('+')
+            mutation = ['LYSOZYME', pos, wild, mut, cls]
+            mutation_list.append(mutation)
+        return mutation_list
+
 class hhblits_msa_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
@@ -1073,7 +1143,7 @@ class general_msa(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
 class fake_cluster_file(wrapper.file_wrapper, wrapper.by_uniprot_id_wrapper):
 
@@ -1167,7 +1237,7 @@ class rascalled_afW(wrapper.msa_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -1272,7 +1342,7 @@ class div_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 class general_seq_weights(wrapper.vect_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -1378,7 +1448,7 @@ class neighbors_w(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper):
 class general_neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_uniprot_id_wrapper):
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @classmethod
     def get_all_keys(cls, params, self=None):
@@ -1500,9 +1570,40 @@ class neighbors_w_weight_w(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.by_u
         return edges
 
 
+class protease_stone_mutation_list_all(wrapper.obj_wrapper):
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+
+        params.set_param('uniprot_id', global_stuff.PROTEASE_GENE_NAME_TO_USE)
 
 
+        short_seq = SeqIO.read(global_stuff.PROTEASE_SHORT_FILE, 'fasta')
+        long_seq = self.get_var_or_file(dW, params)
+        short_to_long, long_to_short = helper.get_alignment_mapping(short_seq.seq.tostring(), long_seq.seq.tostring())
+        
 
+        mutation_list = []
+        f = open(global_stuff.PROTEASE_MUT_FILE, 'r')
+        f.next()
+        for line in f:
+            s = line.strip().split('\t')
+            wild = s[0]
+            short_pos = int(s[1]) - 1
+            mut = s[2]
+            name = global_stuff.PROTEASE_GENE_NAME_TO_USE
+            cls = s[6].strip()
+            try:
+                long_pos = short_to_long[short_pos]
+                assert long_seq[long_pos] == wild
+                mutation = [name, long_pos, wild, mut, cls]
+                mutation_list.append(mutation)
+            except Exception, err:
+                print err
+                pdb.set_trace()
+                pass
+
+        return mutation_list
 
 class filtered_mutation_list(wrapper.obj_wrapper):
 
@@ -1510,20 +1611,32 @@ class filtered_mutation_list(wrapper.obj_wrapper):
     def get_all_keys(cls, params, self=None):
         which_dataset = params.get_param('which_dataset')
         if which_dataset == 'cosmic':
-            return set(['which_dataset', 'protein_list_file']) | current_cosmic_mutation_list_all.get_all_keys(params, self)
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | current_cosmic_mutation_list_all.get_all_keys(params, self)
         elif which_dataset == 'their_cosmic':
-            return set(['which_dataset', 'protein_list_file']) | their_cosmic_mutation_list_all.get_all_keys(params, self)
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | their_cosmic_mutation_list_all.get_all_keys(params, self)
         elif which_dataset == 'humvar':
-            return set(['which_dataset', 'protein_list_file']) | humvar_mutation_list_all.get_all_keys(params, self)
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | humvar_mutation_list_all.get_all_keys(params, self)
         elif which_dataset == 'saapdb':
-            return set(['which_dataset', 'protein_list_file']) | saapdb_mutation_list_all.get_all_keys(params, self)
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | saapdb_mutation_list_all.get_all_keys(params, self)
         elif which_dataset == 'p53':
-            return set(['which_dataset', 'protein_list_file']) | p53_mutation_list_all.get_all_keys(params, self)
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | p53_mutation_list_all.get_all_keys(params, self)
+        elif which_dataset == 'p53_stone':
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | p53_stone_mutation_list_all.get_all_keys(params, self)
+        elif which_dataset == 'protease_stone':
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | protease_stone_mutation_list_all.get_all_keys(params, self)
+        elif which_dataset == 'lys_stone':
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | lys_stone_mutation_list_all.get_all_keys(params, self)
+        elif which_dataset == 'hemo_stone':
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | hemo_stone_mutation_list_all.get_all_keys(params, self)
+        elif which_dataset == 'reverse_stone':
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | reverse_stone_mutation_list_all.get_all_keys(params, self)
         elif which_dataset == 'humsavar':
-            return set(['which_dataset', 'protein_list_file']) | humsavar_mutation_list_all.get_all_keys(params, self)
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | humsavar_mutation_list_all.get_all_keys(params, self)
+        elif which_dataset == 'cbs':
+            return set(['which_dataset', 'protein_list_file', 'mut_freq']) | cbs_mutation_list_all.get_all_keys(params, self)
 
     def whether_to_override(self, object_key):
-        return True
+        return False
 
     @dec
     def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -1540,8 +1653,20 @@ class filtered_mutation_list(wrapper.obj_wrapper):
             mutation_list = self.get_var_or_file(saapdb_mutation_list_all, params)
         elif which_dataset == 'p53':
             mutation_list = self.get_var_or_file(p53_mutation_list_all, params)
+        elif which_dataset == 'p53_stone':
+            mutation_list = self.get_var_or_file(p53_stone_mutation_list_all, params)
+        elif which_dataset == 'protease_stone':
+            mutation_list = self.get_var_or_file(protease_stone_mutation_list_all, params)
+        elif which_dataset == 'reverse_stone':
+            mutation_list = self.get_var_or_file(reverse_stone_mutation_list_all, params)
+        elif which_dataset == 'lys_stone':
+            mutation_list = self.get_var_or_file(lys_stone_mutation_list_all, params)
+        elif which_dataset == 'hemo_stone':
+            mutation_list = self.get_var_or_file(hemo_stone_mutation_list_all, params)
         elif which_dataset == 'humsavar':
             mutation_list = self.get_var_or_file(humsavar_mutation_list_all, params)
+        elif which_dataset == 'cbs':
+            mutation_list = self.get_var_or_file(cbs_mutation_list_all, params)
 
         #return mutation_list
 
@@ -1552,10 +1677,10 @@ class filtered_mutation_list(wrapper.obj_wrapper):
 
 
 
-        m = self.get_var_or_file(general_start_to_pdb, params)
+        #m = self.get_var_or_file(general_start_to_pdb, params)
 
-
-
+        num_no_neighbor = 0
+        mut_freq = params.get_param('mut_freq')
         protein_list = helper.get_file_string_set(self.get_param(params, 'protein_list_file'))
 
         #g = self.get_var_or_file(general_start_to_pdb_definitive, params)
@@ -1572,16 +1697,31 @@ class filtered_mutation_list(wrapper.obj_wrapper):
             wild_res = mutation[2]
             mut_res = mutation[3]
             #change = sum(mutation[4:]) / 8.0
-
+            
             try:
 
+                self.set_param(params, 'uniprot_id', protein_name)
+                seq = self.get_var_or_file(dW, params)
+                #filtered_mutations.append(mutation)
                 
-                #if True:
-                if protein_name in protein_list:
-                    if protein_name in m:
-                        filtered_mutations.append(mutation)
-                        num_add += 1
-                        
+                assert seq[pos] == wild_res
+
+
+                msa = self.get_var_or_file(wrapper.my_msa_obj_wrapper, params)
+                
+                col = msa.get_column(pos)
+                
+                
+                n = self.get_var_or_file(general_neighbors_w_weight_w, params)
+                deg = len(n[pos])
+
+                if deg == 0:
+                    num_no_neighbor += 1
+                if col.count(mut_res) > mut_freq and deg > 0:
+                
+                    filtered_mutations.append(mutation)
+                    num_add += 1
+                    print num_add, len(mutation_list), len(msa)
                     #import wrapper
                     #self.set_param(params, 'uniprot_id', protein_name)
                     #seq = self.get_var_or_file(dW, params)
@@ -1594,101 +1734,10 @@ class filtered_mutation_list(wrapper.obj_wrapper):
                     #if True:
                     #    filtered_mutations.append(mutation)
                     #    num_add += 1
-            except Exception, err:
-                print err
-                """
-                        self.set_param(params, 'uniprot_id', protein_name)
-
-                        start_seq = self.get_var_or_file(dW, params, recalculate, False, False)
-                        try:
-                        pdb_name, chain_letter = m[protein_name]
-                        self.set_param(params, 'pdb', pdb_name)
-                        self.set_param(params, 'chain', chain_letter)
-                        pdb_seq = self.get_var_or_file(pdb_chain_seq, params)
-                    except KeyError:
+            except:
                     pass
-                    else:
-                    print len(pdb_seq), len(start_seq)
+        print 'num_add: ', num_add, num_no_neighbor
 
-                    try:
-                        if float(len(pdb_seq)) / len(start_seq) > 0.75 and start_seq[pos] == wild_res:
-                            import wrapper
-                            msa = self.get_var_or_file(wrapper.my_msa_obj_wrapper, params)
-                            mut_count = msa.get_column(pos).count(mut_res)
-                            self.set_param(params, 'co', 6)
-                            #n = self.get_var_or_file(general_neighbors_w_weight_w, params)
-                            #deg = len(n[pos])
-                            if mut_count >= 5 and deg > 0:
-                                filtered_mutations.append(mutation)
-                                num_add += 1
-                    except:
-                        pass
-                
-                """
-
-            """
-                try:
-                    neighbors = n_dict[protein_name]
-                except:
-                    neighbors = self.get_var_or_file(neighbors_w, params, recalculate, True, False)
-                    n_dict[protein_name] = neighbors
-
-                try:
-                    query = q_dict[protein_name]
-                except:
-                    query = self.get_var_or_file(dW, params, recalculate, True, False)
-                    q_dict[protein_name ] = query
-                    """
-            """
-                try:
-                    neighbors = n_dict[protein_name]
-                except:
-                    neighbors = self.get_var_or_file(neighbors_w_weight_w, params, recalculate, True, False)
-                    n_dict[protein_name] = neighbors
-                
-                try:
-                    msa = m_dict[protein_name]
-                except:
-                    msa = self.get_var_or_file(general_msa, params, recalculate, True, False)
-                    m_dict[protein_name ] = msa
-
-
-                    
-            if len(seq) < 500000:
-
-                neighbors = self.get_var_or_file(neighbors_w_weight_w, params, recalculate, True, False)
-                msa = self.get_var_or_file(wrapper.my_msa_obj_wrapper, params, recalculate, True, False)
-
-                try:    
-                    pos = mutation[1]
-
-
-                    col = msa.get_column(pos)
-                
-                    if col.count(mutation[3]) > 5 and len(msa) > 200 and len(neighbors[pos])>0:
-                    #if True:
-                        #print 'added: ', protein_name
-                        filtered_mutations.append(mutation)
-                        num_add += 1
-                except Exception, err:
-                    print err
-
-                num += 1
-                if num % 50 == 0:
-                    print >> sys.stderr, '                               ', num_add, num
-
-                
-                filtered_column = helper.filter_msa_based_on_pos_neighbors_and_query(query, pos, msa, neighbors[pos])
-
-                print >> sys.stderr, '       ', len(neighbors[pos]), len(filtered_column), neighbor_cutoff, filter_cutoff
-
-                if len(neighbors[pos]) > neighbor_cutoff and len(filtered_column) > filter_cutoff:
-                    filtered_mutations.append(mutation)
-                    print >> sys.stderr, '                                   YES'
-                    """
-
-        print 'num_add: ', num_add
-                
         return filtered_mutations
 
 
@@ -1709,7 +1758,7 @@ class cbs_mutation_list_all(wrapper.obj_wrapper):
         for line in f:
             s = line.strip().split(',')
             wild = s[0]
-            pos = int(s[1])
+            pos = int(s[1])-1
             mut = s[2]
             try:
                 one_level = float(s[3])
@@ -1724,7 +1773,58 @@ class cbs_mutation_list_all(wrapper.obj_wrapper):
         return mutation_list
 
 
-        
+class hemo_stone_mutation_list_all(wrapper.obj_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set()
+
+    def whether_to_override(self, object_key):
+        return True
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):    
+        f = open(global_stuff.HEMO_MUT_FILE, 'r')
+        f.next()
+        mutation_list = []
+        params.set_param('uniprot_id', global_stuff.HEMO_GENE_NAME_TO_USE)
+        seq = self.get_var_or_file(dW, params)
+        for line in f:
+            s = line.strip().split('\t')
+            wild = s[0]
+            mut = s[2]
+            pos = int(s[1])-1
+            cls = s[6].strip()
+            assert seq[pos] == wild
+            mutation = [global_stuff.HEMO_GENE_NAME_TO_USE, pos, wild, mut, cls]
+            mutation_list.append(mutation)
+        return mutation_list
+
+class p53_stone_mutation_list_all(wrapper.obj_wrapper):
+
+    @classmethod
+    def get_all_keys(cls, params, self=None):
+        return set()
+
+    def whether_to_override(self, object_key):
+        return True
+
+    @dec
+    def constructor(self, params, recalculate, to_pickle = False, to_filelize = False, always_recalculate = False, old_obj = None):
+        f = open(global_stuff.STONE_P53_FILE)
+        mutation_list = []
+        f.next()
+        for line in f:
+            s = line.strip().split('\t')
+            name = 'TP53'
+            pos = int(s[1]) - 1
+            wild = s[0]
+            mut = s[2]
+            freq = int(s[6])
+            mutation = [name, pos, wild, mut, freq]
+            mutation_list.append(mutation)
+        return mutation_list
+
 
 # one wrapper for each raw dataset.  no parameters needed
 class their_cosmic_mutation_list_all(wrapper.obj_wrapper):
@@ -2039,6 +2139,9 @@ def get_mutation_info(out_file, params):
                 ans.append(str(deg))
             return ans
 
+        def get_p53_stone_count():
+            return [str(mutation[4])]
+
         info = []
         if i % 50 == 0:
             print >> sys.stderr, get_name(), i
@@ -2080,6 +2183,8 @@ def get_output_obj(params, l, use_neighbor, ignore_pos, max_neighbors, num_trial
     scores = []
     labels = []
     bad_count = 0
+
+
 
     for mutation in l:
 
@@ -2413,6 +2518,7 @@ class general_start_to_pdb(wrapper.obj_wrapper):
         elif which_dataset == 'humsavar':
             return humsavar_start_to_pdb.get_all_keys(params, self)
 
+
     def whether_to_override(self, object_key):
         return False
 
@@ -2423,6 +2529,10 @@ class general_start_to_pdb(wrapper.obj_wrapper):
             return self.get_var_or_file(saapdb_to_pdb, params)
         elif which_dataset == 'humsavar':
             return self.get_var_or_file(humsavar_start_to_pdb, params)
+
+
+
+
 
 class humsavar_mutation_list_all(wrapper.obj_wrapper):
 
@@ -2480,6 +2590,8 @@ class humsavar_start_to_pdb(wrapper.obj_wrapper):
 
 
 
+
+
 class general_start_to_pdb_definitive(wrapper.obj_wrapper):
     """
     only contains mapping of gene names for which i have the sequence
@@ -2490,7 +2602,17 @@ class general_start_to_pdb_definitive(wrapper.obj_wrapper):
         which_data = params.get_param('which_dataset')
         if which_data == 'p53':
             return set(['which_dataset'])
-        elif which_data == 'CBS':
+        elif which_data == 'cbs':
+            return set(['which_dataset'])
+        elif which_data == 'p53_stone':
+            return set(['which_dataset'])
+        elif which_data == 'protease_stone':
+            return set(['which_dataset'])
+        elif which_data == 'lys_stone':
+            return set(['which_dataset'])
+        elif which_data == 'reverse_stone':
+            return set(['which_dataset'])
+        elif which_data == 'hemo_stone':
             return set(['which_dataset'])
         elif which_data == 'their_cosmic':
             return set(['which_dataset']) | gene_name_to_refseq.get_all_keys(params, self) | refseq_to_pdb_definitive.get_all_keys(params, self)
@@ -2498,7 +2620,7 @@ class general_start_to_pdb_definitive(wrapper.obj_wrapper):
             return (set(['which_dataset']) | general_start_to_pdb.get_all_keys(params, self) | pdb_chain_seq.get_all_keys(params, self)) - set(['pdb', 'chain'])
 
     def whether_to_override(self, object_key):
-        return False
+        return True
 
     @dec
     def constructor(self, params, recalculate, to_pickle, to_filelize = False, always_recalculate = False, old_obj = None):
@@ -2507,7 +2629,22 @@ class general_start_to_pdb_definitive(wrapper.obj_wrapper):
         if which_dataset == 'p53':
             m = {'TP53':('1TUP','A')}
             return m
-        elif which_dataset == 'CBS':
+        elif which_dataset == 'p53_stone':
+            m = {'TP53':('1TUP','A')}
+            return m
+        elif which_dataset == 'protease_stone':
+            m = {global_stuff.PROTEASE_GENE_NAME_TO_USE:('5HVP','A')}
+            return m
+        elif which_dataset == 'reverse_stone':
+            m = {global_stuff.REVERSE_GENE_NAME_TO_USE:('3KJV','B')}
+            return m
+        elif which_dataset == 'lys_stone':
+            m = {'LYSOZYME':('102L','A')}
+            return m
+        elif which_dataset == 'hemo_stone':
+            m = {global_stuff.HEMO_GENE_NAME_TO_USE:('3EOK','B')}
+            return m
+        elif which_dataset == 'cbs':
             m = {'CBS':('1JBQ','A')}
             return m
         elif which_dataset == 'their_cosmic':
@@ -2560,7 +2697,7 @@ class query_to_pdb_chain_maps(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper
         uniprot_id = self.get_param(params, 'uniprot_id')
 
         m = self.get_var_or_file(general_start_to_pdb_definitive, params)
-        pdb.set_trace()
+
         pdb_name, chain_letter = m[uniprot_id]
         self.set_param(params, 'pdb', pdb_name)
         self.set_param(params, 'chain', chain_letter)
@@ -2568,6 +2705,13 @@ class query_to_pdb_chain_maps(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper
         uniprot_chain = self.get_var_or_file(dW, params)
         uniprot_seq = uniprot_chain.seq.tostring()
         pdb_seq = pdb_chain.seq.tostring()
+
+        pdb.set_trace()
+
+        return helper.get_alignment_mapping(uniprot_seq, pdb_seq)
+
+
+        
         matrix = matlist.blosum62
         gap_open = -10
         gap_extend = -0.5
@@ -2582,7 +2726,7 @@ class query_to_pdb_chain_maps(wrapper.obj_wrapper, wrapper.by_uniprot_id_wrapper
         uniprot_to_pdb_map = {}
         pdb_to_uniprot_map = {}
 
-        pdb.set_trace()
+
 
         for i in range(aln_length):
             if aln_pdb[i] != '-' and aln_uniprot[i] != '-':
@@ -2661,7 +2805,7 @@ class start_neighbors_from_pdb(wrapper.int_float_tuple_mat_obj_wrapper, wrapper.
         return neighbors
         
     def whether_to_override(self, object_key):
-        return Truev
+        return True
 
 
 def write_genes_mutation_list(p, outfile):

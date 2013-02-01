@@ -160,7 +160,7 @@ def dec(f):
 
         import sys
         #print >> sys.stderr, 'OBTAINING!!!', self, object_key
-#        print >> sys.stderr, params
+        #print >> sys.stderr, params
 
 
         used_keys = set()

@@ -92,10 +92,12 @@ elif orchestra_or_no == 'no':
     MUSCLE_PATH = '/mnt/work/fultonw/deleterious/muscle/muscle3.8.31_i86linux64'
     BLAST_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/psiblast'
     BLASTP_PATH = '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/bin/blastp'
-    BLASTDB_PATH = 'nr/nr'
+    #BLASTDB_PATH = 'nr/nr'
+    BLASTDB_PATH= '/mnt/work/fultonw/deleterious/blast/ncbi-blast-2.2.26+/nr/nr'
+    DELTABLAST_PATH = '/mnt/work/fultonw/deleterious/src/deltablast'
+    CDD_PATH = '/mnt/work/fultonw/deleterious/data/bin/cdd/cdd_delta'
 
-    DELTABLAST_PATH = None
-    CDD_PATH = None
+
     MIP_PATH = 'MIp_wrapper.pl'
     PSICOV_PATH = 'psicov'
     HHBLITS_PATH = 'hhblits'
@@ -109,6 +111,16 @@ elif orchestra_or_no == 'no':
     CONVSEQ_PATH = '/mnt/work/fultonw/leon/convseq'
     CBS_MUTATIONS = '/mnt/work/fultonw/deleterious/data/CBS_mutations.csv'
     HUMSAVAR_FILE = '/mnt/work/fultonw/deleterious/data/humsavar.txt'
+    STONE_P53_FILE = '/mnt/work/fultonw/deleterious/data/P53_Predictions.txt'
+    LYSOZYME_FILE = '/mnt/work/fultonw/deleterious/data/Lysozyme_Predictions.txt'
+    REVERSE_SHORT_FILE = '/mnt/work/fultonw/deleterious/data/RT_Alignment_fa.txt'
+    REVERSE_MUT_FILE = '/mnt/work/fultonw/deleterious/data/RT_Predictions.txt'
+    REVERSE_GENE_NAME_TO_USE = 'REVERSE_ONLINE'
+    PROTEASE_MUT_FILE = '/mnt/work/fultonw/deleterious/data/Protease_Predictions.txt'
+    PROTEASE_SHORT_FILE = '/mnt/work/fultonw/deleterious/data/protease_seq'
+    PROTEASE_GENE_NAME_TO_USE = 'PROTEASE_ONLINE'
+    HEMO_MUT_FILE = '/mnt/work/fultonw/deleterious/data/Hemoglobin_Predictions.txt'
+    HEMO_GENE_NAME_TO_USE = 'HEMO_ONLINE'
 
 base_folder = real_base_folder
 home = real_home
@@ -123,7 +135,7 @@ def get_param():
 
 
 
-    p = param.param({'ev':.05, 'uniprot_id':'KRAS', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':2, 'which_weight':0, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':0, 'blmax':999999, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':5, 'hhblits_iter':2, 'co':8.0, 'which_dataset':'their_cosmic', 'which_neighbors':1, 'protein_list_file':'rascalled_completed', 'to_leon':0, 'to_cluster':1, 'to_rascal':1, 'to_normd':0, 'norm_co':9.0})
+    p = param.param({'ev':.05, 'uniprot_id':'REVERSE', 'avg_deg':1, 'n_cutoff':0, 'f_cutoff':15, 'which_msa':0, 'which_weight':1, 'which_dist':3, 'pseudo_c':0.1, 'which_blast':2, 'blmax':999999, 'which_impute':0, 'filter_co':0.35, 'psicov_sep':6, 'psicov_gap':0.5, 'psicov_r':.001, 'psiblast_iter':1, 'hhblits_iter':2, 'co':5.0, 'which_dataset':'hemo_stone', 'which_neighbors':1, 'protein_list_file':'rascalled_completed', 'to_leon':0, 'to_cluster':1, 'to_rascal':1, 'to_normd':0, 'norm_co':9.0, 'mut_freq':15})
 
 
 

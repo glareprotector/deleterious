@@ -265,10 +265,12 @@ for line in f:
             #for avg_deg in [1,2,3,4,5,6,7,8,9,10,11,12]:
             #    get(objects.neighbors_w_weight_w, p, gotten_stuff, used_ps)
             import wrapper
-            for hhblits_iter in [1,2]:
-                p.set_param('hhblits_iter', hhblits_iter)
-                for to_normd in [0]:
-                    p.set_param('to_normd', to_normd)                    
+            p.set_param('hhblits_iter', 2)
+            p.set_param('psiblast_iter', 2)
+            for to_rascal in [0,1]:
+                p.set_param('to_rascal', to_rascal)
+                for which_msa in [0,2]:
+                    p.set_param('which_msa', which_msa)
                     get(wrapper.my_msa_obj_wrapper, p, gotten_stuff, used_ps)
 
 
